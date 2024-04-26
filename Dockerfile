@@ -1,21 +1,19 @@
 # Base node image.
-FROM node:18-bullseye-slim as base
+FROM node:16-bullseye-slim as base
 
 # Set global environment variables.
-ENV PORT="8080"
-ENV NODE_ENV="production"
-ENV DATABASE_URL=file:/data/sqlite.db 
+ENV NODE_ENV=production
 
 # Install openssl for Prisma.
-RUN apt-get update && apt-get install -y sqlite3
+RUN apt-get update && apt-get install -y openssl
 
 # Install all node_modules, including dev dependencies.
 FROM base as deps
 
 WORKDIR /myapp
 
-ADD package.json ./
-RUN npm install --include=dev
+ADD package.json package-lock.json ./
+RUN npm install --production=false
 
 # Setup production node_modules.
 FROM base as production-deps
@@ -23,8 +21,8 @@ FROM base as production-deps
 WORKDIR /myapp
 COPY --from=deps /myapp/node_modules /myapp/node_modules
 
-ADD package.json ./
-RUN npm prune --omit=dev
+ADD package.json package-lock.json ./
+RUN npm prune --production
 
 # Build the app.
 FROM base as build
@@ -40,9 +38,6 @@ RUN npm run build
 
 # Finally, build the production image with minimal footprint.
 FROM base
-
-# Add shortcut for connecting to database CLI.
-RUN echo "#!/bin/sh\nset -x\nsqlite3 \$DATABASE_URL" > /usr/local/bin/database-cli && chmod +x /usr/local/bin/database-cli 
 
 WORKDIR /myapp
 
