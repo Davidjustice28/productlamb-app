@@ -13,90 +13,130 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ...
-// Authentication Related Models.
-// ...
-
-model Otp {
-  id       String  @id @default(cuid())
-  code     String  @unique
-  active   Boolean @default(false)
-  attempts Int     @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Account {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  dateCreated DateTime
+  subscriptionType String
+  status String
+  users String[]
+  applications AccountApplication[]
 }
 
-model User {
-  id           String        @unique @default(cuid())
-  email        String        @unique
-  name         String?
-  customerId   String?       @unique
-  subscription Subscription?
 
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
+model AccountApplication {
+  id    Int     @id @default(autoincrement())
+  name String
+  summary String
+  archived Boolean
+  siteUrl String
+  type String
+  industry String
+  isPrivate Boolean
+  account Account @relation(fields: [accountId], references: [id]) 
+  accountId Int
+  userId Int
+  competitors ApplicationCompetitor[]
+  goals ApplicationGoal[]
+  initiatives GeneratedInitiative[]
+  integrations ApplicationIntegration[]
+  codeRepositoryInfo ApplicationCodeRepositoryInfo[]
+  sprints ApplicationSprint[]
+  tasks GeneratedTask[]
+  bugs ApplicationBug[]
+  feedback ApplicationFeedback[]
 }
 
-// ...
-// Subscription Related Models.
-// ...
 
-// Plans are used to describe and group our Stripe Products.
-model Plan {
-  id            String         @id @unique
-  name          String
-  description   String?
-  active        Boolean?       @default(true)
-  limits        PlanLimit?
-  prices        Price[]
-  subscriptions Subscription[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model ApplicationCompetitor  {
+  id Int @id @default(autoincrement())
+  name String
+  siteUrl String
+  application AccountApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
 }
 
-// Plan limits are used to describe the limits available to a plan.
-model PlanLimit {
-  id     String @id @default(cuid())
-  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  planId String @unique
-
-  // Here you can define your own limits.
-  // For example, you could have a limit on the number of items a user can create.
-  maxItems Int @default(0)
+model ApplicationGoal {
+  id Int @id @default(autoincrement())
+  goal String
+  isLongTerm Boolean
+  application AccountApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
 }
 
-// Prices are used to identify our plan prices.
-model Price {
-  id            String         @id @unique // Managed by Stripe - (Price ID)
-  plan          Plan           @relation(fields: [planId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  planId        String
-  amount        Int
-  currency      String
-  interval      String
-  active        Boolean        @default(true)
-  subscriptions Subscription[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model ApplicationFeedback {
+  id Int @id @default(autoincrement())
+  application AccountApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
+  feedback String
+  feedbackType String
+  feedbackDateMs Int
+}
+model GeneratedInitiative {
+  id Int @id @default(autoincrement())
+  description String
+  application AccountApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
+  sprint ApplicationSprint @relation(fields: [sprintId], references: [id])
+  sprintId Int @unique
 }
 
-// Subscriptions are used to identify our customers subscriptions.
-model Subscription {
-  id                 String  @id @unique // Managed by Stripe - (Subscription ID)
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId             String  @unique
-  plan               Plan    @relation(fields: [planId], references: [id])
-  planId             String
-  price              Price   @relation(fields: [priceId], references: [id])
-  priceId            String
-  interval           String
-  status             String
-  currentPeriodStart Int
-  currentPeriodEnd   Int
-  cancelAtPeriodEnd  Boolean @default(false)
+model ApplicationIntegration {
+  id Int @id @default(autoincrement())
+  application AccountApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
+  name String
+  secret String
+  secretExpirationDateMs BigInt?
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model ApplicationCodeRepositoryInfo {
+  id Int @id @default(autoincrement())
+  application AccountApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
+  platform String
+  secret String
+  secretExpirationDateMs BigInt?
+  repositoryName String?
+  repositoryId Int?
+}
+
+model GeneratedTask {
+  id Int @id @default(autoincrement())
+  application AccountApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
+  sprint ApplicationSprint @relation(fields: [sprintId], references: [id])
+  sprintId Int
+  technicalDesign TaskTechnicalDesign @relation(fields: [technicalDesignId], references: [id])
+  technicalDesignId Int @unique
+  title String
+  summary String
+  status String
+  points Int
+}
+
+model TaskTechnicalDesign {
+  id Int @id @default(autoincrement())
+  task GeneratedTask?
+}
+
+model ApplicationSprint {
+  id Int @id @default(autoincrement())
+  application AccountApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
+  startDate BigInt
+  endDate BigInt
+  completed Boolean
+  generatedTasks GeneratedTask[]
+  initiative GeneratedInitiative?
+}
+
+model ApplicationBug {
+  id Int @id @default(autoincrement())
+  application AccountApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
+  title String
+  description String
+  completed Boolean
+  priority String
 }
