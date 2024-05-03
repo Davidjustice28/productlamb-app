@@ -13,7 +13,6 @@ export const LoggedInNavbar = ({darkMode, expanded}: {darkMode: boolean, expande
     { iconClass: "ri-feedback-line", absoluteHref: '/portal/feedback', text: 'Feedback', adminOnly: false},
     { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: true},
     { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: true},
-    { iconClass: "ri-team-line", absoluteHref: '/portal/users', text: 'Team Members', adminOnly: true},
     { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Settings', adminOnly: false},
     { iconClass: "ri-file-text-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]

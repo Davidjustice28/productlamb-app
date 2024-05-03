@@ -64,14 +64,14 @@ export const loader: LoaderFunction = (args) => {
 export function App() {
   const { ENV, darkMode } = useLoaderData<typeof loader>()
   return (
-    <html lang="en" className={ darkMode ? 'dark' : '' }>
+    <html lang="en" className={ (darkMode ? 'dark' : '') }>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className={darkMode ? 'bg-neutral-800' : 'bg-white'}>
         <RootLayout/>
         <ScrollRestoration />
         <Scripts />

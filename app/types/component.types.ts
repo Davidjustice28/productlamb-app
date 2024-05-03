@@ -5,10 +5,31 @@ export interface PLBasicButtonProps {
   text: string
   onClick?: () => void
   colorClasses?: string
+  rounded?: boolean
+}
+
+export interface PLLabelButtonProps {
+  icon: PLButtonIcons
+  text: string
+  onClick?: () => void
+  colorClasses?: string
+  rounded?: boolean
+  img?: string
 }
 
 export interface PLIconButtonProps {
   icon: PLButtonIcons
   onClick?: () => void
   colorClasses?: string
+}
+
+export interface PLTableProps<T> {
+  data: Array<T>
+  columns?: Array<{key: string, type: "text" | "status" | "image", sortable?: boolean}>
+  actionsAvailable?: boolean
+  checked: Array<number>
+  columnsVisible?: boolean
+  component?: React.ComponentType<{data: T}>
+  tableModalName?: string
+  onCheck?: (ids: Array<number>) => void
 }

@@ -1,8 +1,9 @@
 import React, { useEffect } from "react"
 import { PLStatusBadge } from "./status-badge"
 import { Colors } from "~/types/base.types"
+import { PLTableProps } from "~/types/component.types"
 
-export function PLTable<T extends {[key:string]: any, id: number}>({data, columns=[], actionsAvailable=true, searchable=true, checked, columnsVisible=true, component, tableModalName="rows"}: {data: Array<T>, columns?: Array<{key: string, type: "text" | "status" | "image", sortable?: boolean}>, actionsAvailable?: boolean, searchable?: boolean, tableModalName?:string, checked: Array<number>, columnsVisible?: boolean, component?: React.ComponentType<{data: T}>}) {
+export function PLTable<T extends {[key:string]: any, id: number}>({data, columns=[], actionsAvailable=true, checked, columnsVisible=true, component, tableModalName="rows", onCheck}: PLTableProps<T>) {
   const [checkedRowIds, setCheckedRowIds] = React.useState<Array<number>>([...checked])
   const [rowData, setRowData] = React.useState<Array<T>>(data)
   
@@ -33,10 +34,18 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                           className="w-4 h-4 dark:accent-orange-600 accent-orange-300 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                           onChange={(e) => {
                             if(e.target.checked) {
-                              setCheckedRowIds(rowData.map(i => i.id))
+                              const updatedList = rowData.map(i => i.id)
+                              if(onCheck) {
+                                onCheck(updatedList)
+                              }
+                              setCheckedRowIds(updatedList)
                             } else {
+                              if(onCheck) {
+                                onCheck([])
+                              }
                               setCheckedRowIds([])
                             }
+
                           }}
                         />
                         <label htmlFor="checkbox-all-search" className="sr-only">checkbox</label>
@@ -96,9 +105,17 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                             checked={checkedRowIds.includes(index)}
                             onChange={(e) => {
                               if(e.target.checked) {
-                                setCheckedRowIds([...checkedRowIds, item.id])
+                                const updatedList = [...checkedRowIds, item.id]
+                                if(onCheck) {
+                                  onCheck(updatedList)
+                                }
+                                setCheckedRowIds(updatedList)
                               } else {
-                                setCheckedRowIds(checkedRowIds.filter(i => i !== item.id))
+                                const filteredList = checkedRowIds.filter(i => i !== item.id)
+                                if(onCheck) {
+                                  onCheck(filteredList)
+                                }
+                                setCheckedRowIds(filteredList)
                               }
                             }}
                             id="checkbox-table-search-1" type="checkbox" 

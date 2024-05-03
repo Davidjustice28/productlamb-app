@@ -2,6 +2,7 @@ import { useLocation, useLoaderData, Form, Outlet } from "@remix-run/react"
 import { useRef } from "react"
 import { ToggleSwitch } from "../forms/toggle-switch"
 import { LoggedInNavbar } from "../navigation/logged-in-navbar"
+import { UserButton, UserProfile } from "@clerk/remix"
 
 
 export function AuthenticatedLayout() {
@@ -30,10 +31,7 @@ export function AuthenticatedLayout() {
               </Form>
               <ToggleSwitch  onChangeHandler={handleSubmit}/>
             </label> 
-            <div className={"w-10 h-10 rounded-full flex items-center justify-center " + (darkMode ? "bg-neutral-900" : "bg-gray-100") }>
-              <img src="https://storage.googleapis.com/talo_profile_images/IMG_4465.jpg" alt="profile" className="w-8 h-8 rounded-full object-cover"/>
-              {/* <i className="ri-user-fill text-xl"></i> */}
-            </div>
+            <UserButton/>
           </div>
         </div>
         <Outlet />

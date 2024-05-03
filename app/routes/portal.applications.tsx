@@ -1,17 +1,20 @@
-import { useContext, useState } from "react"
+import { useState } from "react"
 import { mockApplications } from "~/backend/mocks/applications"
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { PLConfirmModal } from "~/components/modals/confirm"
 
 
-
 export default function ApplicationsPage() {
   const [modalOpen, setModalOpen] = useState(false)
+
+  function openDeleteModal() {
+    setModalOpen(true)
+  }
   return (
     <div>
       <div className="flex items-center justify-between w-full">
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Manage all of your personal projects being managed by ProductLamb</p>
-        <PLIconButton icon="ri-add-line" onClick={() => setModalOpen(true)}/>
+        <PLIconButton icon="ri-add-line"/>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-5">
         {mockApplications.map((app, index) => {
@@ -25,7 +28,7 @@ export default function ApplicationsPage() {
                   <h4 className="ml-2 font-semibold text-gray-700 dark:text-neutral-100">{app.name}</h4>
                 </div>
                 <div className="flex flex-row">
-                  <PLIconButton icon="ri-close-line" colorClasses="invisible group-hover:visible text-red-500 hover:bg-gray-100 dark:hover:bg-neutral-700" />
+                  <PLIconButton icon="ri-close-line" colorClasses="invisible group-hover:visible text-red-500 hover:bg-gray-100 dark:hover:bg-neutral-700" onClick={openDeleteModal}/>
                   <PLIconButton icon="ri-equalizer-line" colorClasses="text-gray-600 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700" />
                 </div>
               </div>
@@ -36,7 +39,7 @@ export default function ApplicationsPage() {
           )
         })}
       </div>
-      <PLConfirmModal onConfirm={() => console.log("confirmed")} open={modalOpen} setOpen={setModalOpen}/>
+      <PLConfirmModal open={modalOpen} setOpen={setModalOpen} message="Are you sure you would like to delete this application?"/>
     </div>
   )
 }

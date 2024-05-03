@@ -1,18 +1,19 @@
 import { SignedIn, SignedOut, UserButton } from "@clerk/remix";
 import { AuthenticatedLayout } from "./authenticated-layout";
-import { UnAuthenticatedLayout } from "./unauthenticated-layout";
+import { Outlet } from "@remix-run/react";
 
 
 export function RootLayout() {
   return (
-    <>
-      <SignedOut>
-        <UserButton />
-        <AuthenticatedLayout />
-      </SignedOut>
+    <div>
       <SignedIn>
-        <UnAuthenticatedLayout />
+        <AuthenticatedLayout />
       </SignedIn>
-    </>
+      <SignedOut>
+        <div>
+          <Outlet />
+        </div>
+      </SignedOut>
+    </div>
   )
 }

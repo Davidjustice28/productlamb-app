@@ -29,7 +29,7 @@ export function PLBaseModal({title="Title", children, open, setOpen}: {children?
 
 export function PLModalFooter({closeText = 'Close', submitText = 'Submit', onSubmit, onClose}: {closeText?: string, submitText?: string, onSubmit?: (...args:Array<any>) => any, onClose?: (...args:Array<any>) => any}) {
   return (
-    <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 dark:border-neutral-700 rounded-b">
+    <div className="flex items-center justify-end p-6">
       <button
         className="text-red-500 dark:text-red-400 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1"
         onClick={onClose}
