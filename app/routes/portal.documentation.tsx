@@ -15,8 +15,8 @@ import { FAQQuestion } from "~/types/base.types";
 
 export default function DocumentationPage() {
   const faqOptions = ["general", "troubleshoot", "features"]
-  const tutorialOptions = ["New Application", "Setup Integrations", "Add Members", "Upload Feedback", "Brainstorm Ideas", "Sprint Basics"]
-  const tutorials = [NewApplicationTutorial, SetupIntegrationTutorial, InviteTeamMemberTutorial, UploadFeedbackTutorial, BrainStormIdeasTutorial, SwitchApplicationsTutorial, SprintBasicsTutorial]
+  const tutorialOptions = ["New Application", "Setup Integrations", "Upload Feedback", "Brainstorm Ideas", "Sprint Basics"]
+  const tutorials = [NewApplicationTutorial, SetupIntegrationTutorial, UploadFeedbackTutorial, BrainStormIdeasTutorial, SwitchApplicationsTutorial, SprintBasicsTutorial]
   const [faqTab, setFaqTab] = useState<string>(faqOptions[0])
   const [tutorialTab, setTutorialTab] = useState<string>(tutorialOptions[0])
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<FAQQuestion[]>(generalQuestions)
@@ -48,20 +48,17 @@ export default function DocumentationPage() {
         case "Setup Integrations":
           setTutorialIndex(1)
           break
-        case "Invite Team Member":
+        case "Upload Feedback":
           setTutorialIndex(2)
           break
-        case "Upload Feedback":
+        case "Brainstorm Ideas":
           setTutorialIndex(3)
           break
-        case "Brainstorm Ideas":
+        case "Switch Applications":
           setTutorialIndex(4)
           break
-        case "Switch Applications":
-          setTutorialIndex(5)
-          break
         case "Sprint Basics":
-          setTutorialIndex(6)
+          setTutorialIndex(5)
           break
         default:
           break

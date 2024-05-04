@@ -6,15 +6,8 @@ export enum BugGroup {
   EXTERNAL = "external"
 }
 
-export enum UserSettingsTabGroup {
-  PERSONAL = "personal",
-  SECURITY = "security",
+export enum SettingsTabGroup {
+  PREFERENCES = "preferences",
   NOTIFICATIONS = "notifications",
-  PREFERENCES = "preferences"
-}
-
-export enum AccountSettingsTabGroup {
-  GENERAL = "general",
   BILLING = "billing",
-  TEAM = "team",
 }

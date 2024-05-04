@@ -2,9 +2,10 @@ import { LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { theme } from "~/backend/cookies/dark-mode";
+import { mockBarChartdata, mockSprintTaskCompletionPercentageData, mockSprintTaskTotalData } from "~/backend/mocks/charts";
 import { PlatformEvent, mockEvents } from "~/backend/mocks/events";
-import { PLAreaChart, mockSprintTaskTotalData, mockSprintTaskCompletionPercentageData } from "~/components/charts/area-chart";
-import { PLTable } from "~/components/common/table";
+import { PLAreaChart } from "~/components/charts/area-chart";
+import { PLBarChart } from "~/components/charts/bar-chart";
 import { TableColumn } from "~/types/base.types";
 
 
@@ -74,30 +75,40 @@ export default function DashboardPage() {
       <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "320px"}}>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Current Sprint - <span className="italic text-black dark:text-neutral-500">#0</span></h2>
-          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full md:h-full p-4 flex flex-row items-center justify-evenly gap-4">
-            <div className="justify-evenly flex flex-col items-center h-full border-black dark:border-neutral-400 border-2 flex-1 rounded-md">
+          <div className="rounded-xl w-full md:h-full flex flex-row items-center justify-evenly gap-4">
+            <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
               <p className="text-black text-xs dark:text-gray-500">Tasks</p>
               <h3 className="text-black font-bold text-3xl dark:text-neutral-400">13</h3>
               <p className="text-black text-xs dark:text-gray-500">Total</p>
             </div>
-            <div className="justify-evenly flex flex-col items-center h-full border-black dark:border-neutral-400 border-2 flex-1 rounded-md">
+            <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
               <p className="text-black text-xs dark:text-gray-500">Tasks</p>
               <h3 className="text-black font-bold text-3xl dark:text-neutral-400">8</h3>
               <p className="text-black text-xs dark:text-gray-500">Incomplete</p>
             </div>
-            <div className="justify-evenly flex flex-col items-center h-full border-black dark:border-neutral-400 border-2 flex-1 rounded-md">
+            <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
               <p className="text-black text-xs dark:text-gray-500">Days</p>
               <h3 className="text-black font-bold text-3xl dark:text-neutral-400">2</h3>
               <p className="text-black text-xs dark:text-gray-500">Left</p>
             </div>
           </div>
-          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-md text-sm">Team notes</h2>
-          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-15 md:h-full"></div>
+          <div className="rounded-xl mt-2 bg-white dark:bg-neutral-800 h-15 md:h-full pt-2">
+            <PLBarChart darkMode={darkMode} data={mockBarChartdata}/>
+          </div>
         </div>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Alerts & Events - <span className="italic text-black dark:text-neutral-500">{mockEvents.length}</span></h2>
-          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full overflow-hidden hover:overflow-y-scroll">
-            <PLTable data={mockEvents} checked={[]} columnsVisible={false} actionsAvailable={false} columns={columns} component={({data} ) => <PlatformEventComponent data={data} />} />
+          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full overflow-hidden hover:overflow-y-scroll flex flex-col p-2  gap-2 items-start">
+            {mockEvents.map((event, _) => {
+              return (
+              <p
+                key={event.id}
+                className="text-gray-900 dark:text-gray-300 text-xs"
+              >
+                {`{"timestamp": ${event.date}, "type": "${event.type}", "origin": "${event.originator}" explanation: "${event.description}"}`}
+              </p>
+              )
+            })}
           </div>
         </div>
       </div>
