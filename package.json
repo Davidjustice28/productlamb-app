@@ -8,6 +8,7 @@
     "format": "prettier --write .",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve ./build/index.js",
+    "start:production": "NODE_ENV=production && aaremix-serve ./build/index.js",
     "test:e2e:dev": "playwright test",
     "test:e2e:install": "npx playwright install chromium --with-deps",
     "pretest:e2e:run": "npm run build",
@@ -30,7 +31,6 @@
     "react-dom": "^18.2.0",
     "recharts": "^2.12.6",
     "remix-auth": "^3.6.0",
-    "remix-auth-otp": "^2.3.0",
     "remix-auth-socials": "^2.0.5",
     "remix-utils": "^7.1.0",
     "stripe": "^11.18.0"
