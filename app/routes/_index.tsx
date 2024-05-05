@@ -44,7 +44,7 @@ export default function LandingPage() {
     formRef.current?.submit()
   } 
   return (
-    <div className="flex flex-col bg-white w-full py-2 px-16">
+    <div className="flex flex-col bg-white w-full py-2 px-5">
       <div className="relative flex flex-wrap items-center justify-between w-full bg-white group py-7 shrink-0">
         <div className="m-auto md:m-0">
           <img className="h-8" src="https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png"/>
@@ -70,7 +70,7 @@ export default function LandingPage() {
           <div className="flex items-center justify-center mb-2 md:mb-4 lg:justify-normal">
             <h4 className="text-sm invisible md:visible font-bold tracking-widest text-[#F28C28] uppercase">Explore the Benefits of Direction</h4>
           </div>
-          <h1 className="-mt-6 md:-mt-0 mb-6 md:mb-8 text-4xl font-extrabold leading-tight lg:text-6xl text-black">Product Management for the Little Guys</h1>
+          <h1 className="-mt-6 md:-mt-0 mb-6 md:mb-8 text-3xl font-extrabold leading-tight lg:text-6xl text-black">Product Management for the Little Guys</h1>
           <p className="mb-0 md:mb-6 text-base font-normal leading-7 lg:w-3/4 text-black">
             Indiehacker or early startup? Enjoy many of the benefits that proper planning and organization bring through a dedicated AI powered product manager.
           </p>
@@ -136,7 +136,7 @@ export default function LandingPage() {
 function ProductSection() {
   return (
     <div className="w-full flex flex-col items-center gap-5" id="product">
-      <h1 className="font-bold text-4xl text-center md:text-5xl mb-2">Build better projects with proper planning.</h1>
+      <h1 className="font-bold text-3xl text-center md:text-5xl mb-2">Build better projects with proper planning.</h1>
       <p className="font-regular w-full text-lg md:w-3/4 md:text-xl text-center mb-10">Let's be honest, developers love coding <span className="font-extrabold">not planning</span>. Leverage AI technology to properly plan out and manage 
         your personal project's workload so you can focus on what you do best.
       </p>
@@ -179,7 +179,7 @@ function FeaturesSection() {
   const [index, setIndex] = useState(0)
   return (
     <div className="w-full flex flex-col items-center border-neutral-200 border-2 rounded-3xl p-10" id="features">
-      <h1 className="font-bold text-xl md:text-2xl mb-3">{featureHeaders[index]}</h1>
+      <h1 className="font-bold text-xl text-center md:text-2xl mb-3">{featureHeaders[index]}</h1>
       <p className="font-regular w-full md:w-4/5  text-lg md:text-xl text-center mb-12">{featureDescriptions[index]}</p>
       <img className="w-full md:w-4/5" src={imgs[index]}/>
       <div className="flex gap-2 mt-10">
@@ -238,7 +238,7 @@ function PricingSection() {
       <div className="bg-white sm:pt-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl sm:text-center">
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">Simple pricing. One plan for all.</h2>
+            <h2 className="text-2xl text-center font-bold tracking-tight text-gray-900 sm:text-4xl">Simple pricing. One plan for all.</h2>
             <p className="mt-4 md:mt-6 text-lg leading-8 text-gray-600">Why discriminate on feature access. We make things simple. Choose between monthly or annual subscription and get access to everything.</p>
           </div>
           <div className="mx-auto mt-8 md:mt-16 max-w-2xl rounded-3xl ring-1 ring-gray-200 sm:mt-20 lg:mx-0 lg:flex lg:max-w-none">
@@ -265,7 +265,7 @@ function PricingSection() {
                 <div className="mx-auto max-w-xs px-8">
                   <p className="text-base font-semibold text-gray-600">Affordable pricing for all</p>
                   <p className="mt-6 flex items-baseline justify-center gap-x-2 mb-10">
-                    <span className="text-5xl font-bold tracking-tight text-gray-900">$20</span>
+                    <span className="text-5xl font-bold tracking-tight text-gray-900">$12</span>
                     <span className="text-sm font-semibold leading-6 tracking-wide text-gray-600">USD</span>
                   </p>
                   <PLBasicButton text="Coming June 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600"/>
@@ -286,7 +286,7 @@ function PricingSection() {
 function ContactUsSection() {
   return (
     <div className="w-full flex flex-col items-center gap-10 mt-20" id="contact-us">
-      <h1 className="font-bold text-4xl md:text-5xl">Get in touch with us</h1>
+      <h1 className="font-bold text-center text-3xl md:text-5xl">Get in touch with us</h1>
       <div className="container flex flex-col mx-auto bg-white">
         <div className="w-full">
           <div className="container flex flex-col items-center gap-16 mx-auto">
@@ -300,15 +300,15 @@ function ContactUsSection() {
                 <div className="flex flex-col items-center gap-3 px-8 py-10 bg-white rounded-3xl shadow-lg">
                 <i className="ri-twitter-fill text-3xl text-[#F28C28]"/> 
                 <p className="text-2xl font-extrabold text-dark-grey-900">Social Media</p>
-                <p className="text-base leading-7 text-dark-grey-600">Stay up to date with releases on Twitter/X</p>
+                <p className="text-base text-center leading-7 text-dark-grey-600">Stay up to date with releases on Twitter/X</p>
                 <p className="text-lg font-bold text-purple-blue-500">@productlamb</p>
                 </div>
-                {/* <div className="flex flex-col items-center gap-3 px-8 py-10 bg-white rounded-3xl shadow-lg">
+                <div className="flex flex-col items-center gap-3 px-8 py-10 bg-white rounded-3xl shadow-lg">
                 <i className="ri-phone-fill text-3xl text-[#F28C28]"/> 
                 <p className="text-2xl font-extrabold text-dark-grey-900">Sales</p>
                 <p className="text-base leading-7 text-dark-grey-600">Schedule a 1-on-1 demo</p>
-                <PLBasicButton text="Book a demo" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
-              </div> */}
+                <PLBasicButton text="Coming Soon" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
+              </div>
             </div>
           </div>
         </div>
