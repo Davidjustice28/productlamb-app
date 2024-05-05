@@ -44,7 +44,7 @@ export default function LandingPage() {
     formRef.current?.submit()
   } 
   return (
-    <div className="flex flex-col bg-white w-full py-2 px-5">
+    <div className="flex flex-col bg-white w-full py-2 md:px-16 px-5">
       <div className="relative flex flex-wrap items-center justify-between w-full bg-white group py-7 shrink-0">
         <div className="m-auto md:m-0">
           <img className="h-8" src="https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png"/>
@@ -70,7 +70,7 @@ export default function LandingPage() {
           <div className="flex items-center justify-center mb-2 md:mb-4 lg:justify-normal">
             <h4 className="text-sm invisible md:visible font-bold tracking-widest text-[#F28C28] uppercase">Explore the Benefits of Direction</h4>
           </div>
-          <h1 className="-mt-6 md:-mt-0 mb-6 md:mb-8 text-3xl font-extrabold leading-tight lg:text-6xl text-black">Product Management for the Little Guys</h1>
+          <h1 className="-mt-6 md:-mt-0 mb-6 md:mb-8 text-3xl font-extrabold leading-tight lg:text-6xl text-black">Product Management<br/>for the Little Guys</h1>
           <p className="mb-0 md:mb-6 text-base font-normal leading-7 lg:w-3/4 text-black">
             Indiehacker or early startup? Enjoy many of the benefits that proper planning and organization bring through a dedicated AI powered product manager.
           </p>
@@ -180,7 +180,7 @@ function FeaturesSection() {
   return (
     <div className="w-full flex flex-col items-center border-neutral-200 border-2 rounded-3xl p-10" id="features">
       <h1 className="font-bold text-xl text-center md:text-2xl mb-3">{featureHeaders[index]}</h1>
-      <p className="font-regular w-full md:w-4/5  text-lg md:text-xl text-center mb-12">{featureDescriptions[index]}</p>
+      <p className="font-regular w-full md:w-4/5  text-lg md:text-xl text-left md:text-center mb-12">{featureDescriptions[index]}</p>
       <img className="w-full md:w-4/5" src={imgs[index]}/>
       <div className="flex gap-2 mt-10">
         {imgs.map((_, i) => {
