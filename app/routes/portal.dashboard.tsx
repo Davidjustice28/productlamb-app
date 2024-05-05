@@ -99,10 +99,10 @@ export default function DashboardPage() {
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Alerts & Events - <span className="italic text-black dark:text-neutral-500">{mockEvents.length}</span></h2>
           <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full overflow-hidden hover:overflow-y-scroll flex flex-col p-2  gap-2 items-start">
-            {mockEvents.map((event, _) => {
+            {mockEvents.map((event, index) => {
               return (
               <p
-                key={event.id}
+                key={index}
                 className="text-gray-900 dark:text-gray-300 text-xs"
               >
                 {`{"timestamp": ${event.date}, "type": "${event.type}", "origin": "${event.originator}" explanation: "${event.description}"}`}
@@ -111,19 +111,6 @@ export default function DashboardPage() {
             })}
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function PlatformEventComponent({data}: {data: PlatformEvent}) {
-  return (
-    <div className="flex flex-row justify-start items-center gap-5 p-5 italic border-b-2 dark:border-neutral-500">
-      <img src={data.creator_img_url} alt="event originator" className="w-9 h-9 object-cover"/>
-        {/* <i className="ri-user-fill text-xl"></i> */}
-      <div className="flex flex-row justify-between w-full">
-        <p className="text-sm">{data.description}</p>
-        <p className="text-xs text-gray-500">{data.date}</p>
       </div>
     </div>
   )

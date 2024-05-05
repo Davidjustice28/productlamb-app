@@ -15,7 +15,6 @@ datasource db {
 
 model Account {
   id    Int     @id @default(autoincrement())
-  email String  @unique
   dateCreated DateTime
   subscriptionType String
   status String
@@ -36,7 +35,6 @@ model AccountApplication {
   account Account @relation(fields: [accountId], references: [id]) 
   accountId Int
   userId Int
-  competitors ApplicationCompetitor[]
   goals ApplicationGoal[]
   initiatives GeneratedInitiative[]
   integrations ApplicationIntegration[]
@@ -47,14 +45,6 @@ model AccountApplication {
   feedback ApplicationFeedback[]
 }
 
-
-model ApplicationCompetitor  {
-  id Int @id @default(autoincrement())
-  name String
-  siteUrl String
-  application AccountApplication @relation(fields: [applicationId], references: [id])
-  applicationId Int
-}
 
 model ApplicationGoal {
   id Int @id @default(autoincrement())

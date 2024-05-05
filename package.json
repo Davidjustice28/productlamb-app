@@ -26,6 +26,7 @@
     "intl-parse-accept-language": "^1.0.0",
     "isbot": "^3.7.0",
     "react": "^18.2.0",
+    "react-confetti-explosion": "^2.1.2",
     "react-dom": "^18.2.0",
     "recharts": "^2.12.6",
     "remix-auth": "^3.6.0",

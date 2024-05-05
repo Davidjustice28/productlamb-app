@@ -1,16 +1,20 @@
-import { useLocation, useLoaderData, Form, Outlet } from "@remix-run/react"
+import { useLocation, useLoaderData, Form, Outlet, useNavigate } from "@remix-run/react"
 import { useRef } from "react"
 import { ToggleSwitch } from "../forms/toggle-switch"
 import { LoggedInNavbar } from "../navigation/logged-in-navbar"
-import { UserButton, UserProfile } from "@clerk/remix"
+import { useClerk, useUser } from "@clerk/remix"
+import React from "react"
 
 
 export function AuthenticatedLayout() {
+  const {user} = useUser()
+  const { signOut } = useClerk()
   const location = useLocation()
-  const page = location.pathname.split("/")[2]
+  const navigate = useNavigate()
   const formRef = useRef<HTMLFormElement>(null)
   const loadedData = useLoaderData<{darkMode: boolean|undefined, navBarExpanded: boolean|undefined}>()
   const { darkMode, navBarExpanded } = loadedData
+  const [ profileImageModalOpen, setProfileImageModalOpen ] = React.useState(false)
   const contentBg = darkMode ? 'bg-neutral-950' : 'bg-neutral-200'
 
   const handleSubmit = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,6 +22,17 @@ export function AuthenticatedLayout() {
     formRef.current?.submit()
   }
 
+  const handleSignout = async () => {
+    setProfileImageModalOpen(false)
+    await signOut (() => navigate("/"))
+  }
+
+  const openProfileImageModal = () => {
+    if(!profileImageModalOpen) {
+      setProfileImageModalOpen(true)
+    }
+  }
+  
   return (
     <div className="flex">
       <LoggedInNavbar darkMode={!!darkMode} expanded={!!navBarExpanded}/>
@@ -30,8 +45,19 @@ export function AuthenticatedLayout() {
                 <input type="hidden" name="_darkMode" value={location.pathname} />
               </Form>
               <ToggleSwitch  onChangeHandler={handleSubmit}/>
-            </label> 
-            <UserButton/>
+            </label>
+            <button className="flex items-center gap-3" onClick={openProfileImageModal}>
+              {
+                user ? <img src={user.imageUrl} alt="profile" className="w-8 h-8 rounded-full"/> : 
+                <div>
+                  <i className="ri-user-fill text-3xl text-gray-700 dark:text-gray-500"></i>
+                </div>
+              }
+            </button>
+            <div className={"w-52 bg-neutral-50 rounded absolute top-14 right-10 z-10 divide-y-2 text-black shadow-lg " + (profileImageModalOpen ? 'visible ' : 'invisible ' )} >
+              <button className="w-full h-10 hov" onClick={handleSignout}>Sign out</button>
+              <button className="w-full h-10">Close</button>
+            </div>
           </div>
         </div>
         <Outlet />

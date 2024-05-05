@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, UserButton } from "@clerk/remix";
+import { SignedIn, SignedOut } from "@clerk/remix";
 import { AuthenticatedLayout } from "./authenticated-layout";
 import { Outlet } from "@remix-run/react";
 

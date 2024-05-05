@@ -56,7 +56,18 @@ export const loader: LoaderFunction = (args) => {
   return rootAuthLoader(args, async ({ request }) => {
     const cookieHeader = request.headers.get("Cookie");
     const themeCookie = (await theme.parse(cookieHeader) || {});  
-    const navBarCookie = (await navbarState.parse(cookieHeader) || {});  
+    const navBarCookie = (await navbarState.parse(cookieHeader) || {});
+    const { sessionId, userId } = request.auth
+    const isPortalRoute = request.url.includes('/portal')
+    if ((!userId )) {
+      if (isPortalRoute) {
+        return redirect('/')
+      }
+    } else {
+      if( !isPortalRoute ) {
+        return redirect('/portal/dashboard')
+      }
+    }
     return { darkMode: themeCookie.darkMode, ENV: getSharedEnvs(), navBarExpanded: navBarCookie.navBarMode};
   });
 };

@@ -1,57 +1,101 @@
-import { SignInButton, SignUpButton } from "@clerk/remix";
-import { Form } from "@remix-run/react";
+import { SignInButton, SignUpButton, useUser } from "@clerk/remix";
+import { ActionFunction, json } from "@remix-run/node";
+import { Form, useActionData } from "@remix-run/react";
+import React from "react";
 import { useState } from "react";
 import { PLBasicButton } from "~/components/buttons/basic-button";
 import { PLDeveloperButton } from "~/components/buttons/label-button";
+import ConfettiExplosion from 'react-confetti-explosion';
 
-
+export const action: ActionFunction = async ({ request }) => {
+  const form = await request.formData()
+  const data = Object.fromEntries(form)
+  console.log(data)
+  if (!data["waitlist-email"]) return json({ joined: false }, { status: 400 })
+  try {
+    const emailInput = data["waitlist-email"]
+    const alreadySignedUp = await fetch(`https://api.getwaitlist.com/api/v1/signup?waitlist_id=16560&email=${emailInput}`)
+    if (alreadySignedUp.ok) return json({ message: 'success' }, { status: 200 })
+    const response = await fetch("https://api.getwaitlist.com/api/v1/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        waitlist_id: 16560,
+        email: emailInput,
+      }),
+    })
+  } catch (e) {
+    console.log(e)
+    return json({ joined: false }, { status: 500 })
+  }
+  return json({ joined: true }, { status: 200 })
+}
 export default function LandingPage() {
+  const actionData = useActionData<typeof action>()
+  const { isSignedIn } = useUser()
+  const [showConfetti, setShowConfetti] = useState(actionData?.joined || false)
+  const emailRef = React.createRef<HTMLInputElement>()
+  const formRef = React.createRef<HTMLFormElement>()
+  function joinWaitlist() {
+    const email = emailRef.current?.value
+    if (!email) return
+    formRef.current?.submit()
+  } 
   return (
     <div className="flex flex-col bg-white w-full py-2 px-16">
       <div className="relative flex flex-wrap items-center justify-between w-full bg-white group py-7 shrink-0">
-        <div>
+        <div className="m-auto md:m-0">
           <img className="h-8" src="https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png"/>
         </div>
         <div className="items-center justify-between hidden gap-12 text-black md:flex">
-          <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#features">Purpose</a>
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#features">Features</a>
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#pricing">Pricing</a>
+          <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#">Validation</a>
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#contact-us">Contact Us</a>
         </div>
-        <div className="items-center hidden gap-8 md:flex">
+        <div className="items-center hidden gap-8 md:flex">  
           <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
             <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
           </SignInButton>
-          <SignUpButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
+          {/* <SignUpButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
             <PLBasicButton text="Sign Up" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
-          </SignUpButton>
+          </SignUpButton> */}
+          <PLBasicButton text="Coming June 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600"/>
         </div>
       </div>
-      <div className="grid w-full grid-cols-1 my-auto mt-12 mb-8 md:grid-cols-2 xl:gap-14 md:gap-5">
-        <div className="flex flex-col justify-center col-span-1 text-center lg:text-start">
-          <div className="flex items-center justify-center mb-4 lg:justify-normal">
-            <h4 className="text-sm font-bold tracking-widest text-[#F28C28] uppercase">Explore the Benefits of Direction</h4>
+      <div className="flex w-full flex-col my-auto mb-8 md:flex-row xl:gap-14 md:gap-5">
+        <div className="flex flex-col justify-center w-full md:w-1/2 text-center lg:text-start">
+          <div className="flex items-center justify-center mb-2 md:mb-4 lg:justify-normal">
+            <h4 className="text-sm invisible md:visible font-bold tracking-widest text-[#F28C28] uppercase">Explore the Benefits of Direction</h4>
           </div>
-          <h1 className="mb-8 text-4xl font-extrabold leading-tight lg:text-6xl text-black">Product Management for the Little Guys</h1>
-          <p className="mb-6 text-base font-normal leading-7 lg:w-3/4 text-black">
-            Indiehacker or Small Dev Team? Enjoy many of the benefits that proper planning and organization bring through a dedicated AI powered product manager.
+          <h1 className="-mt-6 md:-mt-0 mb-6 md:mb-8 text-4xl font-extrabold leading-tight lg:text-6xl text-black">Product Management for the Little Guys</h1>
+          <p className="mb-0 md:mb-6 text-base font-normal leading-7 lg:w-3/4 text-black">
+            Indiehacker or early startup? Enjoy many of the benefits that proper planning and organization bring through a dedicated AI powered product manager.
           </p>
-          <div className="flex flex-col items-center gap-4 lg:flex-row">
-            <PLBasicButton text="Get started now" rounded colorClasses="bg-orange-500 text-white py-3 px-4"/>
-            <button className="flex items-center py-4 text-sm font-medium px-7 text-black hover:text-dark-grey-900 transition duration-300 rounded-2xl">
-              <i className="ri-phone-fill text-lg mr-2"></i>
-              Book a demo
-            </button>
+          <div className="flex flex-col invisible md:visible items-center gap-4 lg:flex-row">
+            <Form className="flex gap-2" ref={formRef} method="POST">
+              <input 
+              ref={emailRef}
+              className="py-3 w-96 px-4 text-sm font-medium text-black border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring focus:ring-gray-300" 
+              type="email" 
+              placeholder="Enter your email"
+              onChange={(e) => e.stopPropagation()}
+              name="waitlist-email"
+              />
+              <button className="w-32 py-3 px-4 text-md font-bold text-white bg-[#F28C28] rounded-xl hover:bg-orange-500 focus:outline-none focus:ring focus:ring-orange-300" onClick={joinWaitlist}>Join Waitlist{showConfetti && <ConfettiExplosion onComplete={() => setShowConfetti(false)} width={1000} particleCount={80} force={0.6} duration={2600}/>}</button>
+            </Form>
           </div>
         </div>
-        <div className="items-center justify-end hidden col-span-1 md:flex">
-          <img className="w-4/5 rounded-md h-lg" src="https://storage.googleapis.com/product-lamb-images/pl-header-img-3.png" alt="header image"/>
+        <div className="items-center justify-end flex w-full md:w-1/2 md:flex">
+          <img className="w-full md:w-4/5 rounded-md h-lg" src="https://storage.googleapis.com/product-lamb-images/pl-header-img-3.png" alt="header image"/>
         </div>
       </div>
       <div className="w-full flex flex-col gap-10 mt-10 text-black items-center">
         <ProductSection />
         <FeaturesSection />
-        <ValidationSection />
+        {/* <ValidationSection /> */}
         <PricingSection />
         <ContactUsSection />
       </div>
@@ -59,23 +103,28 @@ export default function LandingPage() {
         <div className="container px-6 py-8 mx-auto">
           <div className="flex flex-col items-center text-center">
             <a href="#"><img className="w-auto h-7" src="https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png" alt=""/></a>
-            <p className="max-w-md mx-auto mt-4 text-gray-500 dark:text-gray-400">Lorem ipsum dolor sit amet consectetur adipisicing elit.</p>
+            <p className="max-w-md mx-auto mt-4 text-gray-500 dark:text-gray-400">You code. We manage.</p>
             <div className="flex flex-col mt-4 sm:flex-row sm:items-center sm:justify-center">
-              <button className="flex items-center justify-center order-1 w-full px-2 py-2 mt-3 text-sm tracking-wide text-gray-600 capitalize transition-colors duration-300 transform border rounded-md sm:mx-2 dark:border-gray-400 dark:text-gray-300 sm:mt-0 sm:w-auto hover:bg-gray-50 focus:outline-none focus:ring dark:hover:bg-gray-800 focus:ring-gray-300 focus:ring-opacity-40">
-                <i className="ri-play-circle-line text-xl"></i>
-                <span className="mx-1">View Demo</span>
-              </button>
-
-              <PLBasicButton text="Get started" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
+              <Form className="flex gap-2" ref={formRef} method="POST">
+                <input 
+                ref={emailRef}
+                className="py-3 w-62 px-4 text-sm font-medium text-black border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring focus:ring-gray-300" 
+                type="email" 
+                placeholder="Enter your email"
+                onChange={(e) => e.stopPropagation()}
+                name="waitlist-email"
+                />
+                <button className="w-32 py-3 px-4 text-md font-bold text-white bg-[#F28C28] rounded-xl hover:bg-orange-500 focus:outline-none focus:ring focus:ring-orange-300" onClick={joinWaitlist}>Join Waitlist{showConfetti && <ConfettiExplosion onComplete={() => setShowConfetti(false)} width={1000} particleCount={80} force={0.6} duration={2600}/>}</button>
+              </Form>
             </div>
           </div>
           <hr className="my-10 border-gray-200 dark:border-gray-700" />
           <div className="flex flex-col items-center sm:flex-row sm:justify-between">
             <p className="text-sm text-gray-500">© Copyright 2021. All Rights Reserved.</p>
               <div className="flex mt-3 -mx-2 sm:mt-0">
-                <a href="#" className="mx-2 text-sm text-gray-500 transition-colors duration-300 hover:text-gray-500 dark:hover:text-gray-300" aria-label="Reddit"> Teams </a>
+                {/* <a href="#" className="mx-2 text-sm text-gray-500 transition-colors duration-300 hover:text-gray-500 dark:hover:text-gray-300" aria-label="Reddit"> Teams </a>
                 <a href="#" className="mx-2 text-sm text-gray-500 transition-colors duration-300 hover:text-gray-500 dark:hover:text-gray-300" aria-label="Reddit"> Privacy </a>
-                <a href="#" className="mx-2 text-sm text-gray-500 transition-colors duration-300 hover:text-gray-500 dark:hover:text-gray-300" aria-label="Reddit"> Cookies </a>
+                <a href="#" className="mx-2 text-sm text-gray-500 transition-colors duration-300 hover:text-gray-500 dark:hover:text-gray-300" aria-label="Reddit"> Cookies </a> */}
               </div>
           </div>
         </div>
@@ -87,8 +136,8 @@ export default function LandingPage() {
 function ProductSection() {
   return (
     <div className="w-full flex flex-col items-center gap-5" id="product">
-      <h1 className="font-bold text-5xl mb-2">Build better projects with proper planning.</h1>
-      <p className="font-regular w-3/4 text-xl text-center mb-10">Let's be honest, developers love coding <span className="font-extrabold">not planning</span>. Leverage AI technology to properly plan out and manage 
+      <h1 className="font-bold text-4xl text-center md:text-5xl mb-2">Build better projects with proper planning.</h1>
+      <p className="font-regular w-full text-lg md:w-3/4 md:text-xl text-center mb-10">Let's be honest, developers love coding <span className="font-extrabold">not planning</span>. Leverage AI technology to properly plan out and manage 
         your personal project's workload so you can focus on what you do best.
       </p>
     </div>
@@ -98,26 +147,28 @@ function ProductSection() {
 function FeaturesSection() {
   const imgs = [
     "https://storage.googleapis.com/product-lamb-images/screely-1714683109927.png",
+    "https://storage.googleapis.com/product-lamb-images/screely-1714683222909.png",
     "https://storage.googleapis.com/product-lamb-images/screely-1714683026541.png",
     "https://storage.googleapis.com/product-lamb-images/screely-1714692729134.png",
-    "https://storage.googleapis.com/product-lamb-images/screely-1714683222909.png",
     "https://storage.googleapis.com/product-lamb-images/screely-1714683109927.png"
   ]
 
   const featureHeaders = [
-    "Sprints Automatically Planned & Generated",
+    "Sprints Automatically Generated",
+    "Manage Multiple Projects",
     "Track Bugs From All Sources",
     "Integrations For Days",
-    "Manage Multiple Projects",
-    "Export Your Data At Any Time",
+    "Event Logs For Tracking"
+    // "Export Your Data At Any Time",
   ]
 
   const featureDescriptions = [
     "ProductLamb auto generates sprints in your preferred management tool by analyzing your goals, code repository issues, user feedback, self reported bugs, and more.",
-    "See all reported bugs in one place. ProductLamb will automatically track and categorize bugs reported by users, your team, and from your code repository.",
-    "Connect to your favorite tools to increase productivity. We support over 10+ integrations including Google Calendar, Slack, Notion, and more.",
     "Working on multiple things? ProductLamb can help plan sprints and tasks across all of your projects. Easily switch between projects and see your progress.",
-    "Never feel locked in. Export all of your task data at any time. ProductLamb is here to help you, not lock you in."
+    "See all reported bugs in one place. ProductLamb will automatically track bugs reported in PM tool, in your code repository, and manually added ones.",
+    "Connect to your favorite tools to increase productivity. We support over 10+ integrations including Google Calendar, Slack, and Notion.",
+    "ProductLamb logs events that occur in your project. See when sprints are generated, when new issues are added in Github, and more."
+    // "Never feel locked in. Export all of your task data at any time. ProductLamb is here to help you, not lock you in."
   ]
 
   function changeFeatureDisplay(i: number) {
@@ -128,13 +179,13 @@ function FeaturesSection() {
   const [index, setIndex] = useState(0)
   return (
     <div className="w-full flex flex-col items-center border-neutral-200 border-2 rounded-3xl p-10" id="features">
-      <h1 className="font-bold text-2xl mb-3">{featureHeaders[index]}</h1>
-      <p className="font-regular w-4/5 text-xl text-center mb-12">{featureDescriptions[index]}</p>
-      <img className="w-4/5" src={imgs[index]}/>
+      <h1 className="font-bold text-xl md:text-2xl mb-3">{featureHeaders[index]}</h1>
+      <p className="font-regular w-full md:w-4/5  text-lg md:text-xl text-center mb-12">{featureDescriptions[index]}</p>
+      <img className="w-full md:w-4/5" src={imgs[index]}/>
       <div className="flex gap-2 mt-10">
         {imgs.map((_, i) => {
           return (
-            <button className={"border-2 p-1 bg-white rounded-full border-neutral-300"} onClick={() => changeFeatureDisplay(i)}>
+            <button key={i} className={"border-2 p-1 bg-white rounded-full border-neutral-300"} onClick={() => changeFeatureDisplay(i)}>
               <div className={"w-3 h-3 rounded-full " + (index === i ? 'bg-orange-400' : 'bg-gray-400')}></div>
             </button>
           )
@@ -187,10 +238,10 @@ function PricingSection() {
       <div className="bg-white sm:pt-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl sm:text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Simple pricing. One plan for all.</h2>
-            <p className="mt-6 text-lg leading-8 text-gray-600">Why discriminate on feature access. We make things simple. Choose between monthly or annual subscription and get access to everything.</p>
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">Simple pricing. One plan for all.</h2>
+            <p className="mt-4 md:mt-6 text-lg leading-8 text-gray-600">Why discriminate on feature access. We make things simple. Choose between monthly or annual subscription and get access to everything.</p>
           </div>
-          <div className="mx-auto mt-16 max-w-2xl rounded-3xl ring-1 ring-gray-200 sm:mt-20 lg:mx-0 lg:flex lg:max-w-none">
+          <div className="mx-auto mt-8 md:mt-16 max-w-2xl rounded-3xl ring-1 ring-gray-200 sm:mt-20 lg:mx-0 lg:flex lg:max-w-none">
             <div className="p-8 sm:p-10 lg:flex-auto">
               <h3 className="text-2xl font-bold tracking-tight text-gray-900">Standard Subscription</h3>
               <p className="mt-6 text-base leading-7 text-gray-600">Power to the developer! Access all features so that you can build and manage better programs.</p>
@@ -213,11 +264,12 @@ function PricingSection() {
               <div className="rounded-2xl bg-gray-50 py-10 text-center ring-1 ring-inset ring-gray-900/5 lg:flex lg:flex-col lg:justify-center lg:py-16 h-full">
                 <div className="mx-auto max-w-xs px-8">
                   <p className="text-base font-semibold text-gray-600">Affordable pricing for all</p>
-                  <p className="mt-6 flex items-baseline justify-center gap-x-2">
+                  <p className="mt-6 flex items-baseline justify-center gap-x-2 mb-10">
                     <span className="text-5xl font-bold tracking-tight text-gray-900">$20</span>
                     <span className="text-sm font-semibold leading-6 tracking-wide text-gray-600">USD</span>
                   </p>
-                  <a href="#" className="mt-10 block w-full rounded-md bg-[#F28C28] px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400">Get access</a>
+                  <PLBasicButton text="Coming June 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600"/>
+
                   <p className="mt-6 text-xs leading-5 text-gray-600">Invoices and receipts available for easy company reimbursement through stripe</p>
                 </div>
               </div>
@@ -234,7 +286,7 @@ function PricingSection() {
 function ContactUsSection() {
   return (
     <div className="w-full flex flex-col items-center gap-10 mt-20" id="contact-us">
-      <h1 className="font-bold text-5xl">Get in touch with us</h1>
+      <h1 className="font-bold text-4xl md:text-5xl">Get in touch with us</h1>
       <div className="container flex flex-col mx-auto bg-white">
         <div className="w-full">
           <div className="container flex flex-col items-center gap-16 mx-auto">
@@ -243,20 +295,20 @@ function ContactUsSection() {
                 <i className="ri-mail-fill text-3xl text-[#F28C28]"/>  
                 <p className="text-2xl font-extrabold text-dark-grey-900">Email</p>
                 <p className="text-base leading-7 text-dark-grey-600">Contact us for support</p>
-                <a className="text-lg font-bold text-purple-blue-500" href = "mailto: hello@loopple.com">info@productlamb.com</a>
+                <a className="text-lg font-bold text-purple-blue-500" href="mailto:support@productlamb.com">support@productlamb.com</a>
                 </div>
                 <div className="flex flex-col items-center gap-3 px-8 py-10 bg-white rounded-3xl shadow-lg">
                 <i className="ri-twitter-fill text-3xl text-[#F28C28]"/> 
-                <p className="text-2xl font-extrabold text-dark-grey-900">Twitter/X</p>
-                <p className="text-base leading-7 text-dark-grey-600">Stay up to date with releases and news</p>
-                <a className="text-lg font-bold text-purple-blue-500" href="tel:+516-486-5135">@productlamb</a>
+                <p className="text-2xl font-extrabold text-dark-grey-900">Social Media</p>
+                <p className="text-base leading-7 text-dark-grey-600">Stay up to date with releases on Twitter/X</p>
+                <p className="text-lg font-bold text-purple-blue-500">@productlamb</p>
                 </div>
-                <div className="flex flex-col items-center gap-3 px-8 py-10 bg-white rounded-3xl shadow-lg">
+                {/* <div className="flex flex-col items-center gap-3 px-8 py-10 bg-white rounded-3xl shadow-lg">
                 <i className="ri-phone-fill text-3xl text-[#F28C28]"/> 
                 <p className="text-2xl font-extrabold text-dark-grey-900">Sales</p>
                 <p className="text-base leading-7 text-dark-grey-600">Schedule a 1-on-1 demo</p>
                 <PLBasicButton text="Book a demo" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
