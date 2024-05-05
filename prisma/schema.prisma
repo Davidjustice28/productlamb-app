@@ -18,7 +18,7 @@ model Account {
   dateCreated DateTime
   subscriptionType String
   status String
-  users String[]
+  user_prisma_id String
   applications AccountApplication[]
 }
 
@@ -28,13 +28,11 @@ model AccountApplication {
   name String
   summary String
   archived Boolean
-  siteUrl String
+  siteUrl String?
   type String
-  industry String
-  isPrivate Boolean
   account Account @relation(fields: [accountId], references: [id]) 
   accountId Int
-  userId Int
+  user_prisma_id String
   goals ApplicationGoal[]
   initiatives GeneratedInitiative[]
   integrations ApplicationIntegration[]
@@ -61,6 +59,7 @@ model ApplicationFeedback {
   feedback String
   feedbackType String
   feedbackDateMs Int
+  source String?
 }
 model GeneratedInitiative {
   id Int @id @default(autoincrement())
@@ -97,18 +96,12 @@ model GeneratedTask {
   applicationId Int
   sprint ApplicationSprint @relation(fields: [sprintId], references: [id])
   sprintId Int
-  technicalDesign TaskTechnicalDesign @relation(fields: [technicalDesignId], references: [id])
-  technicalDesignId Int @unique
   title String
   summary String
   status String
   points Int
 }
 
-model TaskTechnicalDesign {
-  id Int @id @default(autoincrement())
-  task GeneratedTask?
-}
 
 model ApplicationSprint {
   id Int @id @default(autoincrement())

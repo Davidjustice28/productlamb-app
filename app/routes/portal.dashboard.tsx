@@ -1,7 +1,9 @@
-import { LoaderFunction } from "@remix-run/node";
+import { Account, PrismaClient } from "@prisma/client";
+import { LoaderFunction, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { theme } from "~/backend/cookies/dark-mode";
+import { AccountsClient } from "~/backend/database/accounts/client";
 import { mockBarChartdata, mockSprintTaskCompletionPercentageData, mockSprintTaskTotalData } from "~/backend/mocks/charts";
 import { PlatformEvent, mockEvents } from "~/backend/mocks/events";
 import { PLAreaChart } from "~/components/charts/area-chart";
@@ -14,7 +16,7 @@ export const loader: LoaderFunction = async ({request}) => {
   const cookieHeader = request.headers.get("Cookie");
   const cookie = (await theme.parse(cookieHeader) || {});    
   const darkMode = cookie.darkMode ? true : false;
-  return { darkMode }
+  return json({ darkMode, })
 };
 
 export default function DashboardPage() {
@@ -72,7 +74,7 @@ export default function DashboardPage() {
           <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} darkMode={darkMode}/>
         </div>
       </div>
-      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "320px"}}>
+      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "370px"}}>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Current Sprint - <span className="italic text-black dark:text-neutral-500">#0</span></h2>
           <div className="rounded-xl w-full md:h-full flex flex-row items-center justify-evenly gap-4">

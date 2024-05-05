@@ -1,12 +1,13 @@
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
-
-export const loader: LoaderFunction = async ({ request }) => {
-  return json({ message: "get request" });
-}
+import { ActionFunction, json } from "@remix-run/node";
+import { PrismaClient } from "@prisma/client";
+import { AccountsClient } from "~/backend/database/accounts/client";
 
 export const action: ActionFunction = async ({ request }) => {
+  const client = AccountsClient(new PrismaClient().account)
   const body: ClerkUserCreateResponse = await request.json();
-  return json({ response: body });
+  const result = await client.createAccount(body.data.id, "free")
+  if (result.errors.length > 0) return json({ success: false, error: result.errors });
+  return json({ success: true, errors: []});
 }
 
 export interface ClerkUserCreateResponse {

@@ -29,3 +29,18 @@ export function wrapGetAccountById(accountsClient: PrismaClient['account']) {
     }
   }
 }
+
+export function wrapGetAccountByUserId(accountsClient: PrismaClient['account']) {
+  return getAccountById
+  async function getAccountById(id: string): Promise<BaseResponse<Account>> {
+    try {
+      const account = await accountsClient.findFirst({where: {user_prisma_id: id}})
+      if (!account) {
+        return {data: undefined, errors: [4]}
+      }
+      return {data: account, errors: []}
+    } catch (e) {
+      return {data: undefined, errors: [3]}
+    }
+  }
+}
