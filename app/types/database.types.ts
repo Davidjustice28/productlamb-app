@@ -11,3 +11,12 @@ export enum SettingsTabGroup {
   NOTIFICATIONS = "notifications",
   BILLING = "billing",
 }
+
+
+export interface NewApplicationData {
+  name: string
+  summary: string
+  siteUrl: string
+  type: "web" | "mobile" | "desktop"
+  goals: string
+}

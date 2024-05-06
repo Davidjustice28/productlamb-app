@@ -3,7 +3,7 @@ import { useState } from "react";
 
 const defaultMessage = "Are you sure you want to delete this item?"
 
-export const PLConfirmModal = ({ onConfirm, open, setOpen, message=defaultMessage }: { onConfirm?: () => any, open: boolean, setOpen: (open: boolean) => void, message?: string }) => {
+export const PLConfirmModal = ({ onConfirm, open, setOpen, message=defaultMessage }: { onConfirm?: (...args:any[]) => any, open: boolean, setOpen: (open: boolean) => void, message?: string }) => {
   const handleConfirm = () => {
     if (onConfirm) {
       onConfirm()

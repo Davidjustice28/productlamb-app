@@ -32,7 +32,6 @@ model AccountApplication {
   type String
   account Account @relation(fields: [accountId], references: [id]) 
   accountId Int
-  user_prisma_id String
   goals ApplicationGoal[]
   initiatives GeneratedInitiative[]
   integrations ApplicationIntegration[]

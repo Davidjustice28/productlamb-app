@@ -19,7 +19,7 @@ export interface PLLabelButtonProps {
 
 export interface PLIconButtonProps {
   icon: PLButtonIcons
-  onClick?: () => void
+  onClick?: (...args:any[]) => void
   colorClasses?: string
 }
 
