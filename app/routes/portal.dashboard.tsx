@@ -1,26 +1,72 @@
+import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import { Account, PrismaClient } from "@prisma/client";
 import { LoaderFunction, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import { theme } from "~/backend/cookies/dark-mode";
+import { account } from "~/backend/cookies/account";
+import { preferences } from "~/backend/cookies/preferences";
 import { AccountsClient } from "~/backend/database/accounts/client";
+import { ApplicationsClient } from "~/backend/database/applications/client";
 import { mockBarChartdata, mockSprintTaskCompletionPercentageData, mockSprintTaskTotalData } from "~/backend/mocks/charts";
-import { PlatformEvent, mockEvents } from "~/backend/mocks/events";
+import { mockEvents } from "~/backend/mocks/events";
 import { PLAreaChart } from "~/components/charts/area-chart";
 import { PLBarChart } from "~/components/charts/bar-chart";
 import { TableColumn } from "~/types/base.types";
 
+export const loader: LoaderFunction = args => {
+  return rootAuthLoader(args, async ({ request }) => {
+    const { sessionId, userId, getToken } = request.auth;
+    // fetch data
+    const cookieHeader = request.headers.get("Cookie");
+    const preferencesCookie = (await preferences.parse(cookieHeader) || {}); 
+    const accountCookie = (await account.parse(cookieHeader) || {});
+    const darkMode = preferencesCookie.darkMode ? true : false;
+    let hasApplication: boolean|undefined = accountCookie.hasApplication
+    let accountId: number| undefined = accountCookie.accountId
+    let selectedApplicationId: number| undefined = accountCookie.selectedApplicationId
+    let selectedApplicationName: string| undefined = accountCookie.selectedApplicationName
+    
+    const dbClient = new PrismaClient()
+    if (accountId === undefined || hasApplication === undefined) {
+      const accountClient = AccountsClient(dbClient.account)
+      const {data: accountData} = await accountClient.getAccountByUserId(userId || "")
+      accountCookie.accountId = accountData?.id || undefined
+      accountId = accountCookie.accountId
+    
+      const applicationClient = ApplicationsClient(dbClient.accountApplication)
+      const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
+      accountCookie.hasApplication = applications ? !!applications.length : false
+      hasApplication = accountCookie.hasApplication
+      
+      if (selectedApplicationId === undefined && applications && applications.length > 0) {
+        accountCookie.selectedApplicationId = applications[0].id
+        accountCookie.selectedApplicationName = applications[0].name
+        selectedApplicationId = accountCookie.selectedApplicationId
+        selectedApplicationName = accountCookie.selectedApplicationName
+      }
 
+      return json({ darkMode, hasApplication, accountId, selectedApplicationId, selectedApplicationName }, { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+    } else {
+      hasApplication = accountCookie.hasApplication
+      accountId = accountCookie.accountId
 
-export const loader: LoaderFunction = async ({request}) => {
-  const cookieHeader = request.headers.get("Cookie");
-  const cookie = (await theme.parse(cookieHeader) || {});    
-  const darkMode = cookie.darkMode ? true : false;
-  return json({ darkMode, })
+      if (selectedApplicationId === undefined) {
+        const applicationClient = ApplicationsClient(dbClient.accountApplication)
+        const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
+        if (applications && applications.length > 0) {
+          accountCookie.selectedApplicationId = applications[0].id
+          selectedApplicationId = accountCookie.selectedApplicationId
+          accountCookie.selectedApplicationName = applications[0].name
+          selectedApplicationName = accountCookie.selectedApplicationName
+        }
+      }
+      return json({ darkMode, hasApplication, accountId, selectedApplicationName})
+    }
+  });
 };
 
 export default function DashboardPage() {
-  const { darkMode } = useLoaderData<{darkMode: boolean|undefined}>()
+  const { darkMode, accountId, hasApplication } = useLoaderData<{darkMode: boolean|undefined, hasApplication: boolean, accountId: number|undefined, selectedApplicationName: string| undefined}>()
   const [chartData, setChartData] = useState<Array<any>>([mockSprintTaskTotalData, mockSprintTaskCompletionPercentageData])
   const [chartIndex, setChartIndex] = useState<number>(0)
   const xKey = "name"
@@ -74,7 +120,7 @@ export default function DashboardPage() {
           <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} darkMode={darkMode}/>
         </div>
       </div>
-      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "370px"}}>
+      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "350px"}}>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Current Sprint - <span className="italic text-black dark:text-neutral-500">#0</span></h2>
           <div className="rounded-xl w-full md:h-full flex flex-row items-center justify-evenly gap-4">

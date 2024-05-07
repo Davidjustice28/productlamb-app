@@ -14,3 +14,19 @@ export function wrapGetAccountApplications(client: PrismaClient['accountApplicat
     }
   }
 }
+
+export function wrapGetApplicationById(client: PrismaClient['accountApplication']) {
+  return getApplicationById
+
+  async function getApplicationById(application_id: number): Promise<BaseResponse<AccountApplication>> {
+    try {
+      const app = await client.findUnique({where: {id: application_id}})
+      if (!app) {
+        return {data: undefined, errors: [2]}
+      }
+      return {data: app, errors: []}
+    } catch (e) {
+      return {data: undefined, errors: [1]}
+    }
+  }
+}

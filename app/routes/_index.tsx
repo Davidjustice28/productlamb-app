@@ -1,4 +1,4 @@
-import { SignInButton, SignUpButton, useUser } from "@clerk/remix";
+import { SignInButton, useUser } from "@clerk/remix";
 import { ActionFunction, json } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import React from "react";

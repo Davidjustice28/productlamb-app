@@ -62,7 +62,7 @@ export const PLAddApplicationModal = ({ open, setOpen }: { open: boolean, setOpe
             <option value="desktop">Desktop</option>
             <option value="other">Other</option>
           </select>
-          <div className="mt-4 flex flex-col gap-5">
+          <div className="mt-4 flex flex-col gap-5 text-black dark:text-neutral-400 " >
             <input type="hidden" name="goals" value={JSON.stringify(goals)} />
             <div className="flex flex-col gap-2">
               <label>Short-Term Goals</label>

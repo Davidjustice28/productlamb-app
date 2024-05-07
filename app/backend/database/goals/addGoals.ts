@@ -1,6 +1,6 @@
-import { NewApplicationData } from '~/types/database.types'
+import { AddApplicationGoals } from '~/types/function.types'
 import { BaseResponse } from '../../../types/base.types'
-import { PrismaClient, Account, AccountApplication, ApplicationGoal } from '@prisma/client'
+import { PrismaClient, ApplicationGoal } from '@prisma/client'
 
 export function wrapAddApplicationGoal(client: PrismaClient['applicationGoal']) {
   return addApplicationGoal
@@ -19,7 +19,7 @@ export function wrapAddApplicationGoal(client: PrismaClient['applicationGoal']) 
   }
 }
 
-export function wrapAddApplicationGoals(client: PrismaClient['applicationGoal']) {
+export function wrapAddApplicationGoals(client: PrismaClient['applicationGoal']): AddApplicationGoals {
   return addApplicationGoals
 
   async function addApplicationGoals(application_id: number, goals: Array<{goal: string, isLongTerm: boolean}>): Promise<BaseResponse<Array<ApplicationGoal>>> {

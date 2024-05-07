@@ -6,6 +6,7 @@ export interface PLBasicButtonProps {
   onClick?: () => void
   colorClasses?: string
   rounded?: boolean
+  disabled?: boolean
 }
 
 export interface PLLabelButtonProps {

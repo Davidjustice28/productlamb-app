@@ -1,7 +1,8 @@
-export function PLBaseModal({titleCenter, title="Title", children, open, setOpen}: {titleCenter?: boolean, children?: React.ReactNode, title?: string, open: boolean, setOpen: (...args: Array<any>) => void}) {
+export function PLBaseModal({onClose, titleCenter, title="Title", children, open, setOpen}: {onClose?: any, titleCenter?: boolean, children?: React.ReactNode, title?: string, open: boolean, setOpen: (...args: Array<any>) => void}) {
 
   function closeModal() {
     setOpen(false)
+    onClose()
   }
   
   return (

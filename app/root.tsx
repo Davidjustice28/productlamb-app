@@ -12,9 +12,9 @@ import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import TailwindCSS from './root.css'
 import { RootLayout } from './components/layouts/root-layout'
 import { ClerkApp } from '@clerk/remix'
-import { theme } from './backend/cookies/dark-mode';
 import { getSharedEnvs } from './utils/envs';
-import { navbarState } from './backend/cookies/nav-bar-state';
+import { preferences } from './backend/cookies/preferences';
+import { account } from './backend/cookies/account';
 
 export const links: LinksFunction = () => {
   return [
@@ -28,20 +28,19 @@ export const action: ActionFunction = async ({ request }) => {
   const { _darkMode: previousPathA, _navbarState: previousPathB  } = Object.fromEntries(formData)
   const headers = new Headers();
   const cookieHeader = request.headers.get("Cookie");
+  const preferencesCookie = (await preferences.parse(cookieHeader) || {});
   let previousPath = '/'
   if(!previousPathA && !previousPathB) {
     previousPath = '/'
   } else {
     if(previousPathA) { 
-      const themeCookie = (await theme.parse(cookieHeader)) || {};
-      themeCookie.darkMode = themeCookie.darkMode ? false : true;
-      headers.append('Set-Cookie', await theme.serialize(themeCookie));
+      preferencesCookie.darkMode = preferencesCookie.darkMode ? false : true;
+      headers.append('Set-Cookie', await preferences.serialize(preferencesCookie));
       previousPath = previousPathA.toString()
     }
     if(previousPathB) { 
-      const navbarStateCookie = (await navbarState.parse(cookieHeader)) || {};
-      navbarStateCookie.navBarMode = navbarStateCookie.navBarMode === undefined ? true : !navbarStateCookie.navBarMode;
-      headers.append('Set-Cookie', await navbarState.serialize(navbarStateCookie));
+      preferencesCookie.navBarMode = preferencesCookie.navBarMode === undefined ? true : !preferencesCookie.navBarMode;
+      headers.append('Set-Cookie', await preferences.serialize(preferencesCookie));
       previousPath = previousPathB.toString()
     }
   }
@@ -55,9 +54,9 @@ export const action: ActionFunction = async ({ request }) => {
 export const loader: LoaderFunction = (args) => {
   return rootAuthLoader(args, async ({ request }) => {
     const cookieHeader = request.headers.get("Cookie");
-    const themeCookie = (await theme.parse(cookieHeader) || {});  
-    const navBarCookie = (await navbarState.parse(cookieHeader) || {});
-    const { sessionId, userId } = request.auth
+    const preferencesCookie = (await preferences.parse(cookieHeader) || {});  
+    const accountCookie = (await account.parse(cookieHeader) || {});
+    const { userId } = request.auth
     const isPortalRoute = request.url.includes('/portal')
     if ((!userId )) {
       if (isPortalRoute) {
@@ -65,15 +64,15 @@ export const loader: LoaderFunction = (args) => {
       }
     } else {
       if( !isPortalRoute ) {
-        return redirect('/portal/dashboard')
+        return redirect(accountCookie.hasApplication ? '/portal/dashboard' : '/portal/setup')
       }
     }
-    return { darkMode: themeCookie.darkMode, ENV: getSharedEnvs(), navBarExpanded: navBarCookie.navBarMode};
+    return { darkMode: preferencesCookie.darkMode, ENV: getSharedEnvs(), navBarExpanded: preferencesCookie.navBarMode, selectedApplicationName: accountCookie.selectedApplicationName, hasApplication: accountCookie.hasApplication};
   });
 };
  
 export function App() {
-  const { ENV, darkMode } = useLoaderData<typeof loader>()
+  const { ENV, darkMode, selectedApplicationName, hasApplication} = useLoaderData<typeof loader>()
   return (
     <html lang="en" className={ (darkMode ? 'dark' : '') }>
       <head>
@@ -83,7 +82,7 @@ export function App() {
         <Links />
       </head>
       <body className={darkMode ? 'bg-neutral-800' : 'bg-white'}>
-        <RootLayout/>
+        <RootLayout appName={selectedApplicationName} hasApplication={hasApplication}/>
         <ScrollRestoration />
         <Scripts />
 

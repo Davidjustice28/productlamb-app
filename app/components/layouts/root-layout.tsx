@@ -3,11 +3,11 @@ import { AuthenticatedLayout } from "./authenticated-layout";
 import { Outlet } from "@remix-run/react";
 
 
-export function RootLayout() {
+export function RootLayout({appName, hasApplication}: {hasApplication: boolean, appName?: string}) {
   return (
     <div>
       <SignedIn>
-        <AuthenticatedLayout />
+        <AuthenticatedLayout appName={appName} hasApplication={hasApplication}/>
       </SignedIn>
       <SignedOut>
         <div>

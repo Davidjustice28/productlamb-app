@@ -3,8 +3,12 @@ import { NavLink } from '~/types/base.types'
 import { MouseEventHandler, useRef, useState } from 'react'
 
 
-export const LoggedInNavbar = ({darkMode, expanded}: {darkMode: boolean, expanded: boolean}) => {
+export const LoggedInNavbar = ({darkMode, expanded, setupComplete}: {setupComplete: boolean, darkMode: boolean, expanded: boolean}) => {
   const location = useLocation()
+
+  const notSetupLinks: Array<NavLink> = [
+    { iconClass: "ri-play-circle-line", absoluteHref: '/portal/setup', text: `Setup Account`, adminOnly: false},
+  ]
   const links: Array<NavLink> = [
     // user routes
     { iconClass: "ri-dashboard-line", absoluteHref: '/portal/dashboard', text: 'Dashboard', adminOnly: false},
@@ -32,7 +36,7 @@ export const LoggedInNavbar = ({darkMode, expanded}: {darkMode: boolean, expande
           className={'h-auto object-contain object-center ml-3' + (!expanded ? ' max-w-5' : ' max-w-40')}
         />
       </div>
-      <NavOptionsComponent links={links} menuExpanded={expanded}/>
+      <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={expanded}/>
 
       <Form method="post" ref={formRef}>
         <input type="hidden" name="_navbarState" value={location.pathname} />
