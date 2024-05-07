@@ -24,7 +24,6 @@ export function TeamSettings() {
     if (!checked.length && editMode) {
       setEditMode(false)
     }
-    console.log('Users checked: ', checked.length ? checked : 'All users deselected')
   }
 
   return (

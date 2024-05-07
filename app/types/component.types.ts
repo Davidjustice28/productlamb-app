@@ -34,3 +34,9 @@ export interface PLTableProps<T> {
   tableModalName?: string
   onCheck?: (ids: Array<number>) => void
 }
+
+export interface PLAddBugModalProps {
+  open: boolean,
+  onClose: () => void,
+  setOpen: (open: boolean) => void
+}

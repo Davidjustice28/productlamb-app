@@ -10,7 +10,6 @@ import ConfettiExplosion from 'react-confetti-explosion';
 export const action: ActionFunction = async ({ request }) => {
   const form = await request.formData()
   const data = Object.fromEntries(form)
-  console.log(data)
   if (!data["waitlist-email"]) return json({ joined: false }, { status: 400 })
   try {
     const emailInput = data["waitlist-email"]
@@ -27,7 +26,6 @@ export const action: ActionFunction = async ({ request }) => {
       }),
     })
   } catch (e) {
-    console.log(e)
     return json({ joined: false }, { status: 500 })
   }
   return json({ joined: true }, { status: 200 })

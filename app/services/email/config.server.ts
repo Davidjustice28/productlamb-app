@@ -23,7 +23,6 @@ export const sendEmail = async (body: SendEmailBody) => {
       body: JSON.stringify({ ...body }),
     })
   } catch (err: unknown) {
-    console.log(err)
     return false
   }
 }

@@ -75,7 +75,7 @@ model ApplicationIntegration {
   applicationId Int
   name String
   secret String
-  secretExpirationDateMs BigInt?
+  secretExpirationDateMs Int?
 }
 
 model ApplicationCodeRepositoryInfo {
@@ -84,7 +84,7 @@ model ApplicationCodeRepositoryInfo {
   applicationId Int
   platform String
   secret String
-  secretExpirationDateMs BigInt?
+  secretExpirationDateMs Int?
   repositoryName String?
   repositoryId Int?
 }
@@ -106,8 +106,8 @@ model ApplicationSprint {
   id Int @id @default(autoincrement())
   application AccountApplication @relation(fields: [applicationId], references: [id])
   applicationId Int
-  startDate BigInt
-  endDate BigInt
+  startDate String
+  endDate String
   completed Boolean
   generatedTasks GeneratedTask[]
   initiative GeneratedInitiative?
@@ -119,6 +119,8 @@ model ApplicationBug {
   applicationId Int
   title String
   description String
-  completed Boolean
+  status String
+  createdDateMs String
   priority String
+  source String
 }

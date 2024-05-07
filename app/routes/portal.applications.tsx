@@ -107,7 +107,6 @@ export default function ApplicationsPage() {
   }
 
   function editApplication(applicationId: number) {
-    console.log(`Going to edit application ${applicationId}`)
     navigate(`/portal/applications/${applicationId}`)
   }
 
