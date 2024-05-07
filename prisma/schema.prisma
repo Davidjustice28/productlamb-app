@@ -56,9 +56,8 @@ model ApplicationFeedback {
   application AccountApplication @relation(fields: [applicationId], references: [id])
   applicationId Int
   feedback String
-  feedbackType String
-  feedbackDateMs Int
-  source String?
+  feedbackDate String
+  source String
 }
 model GeneratedInitiative {
   id Int @id @default(autoincrement())

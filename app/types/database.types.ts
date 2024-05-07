@@ -30,3 +30,5 @@ export interface BugCreateData {
   status: BugStatus
   priority: BugPriority
 }
+
+export type FeedbackSource = 'Notion' | 'Google Review' | 'SurveyMonkey' | 'YouTube' | 'Other' | 'Jira' | 'Email'
