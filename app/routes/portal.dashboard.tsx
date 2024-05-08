@@ -1,7 +1,7 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import { Account, PrismaClient } from "@prisma/client";
-import { LoaderFunction, json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { LoaderFunction, json, redirect } from "@remix-run/node";
+import { useLoaderData, useRevalidator } from "@remix-run/react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { preferences } from "~/backend/cookies/preferences";
@@ -37,19 +37,19 @@ export const loader: LoaderFunction = args => {
       const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
       accountCookie.hasApplication = applications ? !!applications.length : false
       hasApplication = accountCookie.hasApplication
-      
       if (selectedApplicationId === undefined && applications && applications.length > 0) {
         accountCookie.selectedApplicationId = applications[0].id
         accountCookie.selectedApplicationName = applications[0].name
         selectedApplicationId = accountCookie.selectedApplicationId
         selectedApplicationName = accountCookie.selectedApplicationName
       }
-
-      return json({ darkMode, hasApplication, accountId, selectedApplicationId, selectedApplicationName }, { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+     
+      return redirect("/portal/dashboard", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+      // return json({ darkMode, hasApplication, accountId, selectedApplicationId, selectedApplicationName }, { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
     } else {
       hasApplication = accountCookie.hasApplication
       accountId = accountCookie.accountId
-
+      
       if (selectedApplicationId === undefined) {
         const applicationClient = ApplicationsClient(dbClient.accountApplication)
         const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
@@ -60,7 +60,7 @@ export const loader: LoaderFunction = args => {
           selectedApplicationName = accountCookie.selectedApplicationName
         }
       }
-      return json({ darkMode, hasApplication, accountId, selectedApplicationName})
+      return json({ darkMode, hasApplication, accountId, selectedApplicationName, selectedApplicationId})
     }
   });
 };
