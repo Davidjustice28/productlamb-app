@@ -50,7 +50,7 @@ export default function LandingPage() {
         <div className="items-center justify-between hidden gap-12 text-black md:flex">
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#features">Features</a>
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#pricing">Pricing</a>
-          <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#">Validation</a>
+          <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#values">Values</a>
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#contact-us">Contact Us</a>
         </div>
         <div className="items-center hidden gap-8 md:flex">  
@@ -60,7 +60,7 @@ export default function LandingPage() {
           {/* <SignUpButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
             <PLBasicButton text="Sign Up" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
           </SignUpButton> */}
-          <PLBasicButton text="Coming June 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600"/>
+          <PLBasicButton text="Coming June 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600 cursor-default"/>
         </div>
       </div>
       <div className="flex w-full flex-col my-auto mb-8 md:flex-row xl:gap-14 md:gap-5">
@@ -93,6 +93,7 @@ export default function LandingPage() {
       <div className="w-full flex flex-col gap-10 mt-10 text-black items-center">
         <ProductSection />
         <FeaturesSection />
+        <ValueSection />
         {/* <ValidationSection /> */}
         <PricingSection />
         <ContactUsSection />
@@ -146,16 +147,16 @@ function FeaturesSection() {
   const imgs = [
     "https://storage.googleapis.com/product-lamb-images/screely-1714683109927.png",
     "https://storage.googleapis.com/product-lamb-images/screely-1714683222909.png",
-    "https://storage.googleapis.com/product-lamb-images/screely-1714683026541.png",
     "https://storage.googleapis.com/product-lamb-images/screely-1714692729134.png",
+    "https://storage.googleapis.com/product-lamb-images/screely-1714683026541.png",
     "https://storage.googleapis.com/product-lamb-images/screely-1714683109927.png"
   ]
 
   const featureHeaders = [
     "Sprints Automatically Generated",
     "Manage Multiple Projects",
-    "Track Bugs From All Sources",
     "Integrations For Days",
+    "Track Bugs From All Sources",
     "Event Logs For Tracking"
     // "Export Your Data At Any Time",
   ]
@@ -163,8 +164,8 @@ function FeaturesSection() {
   const featureDescriptions = [
     "ProductLamb auto generates sprints in your preferred management tool by analyzing your goals, code repository issues, user feedback, self reported bugs, and more.",
     "Working on multiple things? ProductLamb can help plan sprints and tasks across all of your projects. Easily switch between projects and see your progress.",
-    "See all reported bugs in one place. ProductLamb will automatically track bugs reported in PM tool, in your code repository, and manually added ones.",
     "Connect to your favorite tools to increase productivity. We support over 10+ integrations including Google Calendar, Slack, and Notion.",
+    "See all reported bugs in one place. ProductLamb will automatically track bugs reported in PM tool, in your code repository, and manually added ones.",
     "ProductLamb logs events that occur in your project. See when sprints are generated, when new issues are added in Github, and more."
     // "Never feel locked in. Export all of your task data at any time. ProductLamb is here to help you, not lock you in."
   ]
@@ -176,7 +177,7 @@ function FeaturesSection() {
 
   const [index, setIndex] = useState(0)
   return (
-    <div className="w-full flex flex-col items-center border-neutral-200 border-2 rounded-3xl p-10" id="features">
+    <div className="w-full flex flex-col items-center border-neutral-200 border-2 rounded-3xl p-10 -mb-10" id="features">
       <h1 className="font-bold text-xl text-center md:text-2xl mb-3">{featureHeaders[index]}</h1>
       <p className="font-regular w-full md:w-4/5  text-lg md:text-xl text-left md:text-center mb-12">{featureDescriptions[index]}</p>
       <img className="w-full md:w-4/5" src={imgs[index]}/>
@@ -233,7 +234,7 @@ function PricingSection() {
   ]
   return (
     <div className="w-full" id="pricing">
-      <div className="bg-white sm:pt-32">
+      <div className="bg-white sm:pt-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl sm:text-center">
             <h2 className="text-2xl text-center font-bold tracking-tight text-gray-900 sm:text-4xl">Simple pricing. One plan for all.</h2>
@@ -308,6 +309,28 @@ function ContactUsSection() {
                 <PLBasicButton text="Coming Soon" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ValueSection() {
+  return (
+    <div className="w-full -mb-16 sm:-mb-32" id="values">
+      <div className="bg-white py-24 sm:py-36">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 bo">
+          <div className="sm:px-32">
+            <h2 className="text-base font-semibold leading-7 text-indigo-600 text-center">Simple. Powerful. Automated</h2>
+            <p className="mt-2 text-left text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">What makes us different than tools like Jira and Trello?</p>
+            <p className="mt-6 text-left text-md sm:text-lg leading-8 text-gray-600">We aren't looking to replace your favorite PM tools like Notion & ClickUp. We're here to relieve you of stress by managing them for you.</p>
+            <p className="mt-6 text-left text-md sm:text-lg leading-8 text-gray-600">Project Managers are crucial personnel, especially in startups. But with an average salary cost of $70k - $120k, hiring one is just not an option. However, we do believe that all developers, who build projects, could benefit from someone or something
+              that can keep them accountable, really managed the lifecycle of new features, and manage a project's workload. So how do most people manage their projects? Either not at all or with a project management software with a kanban board. We decided to start here.</p>
+            <p className="mt-6 text-md text-left sm:text-lg leading-8 text-gray-600">There are many great tools on the 
+              market, but they are too complex and bloated. They are designed for big teams and big projects. ProductLamb is designed for you, the solo developer, the indiehacker, the small team. ProductLamb automates most of the things needed to keep your project on track to hit your goals,
+              while providing the core features you care about, in the case that you want to get your hands dirty.</p>
+            <p className="mt-6 text-md sm:text-lg leading-8 text-gray-600">We're here to help you get back to building your product, not managing it.</p>
           </div>
         </div>
       </div>

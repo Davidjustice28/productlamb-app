@@ -40,3 +40,5 @@ export interface PLAddBugModalProps {
   onClose: () => void,
   setOpen: (open: boolean) => void
 }
+
+export interface IntegrationOptions<T=any>{id: number, name: string, img_url: string, description: string, requiredFields: T}

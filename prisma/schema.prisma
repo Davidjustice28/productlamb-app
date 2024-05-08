@@ -22,7 +22,6 @@ model Account {
   applications AccountApplication[]
 }
 
-
 model AccountApplication {
   id    Int     @id @default(autoincrement())
   name String
@@ -41,7 +40,6 @@ model AccountApplication {
   bugs ApplicationBug[]
   feedback ApplicationFeedback[]
 }
-
 
 model ApplicationGoal {
   id Int @id @default(autoincrement())
@@ -74,7 +72,7 @@ model ApplicationIntegration {
   applicationId Int
   name String
   secret String
-  secretExpirationDateMs Int?
+  secretExpirationDate String?
 }
 
 model ApplicationCodeRepositoryInfo {
@@ -83,7 +81,7 @@ model ApplicationCodeRepositoryInfo {
   applicationId Int
   platform String
   secret String
-  secretExpirationDateMs Int?
+  secretExpirationDate String?
   repositoryName String?
   repositoryId Int?
 }

@@ -1,5 +1,5 @@
-export function PLBaseModal({onClose, titleCenter, title="Title", children, open, setOpen}: {onClose?: any, titleCenter?: boolean, children?: React.ReactNode, title?: string, open: boolean, setOpen: (...args: Array<any>) => void}) {
-
+export function PLBaseModal({onClose, titleCenter, title="Title", children, open, setOpen, size= 'sm'}: {onClose?: any, titleCenter?: boolean, children?: React.ReactNode, title?: string, open: boolean, setOpen: (...args: Array<any>) => void, size?: 'sm' | 'md' | 'lg'}) {
+  const sizeClass = size === 'sm' ? 'md:w-1/2' : size === 'md' ? 'md:w-4/5' : 'w-5/6'
   function closeModal() {
     setOpen(false)
     onClose()
@@ -7,7 +7,7 @@ export function PLBaseModal({onClose, titleCenter, title="Title", children, open
   
   return (
     <div className={"fixed flex justify-center items-center overflow-x-hidden overflow-y-auto inset-0 z-50 outline-none focus:outline-none bg-black bg-opacity-70 " + (!open ? 'hidden' : 'visible') }>
-      <div className="relative w-3/5 md:w-1/2 my-6 mx-auto">
+      <div className={"relative w-3/5 my-6 mx-auto " + sizeClass}>
         <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white dark:bg-neutral-900 outline-none focus:outline-none">
           <div className="flex items-start justify-between p-5 border-b border-solid border-gray-300 dark:border-neutral-700 rounded-t ">
             <h3 className="text-2xl font=semibold text-neutral-700 dark:text-neutral-300">{ title }</h3>

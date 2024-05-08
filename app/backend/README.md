@@ -5,7 +5,6 @@ If auto reporting is off, the user will manually have to request to start next s
 1. System gathers the following data to give initiative suggestions:
   - Application goals: short and long term
   - Application details
-  - List of competitors
   - Previously completed initiatives
   - User Feedback
     - csv/excel doc
