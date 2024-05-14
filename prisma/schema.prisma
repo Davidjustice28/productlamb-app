@@ -30,6 +30,7 @@ model AccountApplication {
   siteUrl String?
   type String
   account Account @relation(fields: [accountId], references: [id]) 
+  logo_url String?
   accountId Int
   goals ApplicationGoal[]
   initiatives GeneratedInitiative[]

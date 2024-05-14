@@ -1,5 +1,5 @@
-export function PLBaseModal({onClose, titleCenter, title="Title", children, open, setOpen, size= 'sm'}: {onClose?: any, titleCenter?: boolean, children?: React.ReactNode, title?: string, open: boolean, setOpen: (...args: Array<any>) => void, size?: 'sm' | 'md' | 'lg'}) {
-  const sizeClass = size === 'sm' ? 'md:w-1/2' : size === 'md' ? 'md:w-4/5' : 'w-5/6'
+export function PLBaseModal({onClose, titleCenter, title="Title", children, open, setOpen, size= 'sm'}: {onClose?: any, titleCenter?: boolean, children?: React.ReactNode, title?: string, open: boolean, setOpen: (...args: Array<any>) => void, size?: 'xsm'| 'sm' | 'md' | 'lg'}) {
+  const sizeClass = size === 'xsm' ? 'md:w-1/3' : size === 'sm' ? 'md:w-1/2' : size === 'md' ? 'md:w-4/5' : 'w-5/6'
   function closeModal() {
     setOpen(false)
     onClose()

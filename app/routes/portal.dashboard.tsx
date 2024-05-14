@@ -1,14 +1,13 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import { Account, PrismaClient } from "@prisma/client";
+import { ApplicationSprint, GeneratedTask, PrismaClient } from "@prisma/client";
 import { LoaderFunction, json, redirect } from "@remix-run/node";
-import { useLoaderData, useRevalidator } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { preferences } from "~/backend/cookies/preferences";
 import { AccountsClient } from "~/backend/database/accounts/client";
 import { ApplicationsClient } from "~/backend/database/applications/client";
 import { mockBarChartdata, mockSprintTaskCompletionPercentageData, mockSprintTaskTotalData } from "~/backend/mocks/charts";
-import { mockEvents } from "~/backend/mocks/events";
 import { PLAreaChart } from "~/components/charts/area-chart";
 import { PLBarChart } from "~/components/charts/bar-chart";
 import { TableColumn } from "~/types/base.types";
@@ -67,11 +66,18 @@ export const loader: LoaderFunction = args => {
 
 export default function DashboardPage() {
   const { darkMode, accountId, hasApplication } = useLoaderData<{darkMode: boolean|undefined, hasApplication: boolean, accountId: number|undefined, selectedApplicationName: string| undefined}>()
-  const [chartData, setChartData] = useState<Array<any>>([mockSprintTaskTotalData, mockSprintTaskCompletionPercentageData])
+  const [chartData, setChartData] = useState<Array<any>>([])
+  // const [barChartData, setBarChartData] = useState<Array<any>>(mockBarChartdata)
+  const [barChartData, setBarChartData] = useState<Array<any>>([])
+  // const [chartData, setChartData] = useState<Array<any>>([mockSprintTaskTotalData, mockSprintTaskCompletionPercentageData])
   const [chartIndex, setChartIndex] = useState<number>(0)
+  const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(null)
+  const [tasks, setTasks] = useState<GeneratedTask[]>([])
   const xKey = "name"
   const yKey = chartIndex == 0 ? "taskCount" : "percentage"
+
   const handleChartChange = (goingForward: boolean) => {
+    if(chartData === null) return 
     if (goingForward) {
       if (chartIndex == chartData.length - 1) {
         setChartIndex(0)
@@ -85,6 +91,14 @@ export default function DashboardPage() {
         setChartIndex(chartIndex - 1)
       }
     }
+  }
+
+  const calculateDaysLeft = (sprint: ApplicationSprint) => {
+    const startDate = new Date(sprint.startDate)
+    const endDate = new Date(sprint.endDate)
+    const currentDate = new Date()
+    const daysLeft = Math.floor((endDate.getTime() - currentDate.getTime()) / (1000 * 3600 * 24))
+    return daysLeft
   }
 
   const columns: Array<TableColumn> = [
@@ -122,41 +136,37 @@ export default function DashboardPage() {
       </div>
       <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "350px"}}>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
-          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Current Sprint - <span className="italic text-black dark:text-neutral-500">#0</span></h2>
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Current Sprint - <span className="italic text-black dark:text-neutral-500">{currentSprint ? '#' + currentSprint.id : 'No active sprint'}</span></h2>
           <div className="rounded-xl w-full md:h-full flex flex-row items-center justify-evenly gap-4">
             <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
               <p className="text-black text-xs dark:text-gray-500">Tasks</p>
-              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">13</h3>
+              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">{tasks.length ? tasks.length : 'N/A'}</h3>
               <p className="text-black text-xs dark:text-gray-500">Total</p>
             </div>
             <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
               <p className="text-black text-xs dark:text-gray-500">Tasks</p>
-              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">8</h3>
+              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">{tasks.length ? tasks.map(t=> t.status === 'completed').length : 'N/A'}</h3>
               <p className="text-black text-xs dark:text-gray-500">Incomplete</p>
             </div>
             <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
               <p className="text-black text-xs dark:text-gray-500">Days</p>
-              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">2</h3>
+              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">{currentSprint ? calculateDaysLeft(currentSprint) : 'N/A'}</h3>
               <p className="text-black text-xs dark:text-gray-500">Left</p>
             </div>
           </div>
           <div className="rounded-xl mt-2 bg-white dark:bg-neutral-800 h-15 md:h-full pt-2">
-            <PLBarChart darkMode={darkMode} data={mockBarChartdata}/>
+            <PLBarChart darkMode={darkMode} data={barChartData}/>
           </div>
         </div>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
-          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Alerts & Events - <span className="italic text-black dark:text-neutral-500">{mockEvents.length}</span></h2>
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Digital CorkBoard - <span className="italic text-black dark:text-neutral-500">0 Notes</span></h2>
           <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full overflow-hidden hover:overflow-y-scroll flex flex-col p-2  gap-2 items-start">
-            {mockEvents.map((event, index) => {
-              return (
-              <p
-                key={index}
-                className="text-gray-900 dark:text-gray-300 text-xs"
-              >
-                {`{"timestamp": ${event.date}, "type": "${event.type}", "origin": "${event.originator}" explanation: "${event.description}"}`}
-              </p>
-              )
-            })}
+            {true ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <p className="text-gray-500 dark:text-gray-400">No sticky notes added</p>
+              </div>
+            ) : <></>}
+            
           </div>
         </div>
       </div>

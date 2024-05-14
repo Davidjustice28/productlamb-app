@@ -145,11 +145,13 @@ function ProductSection() {
 
 function FeaturesSection() {
   const imgs = [
-    "https://storage.googleapis.com/product-lamb-images/screely-1714683109927.png",
-    "https://storage.googleapis.com/product-lamb-images/screely-1714683222909.png",
-    "https://storage.googleapis.com/product-lamb-images/screely-1714692729134.png",
+    "https://storage.googleapis.com/productlamb-platform-images/notion_screenshot.png",
+    "https://storage.googleapis.com/productlamb-platform-images/projects-screenshot.png",
+    "https://storage.googleapis.com/productlamb-platform-images/integrations_screenshot.png",
     "https://storage.googleapis.com/product-lamb-images/screely-1714683026541.png",
-    "https://storage.googleapis.com/product-lamb-images/screely-1714683109927.png"
+    // add screenshots once they are available
+    "https://storage.googleapis.com/product-lamb-images/screely-1714683026541.png",
+    "https://storage.googleapis.com/product-lamb-images/screely-1714683026541.png",
   ]
 
   const featureHeaders = [
@@ -157,8 +159,8 @@ function FeaturesSection() {
     "Manage Multiple Projects",
     "Integrations For Days",
     "Track Bugs From All Sources",
-    "Event Logs For Tracking"
-    // "Export Your Data At Any Time",
+    "Jot Down Notes Anywhere",
+    "Export Your Data At Any Time",
   ]
 
   const featureDescriptions = [
@@ -166,8 +168,8 @@ function FeaturesSection() {
     "Working on multiple things? ProductLamb can help plan sprints and tasks across all of your projects. Easily switch between projects and see your progress.",
     "Connect to your favorite tools to increase productivity. We support over 10+ integrations including Google Calendar, Slack, and Notion.",
     "See all reported bugs in one place. ProductLamb will automatically track bugs reported in PM tool, in your code repository, and manually added ones.",
-    "ProductLamb logs events that occur in your project. See when sprints are generated, when new issues are added in Github, and more."
-    // "Never feel locked in. Export all of your task data at any time. ProductLamb is here to help you, not lock you in."
+    "Jot down notes anywhere in the app. Notes are saved and can be accessed at any time. Never forget that great idea you had.",
+    "Never feel locked in. Export all of your task data at any time. ProductLamb is here to help you, not make things harder when you need to pivot."
   ]
 
   function changeFeatureDisplay(i: number) {

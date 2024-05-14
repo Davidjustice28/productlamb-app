@@ -125,9 +125,12 @@ if (individualAppPage) {
             <div key={index} className="group flex flex-col rounded-lg shadow-lg bg-white dark:bg-neutral-800">
               <div className="flex items-center justify-between p-4 border-b dark:border-neutral-700">
                 <div className="flex items-center">
-                  { <div className="w-10 h-10 rounded-full bg-gray-200 text-gray-800 flex justify-center items-center text-lg"><i className="ri ri-image-line"></i></div> }
+                  { <div className="w-10 h-10 rounded-full bg-gray-200 text-gray-800 flex justify-center items-center text-lg">
+                    {app.logo_url ? <img src={app.logo_url} alt="logo" className="w-full h-full object-contain rounded-full"/> : <i className="ri ri-image-line"></i>}
+                    </div> 
+                  }
                   <h4 className="ml-2 font-semibold text-gray-700 dark:text-neutral-100">{app.name}</h4>
-                  {activeAppId === app.id && <PLBasicButton text="Selected" colorClasses="ml-2 bg-green-300 dark:bg-green-300 dark:text-black px-3 py-0 text-md"/>}
+                  {activeAppId === app.id && <PLIconButton icon="ri-check-fill" colorClasses="text-green-600 dark:text-green-300 cursor-default font-bold text-lg"/>}
                 </div>
                 <div className="flex flex-row">
                   <Form className="flex flex-row" method="POST" ref={formRef}>

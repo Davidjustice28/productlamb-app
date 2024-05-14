@@ -1,35 +1,91 @@
 import { AccountApplication, ApplicationGoal, PrismaClient } from "@prisma/client"
-import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, json, redirect, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
 import { Form, useActionData, useLoaderData } from "@remix-run/react"
 import { useState, useRef } from "react"
 import { ApplicationsClient } from "~/backend/database/applications/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { PLBasicButton } from "~/components/buttons/basic-button"
+import { PLPhotoUploader } from "~/components/forms/photo-uploader"
 import { NewApplicationData } from "~/types/database.types"
+import {createReadStream} from 'fs'
+import { uploadToPhotoToCloudStorage } from "~/services/gcp/upload-file"
+import { Storage } from "@google-cloud/storage";
+import { PLIconButton } from "~/components/buttons/icon-button"
+import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
+
 
 interface NewGoalData {
   goal: string
   isLongTerm: boolean
 }
+
 export const action: ActionFunction = async ({ request, params }) => {
-  const { id } = params
-  const form = await request.formData()
-  const data = Object.fromEntries(form) as unknown as NewApplicationData
+  const ifMultipartForm = request.headers.get('content-type')?.includes('multipart')
+  console.log(ifMultipartForm, 'ifMultipartForm')
   const dbClient = new PrismaClient()
   const appDbClient = ApplicationsClient(dbClient.accountApplication)
-  const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
-  const goals = data.goals.length ? JSON.parse(data.goals) as NewGoalData[] : []
-  const {data: updatedApplication} = await appDbClient.updateApplication(parseInt(id!), data)
-  const {data: updatedGoals} = await goalDbClient.updateApplicationGoals(parseInt(id!), goals)
-  if (!updatedApplication || !updatedGoals) {
-    // TODO: In the future create a custom error boundary to handle this
-    return json({ errors: [1] })
+  if (ifMultipartForm) {
+    const uploadHandler = unstable_composeUploadHandlers(
+      unstable_createFileUploadHandler({
+        maxPartSize: 5_000_000,
+        file: ({ filename }) => filename,
+      }),
+      // parse everything else into memory
+      unstable_createMemoryUploadHandler()
+    );
+    const { id } = params
+    const form = await unstable_parseMultipartFormData(request, uploadHandler)
+    const data = Object.fromEntries(form)
+    if ( 'logoFile' in data) {
+      const photoFile = form.get("logoFile") as File
+      const result = await uploadToPhotoToCloudStorage(photoFile)
+      if (result.errors.length || !result.data) {
+        return json({ errors: [2] })
+      }
+      const {data: updatedApplication} = await appDbClient.updateApplication(parseInt(id!), {logo_url: result.data})
+      if (!updatedApplication) {
+        // TODO: In the future create a custom error boundary to handle this
+        return json({ errors: [1] })
+      }
+      return json({
+        updatedApplication,
+      })
+    }
+  } else {
+    const { id } = params
+    const formData = await request.formData()
+    const data = Object.fromEntries(formData)
+
+    if ('fileToDelete' in data) {
+      console.log('deleting file', data)
+
+      // await deleteFileFromCloudStorage(data.fileToDelete.toString())
+      const {data: appAfterImageDeletion} = await appDbClient.updateApplication(parseInt(id!), {logo_url: undefined})
+      if (!appAfterImageDeletion) {
+        console.log('error deleting file')
+        return json({ errors: [4] })
+      } else {
+        console.log('file deleted', appAfterImageDeletion)
+        return json({ updatedApplication: appAfterImageDeletion })
+      }
+    } else {
+      console.log('updating application')
+      const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
+      const updateData = data  as unknown as NewApplicationData
+      const goals = updateData.goals.length ? JSON.parse(updateData.goals) as NewGoalData[] : []
+      const {data: updatedApplication} = await appDbClient.updateApplication(parseInt(id!), data)
+      const {data: updatedGoals} = await goalDbClient.updateApplicationGoals(parseInt(id!), goals)
+      if (!updatedApplication || !updatedGoals) {
+        return json({ errors: [1] })
+      }
+      return json({
+        updatedApplication,
+        updatedGoals
+      })
+    }
+
   }
 
-  // return json({
-  //   updatedApplication,
-  //   updatedGoals
-  // })
   return redirect('/portal/applications')
 }
 
@@ -62,10 +118,12 @@ export default function IndividualApplicationsPage() {
   const [summary, setSummary] = useState(updatedApplication ? updatedApplication.summary : currentApplicationData.summary)
   const [siteUrl, setSiteUrl] = useState(updatedApplication ? updatedApplication.siteUrl : currentApplicationData.siteUrl)
   const [type, setType] = useState(updatedApplication ? updatedApplication.type : currentApplicationData.type)
+  const [logoUrl, setLogoUrl] = useState(updatedApplication ? updatedApplication.logo_url : currentApplicationData.logo_url)
   const [changesDetected, setChangesDetected] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  const deleteFormRef = useRef<HTMLFormElement>(null)
 
   const addGoal = (e: React.FormEvent<HTMLButtonElement>, isLongTerm: boolean) => {
     e.preventDefault()
@@ -123,9 +181,22 @@ export default function IndividualApplicationsPage() {
     formRef.current?.requestSubmit()
   }
 
+  function deleteAppImg() {
+    deleteFormRef.current?.requestSubmit()
+  }
+
   return (
     <div>
       <div className="relative p-6 flex-auto rounded px-8 pt-6 pb-2 w-full">
+        <div className="mb-2 flex gap-2 items-end">
+          <PLPhotoUploader shape="square" size="small" currentImageUrl={logoUrl}/>
+          {logoUrl && (
+            <Form method="post" ref={deleteFormRef}>
+              <input type="hidden" name="fileToDelete" value={logoUrl} />
+              <PLIconButton icon="ri-delete-bin-6-line" onClick={deleteAppImg} />
+            </Form>
+          )}
+        </div>
         <Form method="post" ref={formRef}>
           <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">Application Name</label>
           <input value={name} 

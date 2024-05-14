@@ -52,7 +52,10 @@ export default function FeedbackPage() {
     <div>
       <div className="flex items-center justify-between w-full">
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">View and add feedback from users and integrations</p>
-        <PLIconButton icon="ri-add-line" onClick={() => setAddModalOpen(true)}/>
+        <div className="flex items-center gap-2">
+          <PLIconButton icon="ri-chat-upload-line"/>
+          <PLIconButton icon="ri-add-line" onClick={() => setAddModalOpen(true)}/>
+        </div>
       </div>
       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {

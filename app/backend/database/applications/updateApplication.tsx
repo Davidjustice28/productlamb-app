@@ -5,7 +5,7 @@ import { NewApplicationData } from "~/types/database.types"
 export function wrapUpdateApplication(client: PrismaClient['accountApplication']) {
   return updateApplication
 
-  async function updateApplication(id: number, data: NewApplicationData): Promise<BaseResponse<AccountApplication>> {
+  async function updateApplication(id: number, data: Partial<NewApplicationData>): Promise<BaseResponse<AccountApplication>> {
     const {goals, ...rest} = data
     try {
       const entry = await client.update({where: {id}, data: {...rest}})

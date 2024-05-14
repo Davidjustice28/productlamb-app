@@ -1,16 +1,19 @@
-import { Form, Link, useLoaderData, useLocation } from '@remix-run/react'
+import { Form, Link, useLoaderData, useLocation, useNavigate } from '@remix-run/react'
 import { NavLink } from '~/types/base.types'
 import { MouseEventHandler, useRef, useState } from 'react'
+import { PLConfirmModal } from '../modals/confirm'
+import { useClerk } from '@clerk/remix'
 
 
 export const LoggedInNavbar = ({darkMode, expanded, setupComplete}: {setupComplete: boolean, darkMode: boolean, expanded: boolean}) => {
   const location = useLocation()
-
+  const navigate = useNavigate()
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false)
+  const { signOut } = useClerk()
   const notSetupLinks: Array<NavLink> = [
     { iconClass: "ri-play-circle-line", absoluteHref: '/portal/setup', text: `Setup Account`, adminOnly: false},
   ]
   const links: Array<NavLink> = [
-    // user routes
     { iconClass: "ri-dashboard-line", absoluteHref: '/portal/dashboard', text: 'Dashboard', adminOnly: false},
     { iconClass: "ri-file-list-line", absoluteHref: '/portal/sprints', text: 'Sprints', adminOnly: false},
     { iconClass: "ri-bug-line", absoluteHref: '/portal/bugs', text: 'Bugs', adminOnly: false},
@@ -18,7 +21,7 @@ export const LoggedInNavbar = ({darkMode, expanded, setupComplete}: {setupComple
     { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: true},
     { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: true},
     { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Settings', adminOnly: false},
-    { iconClass: "ri-file-text-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
+    // { iconClass: "ri-file-text-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]
 
   const formRef = useRef<HTMLFormElement>(null)
@@ -27,8 +30,12 @@ export const LoggedInNavbar = ({darkMode, expanded, setupComplete}: {setupComple
     formRef.current?.submit()
   }
 
+  const handleSigningOut = async () => {
+    await signOut(() => navigate("/"))
+  } 
+
   return (
-    <nav className={'h-screen px-5 bg-neutral-50 dark:bg-neutral-900 items-center flex flex-col py-6' + (expanded ? ' w-80' : ' w-20')}>
+    <nav className={'h-screen px-5 bg-neutral-50 dark:bg-neutral-900 flex flex-col py-6 items-start' + (expanded ? ' w-80' : ' w-20')}>
       <div className='mb-10 w-full h-27'>
         <img 
           src={expanded ? (darkMode ? 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_white.svg' : 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png') : 'https://storage.googleapis.com/product-lamb-images/productlamb_logo_icon.png'} 
@@ -41,11 +48,19 @@ export const LoggedInNavbar = ({darkMode, expanded, setupComplete}: {setupComple
       <Form method="post" ref={formRef}>
         <input type="hidden" name="_navbarState" value={location.pathname} />
       </Form>
-
+      
+      <button 
+        className='w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 text-black dark:text-gray-500 dark:hover:text-white dark:hover:bg-neutral-800 hover:bg-[#f0f0f0]'
+        onClick={() => setConfirmModalOpen(true)}
+      >
+        <i className={'ri-logout-box-line text-xl cursor-pointer' + (expanded ? " ml-3" : ' mx-auto')} style={{fontSize: '20px'}}></i>
+        <span className={'text-18 font-bold inline-block ' + (expanded ? '' : 'hidden')}>Sign out</span>
+      </button>
       <i 
-        className={'ri-arrow-left-s-line text-xl absolute bottom-5 cursor-pointer text-black dark:text-white ' + (expanded ? 'left-5 rotate-180' : 'mx-auto')}
+        className={'ri-arrow-right-s-line text-xl absolute bottom-5 cursor-pointer text-black dark:text-white ' + (expanded ? 'left-5 rotate-180' : 'mx-auto')}
         onClick={handleNavCookieUpdate}
       ></i>
+      <PLConfirmModal open={confirmModalOpen} setOpen={setConfirmModalOpen} message='Are you sure you would like to log out of your account?' onConfirm={handleSigningOut} size='xsm'/>
     </nav>
   )
 }
