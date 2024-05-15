@@ -5,7 +5,9 @@ import { useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { FeedbackClient } from "~/backend/database/feedback/client";
 import { PLIconButton } from "~/components/buttons/icon-button";
-import { PLAddFeedbackModal } from "~/components/modals/feedback/add-feeback";
+import { PLAddFeedbackModal } from "~/components/modals/feedback/add-feedback";
+import { PLSelectorModal } from "~/components/modals/selector";
+import { PLSelectorModalOption } from "~/types/component.types";
 import { FeedbackSource } from "~/types/database.types";
 
 export interface NewFeedbackData {
@@ -47,13 +49,40 @@ export default function FeedbackPage() {
   const { updatedFeedback } = useActionData<typeof action>() || {updatedFeedback: null}
   const [feedback, setFeedback] = useState<Array<ApplicationFeedback>>(updatedFeedback ?? loadedFeedback)
   const [addModalOpen, setAddModalOpen] = useState<boolean>(false)
+  const [bulkUploadModalOpen, setBulkModalOpen] = useState(false)
+  const modalOptions: Array<PLSelectorModalOption> = [
+    {
+      name: 'CSV',
+      iconClass: 'ri-file-line',
+      value: 'manual'
+    },
+    {
+      name: 'Typeform',
+      value: 'integration',
+      logo_url: 'https://storage.googleapis.com/productlamb-platform-images/typeform.svg'
+    },
+    {
+      name: 'Jotform',
+      value: 'integration',
+      logo_url: 'https://storage.googleapis.com/productlamb-platform-images/jotform.svg'
+    },
+    {
+      name: 'Google Forms',
+      value: 'integration',
+      logo_url: 'https://storage.googleapis.com/productlamb-platform-images/google-forms.svg'
+    }
+  ]
+
+  const openBulkUploadModal = () => {
+    setBulkModalOpen(true)
+  }
 
   return (
     <div>
       <div className="flex items-center justify-between w-full">
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">View and add feedback from users and integrations</p>
         <div className="flex items-center gap-2">
-          <PLIconButton icon="ri-chat-upload-line"/>
+          <PLIconButton icon="ri-chat-upload-line" onClick={openBulkUploadModal}/>
           <PLIconButton icon="ri-add-line" onClick={() => setAddModalOpen(true)}/>
         </div>
       </div>
@@ -66,7 +95,8 @@ export default function FeedbackPage() {
           })
         }
       </div>
-      <PLAddFeedbackModal open={addModalOpen} setOpen={setAddModalOpen}/>
+      <PLAddFeedbackModal open={addModalOpen} setOpen={setAddModalOpen} onClose={() => setAddModalOpen(false)}/>
+      <PLSelectorModal open={bulkUploadModalOpen} setOpen={setBulkModalOpen} options={modalOptions} message="Choose the source you prefer to upload user feedback from." title="Bulk upload feedback"/>
     </div>
   )
 }

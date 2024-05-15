@@ -102,7 +102,7 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                   <td className={"w-4 p-4 " + (actionsAvailable ? '' : 'hidden')}>
                       <div className="flex items-center">
                           <input 
-                            checked={checkedRowIds.includes(index)}
+                            checked={checkedRowIds.includes(item.id)}
                             onChange={(e) => {
                               if(e.target.checked) {
                                 const updatedList = [...checkedRowIds, item.id]

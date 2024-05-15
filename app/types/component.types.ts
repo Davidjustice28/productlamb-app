@@ -42,3 +42,10 @@ export interface PLAddBugModalProps {
 }
 
 export interface IntegrationOptions<T=any>{id: number, name: string, img_url: string, description: string, requiredFields: T}
+
+export interface PLSelectorModalOption<T=any> {
+  name: string,
+  iconClass?: string,
+  logo_url?: string
+  value: T
+}
