@@ -64,15 +64,15 @@ export const loader: LoaderFunction = (args) => {
       }
     } else {
       if( !isPortalRoute ) {
-        return redirect(accountCookie.hasApplication ? '/portal/dashboard' : '/portal/setup')
+        return redirect(accountCookie.setupIsComplete ? '/portal/dashboard' : '/portal/setup')
       }
     }
-    return { darkMode: preferencesCookie.darkMode, ENV: getSharedEnvs(), navBarExpanded: preferencesCookie.navBarMode, selectedApplicationName: accountCookie.selectedApplicationName, hasApplication: accountCookie.hasApplication};
+    return { darkMode: preferencesCookie.darkMode, ENV: getSharedEnvs(), navBarExpanded: preferencesCookie.navBarMode, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete};
   });
 };
  
 export function App() {
-  const { ENV, darkMode, selectedApplicationName, hasApplication} = useLoaderData<typeof loader>()
+  const { ENV, darkMode, selectedApplicationName, setupIsComplete} = useLoaderData<typeof loader>()
   return (
     <html lang="en" className={ (darkMode ? 'dark' : '') }>
       <head>
@@ -82,7 +82,7 @@ export function App() {
         <Links />
       </head>
       <body className={darkMode ? 'bg-neutral-800' : 'bg-white'}>
-        <RootLayout appName={selectedApplicationName} hasApplication={hasApplication}/>
+        <RootLayout appName={selectedApplicationName} setupIsComplete={setupIsComplete}/>
         <ScrollRestoration />
         <Scripts />
 

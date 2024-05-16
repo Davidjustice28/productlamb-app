@@ -57,19 +57,13 @@ export const action: ActionFunction = async ({ request, params }) => {
     const data = Object.fromEntries(formData)
 
     if ('fileToDelete' in data) {
-      console.log('deleting file', data)
-
-      // await deleteFileFromCloudStorage(data.fileToDelete.toString())
       const {data: appAfterImageDeletion} = await appDbClient.updateApplication(parseInt(id!), {logo_url: undefined})
       if (!appAfterImageDeletion) {
-        console.log('error deleting file')
         return json({ errors: [4] })
       } else {
-        console.log('file deleted', appAfterImageDeletion)
         return json({ updatedApplication: appAfterImageDeletion })
       }
     } else {
-      console.log('updating application')
       const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
       const updateData = data  as unknown as NewApplicationData
       const goals = updateData.goals.length ? JSON.parse(updateData.goals) as NewGoalData[] : []
@@ -99,6 +93,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
   const {data:goals} = await goalDbClient.getGoals(parseInt(id))
   const {data: application} = await appDbClient.getApplicationById(parseInt(id))
+
   if (!application) {
     return redirect('/portal/applications')
   }

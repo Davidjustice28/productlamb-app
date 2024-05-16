@@ -1,5 +1,7 @@
 export default function SetupPage() {
-  return <>
-    <h1>Get Started</h1>
-  </>
+  return (
+    <div className="flex flex-col border-2 border-black">
+      <h1 className="text-black">Let's setup your account!</h1>
+    </div>
+  )
 }

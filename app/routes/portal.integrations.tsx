@@ -1,7 +1,6 @@
 import { LoaderFunction, json } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
 import { useState } from "react"
-import { mockIntegrations } from "~/backend/mocks/integrations"
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { PLIntegrationOption } from "~/components/integrations/integration"
 import { PLIntegrationEditModal } from "~/components/modals/integrations/edit-integration"
@@ -10,7 +9,7 @@ import { availableIntegrations } from "~/static/integration-options"
 import { IntegrationOptions } from "~/types/component.types"
 
 export const loader: LoaderFunction = async ({ request }) => {
-  return json({ integrations: [0, 3]})
+  return json({ integrations: []})
 }
 
 export default function IntegrationsPage() {

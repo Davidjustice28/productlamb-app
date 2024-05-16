@@ -7,7 +7,7 @@ export function wrapGetAccountApplications(client: PrismaClient['accountApplicat
 
   async function getAccountApplications(account_id: number): Promise<BaseResponse<Array<AccountApplication>>> {
     try {
-      const apps = await client.findMany({where: {accountId: account_id}})
+      const apps =(await client.findMany({where: {accountId: account_id}}))
       return {data: apps, errors: []}
     } catch (e) {
       return {data: undefined, errors: [1]}

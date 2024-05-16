@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@clerk/remix": "^4.0.1",
+    "@gitbeaker/requester-utils": "^40.0.3",
+    "@gitbeaker/rest": "^40.0.3",
     "@google-cloud/storage": "^7.11.0",
     "@prisma/client": "^4.16.2",
     "@remix-run/node": "^2.2.0",
@@ -27,6 +29,7 @@
     "dayjs": "^1.11.10",
     "intl-parse-accept-language": "^1.0.0",
     "isbot": "^3.7.0",
+    "octokit": "^4.0.2",
     "react": "^18.2.0",
     "react-confetti-explosion": "^2.1.2",
     "react-dom": "^18.2.0",

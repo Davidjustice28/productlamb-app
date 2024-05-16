@@ -4,6 +4,8 @@ import { Form, Outlet, useActionData, useLoaderData, useLocation, useNavigate, u
 import { useRef, useState } from "react"
 import { account } from "~/backend/cookies/account"
 import { ApplicationsClient } from "~/backend/database/applications/client"
+import { ApplicationBugsClient } from "~/backend/database/bugs/client"
+import { FeedbackClient } from "~/backend/database/feedback/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLIconButton } from "~/components/buttons/icon-button"
@@ -29,7 +31,7 @@ export let action: ActionFunction = async ({ request }) => {
   const dbClient = new PrismaClient()
   const appDbClient = ApplicationsClient(dbClient.accountApplication)
   const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
-  if ('applicationId' in data) { 
+  if ('applicationId' in data) {
     await appDbClient.deleteApplication(parseInt(data.applicationId))
     return json({})
   } else if ('selectedAppId' in data) {

@@ -29,7 +29,7 @@ model AccountApplication {
   archived Boolean
   siteUrl String?
   type String
-  account Account @relation(fields: [accountId], references: [id]) 
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade) 
   logo_url String?
   accountId Int
   goals ApplicationGoal[]
@@ -46,13 +46,13 @@ model ApplicationGoal {
   id Int @id @default(autoincrement())
   goal String
   isLongTerm Boolean
-  application AccountApplication @relation(fields: [applicationId], references: [id])
+  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId Int
 }
 
 model ApplicationFeedback {
   id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id])
+  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId Int
   feedback String
   feedbackDate String
@@ -61,7 +61,7 @@ model ApplicationFeedback {
 model GeneratedInitiative {
   id Int @id @default(autoincrement())
   description String
-  application AccountApplication @relation(fields: [applicationId], references: [id])
+  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId Int
   sprint ApplicationSprint @relation(fields: [sprintId], references: [id])
   sprintId Int @unique
@@ -78,18 +78,20 @@ model ApplicationIntegration {
 
 model ApplicationCodeRepositoryInfo {
   id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id])
+  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId Int
   platform String
   secret String
   secretExpirationDate String?
   repositoryName String?
   repositoryId Int?
+  repositoryOwner String?
+  archived Boolean
 }
 
 model GeneratedTask {
   id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id])
+  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId Int
   sprint ApplicationSprint @relation(fields: [sprintId], references: [id])
   sprintId Int
@@ -102,7 +104,7 @@ model GeneratedTask {
 
 model ApplicationSprint {
   id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id])
+  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId Int
   startDate String
   endDate String
@@ -113,7 +115,7 @@ model ApplicationSprint {
 
 model ApplicationBug {
   id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id])
+  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId Int
   title String
   description String

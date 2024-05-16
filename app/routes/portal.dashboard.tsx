@@ -20,13 +20,13 @@ export const loader: LoaderFunction = args => {
     const preferencesCookie = (await preferences.parse(cookieHeader) || {}); 
     const accountCookie = (await account.parse(cookieHeader) || {});
     const darkMode = preferencesCookie.darkMode ? true : false;
-    let hasApplication: boolean|undefined = accountCookie.hasApplication
+    let setupIsComplete: boolean|undefined = accountCookie.setupIsComplete
     let accountId: number| undefined = accountCookie.accountId
     let selectedApplicationId: number| undefined = accountCookie.selectedApplicationId
     let selectedApplicationName: string| undefined = accountCookie.selectedApplicationName
     
     const dbClient = new PrismaClient()
-    if (accountId === undefined || hasApplication === undefined) {
+    if (accountId === undefined || setupIsComplete === undefined) {
       const accountClient = AccountsClient(dbClient.account)
       const {data: accountData} = await accountClient.getAccountByUserId(userId || "")
       accountCookie.accountId = accountData?.id || undefined
@@ -34,8 +34,8 @@ export const loader: LoaderFunction = args => {
     
       const applicationClient = ApplicationsClient(dbClient.accountApplication)
       const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
-      accountCookie.hasApplication = applications ? !!applications.length : false
-      hasApplication = accountCookie.hasApplication
+      accountCookie.setupIsComplete = applications ? !!applications.length : false
+      setupIsComplete = accountCookie.setupIsComplete
       if (selectedApplicationId === undefined && applications && applications.length > 0) {
         accountCookie.selectedApplicationId = applications[0].id
         accountCookie.selectedApplicationName = applications[0].name
@@ -46,7 +46,7 @@ export const loader: LoaderFunction = args => {
       return redirect("/portal/dashboard", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
       // return json({ darkMode, hasApplication, accountId, selectedApplicationId, selectedApplicationName }, { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
     } else {
-      hasApplication = accountCookie.hasApplication
+      setupIsComplete = accountCookie.setupIsComplete
       accountId = accountCookie.accountId
       
       if (selectedApplicationId === undefined) {
@@ -59,13 +59,13 @@ export const loader: LoaderFunction = args => {
           selectedApplicationName = accountCookie.selectedApplicationName
         }
       }
-      return json({ darkMode, hasApplication, accountId, selectedApplicationName, selectedApplicationId})
+      return json({ darkMode, setupIsComplete, accountId, selectedApplicationName, selectedApplicationId})
     }
   });
 };
 
 export default function DashboardPage() {
-  const { darkMode, accountId, hasApplication } = useLoaderData<{darkMode: boolean|undefined, hasApplication: boolean, accountId: number|undefined, selectedApplicationName: string| undefined}>()
+  const { darkMode, accountId, setupIsComplete } = useLoaderData<{darkMode: boolean|undefined, setupIsComplete: boolean, accountId: number|undefined, selectedApplicationName: string| undefined}>()
   const [chartData, setChartData] = useState<Array<any>>([])
   // const [barChartData, setBarChartData] = useState<Array<any>>(mockBarChartdata)
   const [barChartData, setBarChartData] = useState<Array<any>>([])
