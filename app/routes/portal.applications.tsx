@@ -1,10 +1,11 @@
-import { AccountApplication, PrismaClient } from "@prisma/client"
+import { AccountApplication, ApplicationCodeRepositoryInfo, PrismaClient } from "@prisma/client"
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
 import { Form, Outlet, useActionData, useLoaderData, useLocation, useNavigate, useParams } from "@remix-run/react"
 import { useRef, useState } from "react"
 import { account } from "~/backend/cookies/account"
 import { ApplicationsClient } from "~/backend/database/applications/client"
 import { ApplicationBugsClient } from "~/backend/database/bugs/client"
+import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client"
 import { FeedbackClient } from "~/backend/database/feedback/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { PLBasicButton } from "~/components/buttons/basic-button"
@@ -31,6 +32,7 @@ export let action: ActionFunction = async ({ request }) => {
   const dbClient = new PrismaClient()
   const appDbClient = ApplicationsClient(dbClient.accountApplication)
   const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
+  const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
   if ('applicationId' in data) {
     await appDbClient.deleteApplication(parseInt(data.applicationId))
     return json({})
@@ -49,6 +51,9 @@ export let action: ActionFunction = async ({ request }) => {
     if (createAppResult) {
       const goals = data.goals.length < 0 ? [] : JSON.parse(data.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)
+      const {repositories} = JSON.parse(data.repositories) as {repositories: Array<ApplicationCodeRepositoryInfo>}
+      console.log('repos', repositories)
+      await repoDbClient.addMultipleRepositories(createAppResult.id, repositories as any)
     }
 
     return json({})
@@ -166,7 +171,7 @@ if (individualAppPage) {
       </div>
       <PLConfirmModal open={deleteConfirmModalOpen} setOpen={setDeleteConfirmModalOpen} message="Are you sure you would like to delete this application?" onConfirm={(e) => confirmAppDeletion(e)}/>
       <PLConfirmModal open={switchConfirmModalOpen} setOpen={setSwitchConfirmModalOpen} message="Are you sure you would like to switch applications?" onConfirm={(e) => confirmAppSwitch(e)}/>
-      <PLAddApplicationModal open={applicationModalOpen} setOpen={setApplicationModalOpen}/>
+      <PLAddApplicationModal open={applicationModalOpen} setOpen={setApplicationModalOpen} appId={activeAppId}/>
     </div>
   )
 }

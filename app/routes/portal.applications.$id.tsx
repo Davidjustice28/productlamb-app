@@ -12,6 +12,7 @@ import { uploadToPhotoToCloudStorage } from "~/services/gcp/upload-file"
 import { Storage } from "@google-cloud/storage";
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
+import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client"
 
 
 interface NewGoalData {
@@ -91,8 +92,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const dbClient = new PrismaClient()
   const appDbClient = ApplicationsClient(dbClient.accountApplication)
   const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
+  const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
+
   const {data:goals} = await goalDbClient.getGoals(parseInt(id))
   const {data: application} = await appDbClient.getApplicationById(parseInt(id))
+  const {data: repositories} = await repoDbClient.getAllApplicationRepositories(parseInt(id))
+  // console.log('repos:', repositories)
 
   if (!application) {
     return redirect('/portal/applications')

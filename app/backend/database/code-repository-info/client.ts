@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { wrapGetAllApplicationRepositories, wrapGetApplicationRepository } from "./getRepository";
 import { wrapDeleteApplicationRepository, wrapDeleteAllApplicationRepositories } from "./deleteRepository";
-import { wrapAddApplicationRepository } from "./addRepository";
+import { wrapAddApplicationRepository, wrapAddMultipleRepositories } from "./addRepository";
 import { wrapUpdateApplicationRepository } from "./updateRepository";
 
 export const CodeRepositoryInfoClient = (client: PrismaClient['applicationCodeRepositoryInfo']) => {
@@ -10,6 +10,7 @@ export const CodeRepositoryInfoClient = (client: PrismaClient['applicationCodeRe
   const deleteRepository = wrapDeleteApplicationRepository(client)
   const deleteAllApplicationRepositories = wrapDeleteAllApplicationRepositories(client)
   const addRepository = wrapAddApplicationRepository(client)
+  const addMultipleRepositories = wrapAddMultipleRepositories(client)
   const updateRepositoryInfo = wrapUpdateApplicationRepository(client)
   return {
     getRepository,
@@ -17,6 +18,7 @@ export const CodeRepositoryInfoClient = (client: PrismaClient['applicationCodeRe
     deleteRepository,
     deleteAllApplicationRepositories,
     addRepository,
-    updateRepositoryInfo
+    updateRepositoryInfo,
+    addMultipleRepositories
   }
 }

@@ -19,6 +19,7 @@ export interface NewApplicationData {
   type: "web" | "mobile" | "desktop"
   goals: string
   logo_url?: string
+  repositories: string
 }
 
 export type BugSource = 'repository' | 'self-identified' | 'productLamb' | 'integration' | 'pm-tool' | 'other'

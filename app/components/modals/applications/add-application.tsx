@@ -1,17 +1,25 @@
 import { Form } from "@remix-run/react";
 import { PLBaseModal, PLModalFooter } from "../base";
 import { useEffect, useRef, useState } from "react";
+import { PLBasicButton } from "~/components/buttons/basic-button";
+import { PLStatusBadge } from "~/components/common/status-badge";
+import { Colors } from "~/types/base.types";
+import { PLNewRepositoryComponent } from "./add-repository";
+import { Repositories } from "@gitbeaker/rest";
+import { RepositoryCreationBaseInfo } from "~/backend/database/code-repository-info/addRepository";
 
 interface NewGoalData {
   goal: string
   isLongTerm: boolean
 }
 
-export const PLAddApplicationModal = ({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) => {
+export const PLAddApplicationModal = ({ open, setOpen, appId }: { open: boolean, setOpen: (open: boolean) => void, appId: number }) => {
   const [goals, setGoals] = useState<NewGoalData[]>([])
-
+  const [isValid, setIsValid] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
+  const repositoryJsonInputRef = useRef<HTMLInputElement>(null)
+
   const formRef = useRef<HTMLFormElement>(null)
   const handleClose = () => {
     setOpen(false)
@@ -34,9 +42,36 @@ export const PLAddApplicationModal = ({ open, setOpen }: { open: boolean, setOpe
   }
 
   const submitApplication = async (e: React.FormEvent<HTMLButtonElement>) => {
-    e.preventDefault()
+    // e.preventDefault()
     formRef.current?.submit()  
     setOpen(false)
+  }
+
+  const onRepositoriesChange = (repos: RepositoryCreationBaseInfo[]) => {
+    repositoryJsonInputRef.current!.value = JSON.stringify({repositories: repos})
+    console.log('repos', repositoryJsonInputRef.current!.value)
+  }
+
+  const validateApplication = () => {
+    const nameInput = formRef.current?.elements.namedItem('name') as HTMLInputElement
+    const summaryInput = formRef.current?.elements.namedItem('summary') as HTMLInputElement
+    const siteUrlInput = formRef.current?.elements.namedItem('siteUrl') as HTMLInputElement
+    const typeInput = formRef.current?.elements.namedItem('type') as HTMLSelectElement
+    const repositoriesInput = formRef.current?.elements.namedItem('repositories') as HTMLInputElement
+    const repositoryCount = repositoriesInput && repositoriesInput.value.length ? JSON.parse(repositoriesInput.value).repositories.length : 0
+
+    if (nameInput?.value.length && summaryInput?.value.length && siteUrlInput?.value.length && typeInput?.value.length && repositoryCount > 0) {
+  
+      return true
+    } else {
+      return false
+    }
+  
+  }
+
+  const checkValidity = () => {
+    const isValid1= validateApplication()
+    setIsValid(isValid1)
   }
 
   useEffect(() => {
@@ -46,17 +81,17 @@ export const PLAddApplicationModal = ({ open, setOpen }: { open: boolean, setOpe
   }, [open])
 
   return (
-    <PLBaseModal title="New Application" open={open} setOpen={setOpen} titleCenter={true}>
-      <div className="relative p-6 flex-auto rounded px-8 pt-6 pb-2 w-full">
-        <Form method="post" ref={formRef}>
+    <PLBaseModal title="New Application" open={open} setOpen={setOpen} titleCenter={true} size="md">
+      <div className="relative p-6 flex-auto rounded px-8 pt-6 pb-2 w-full overflow-y-scroll">
+        <Form method="post" ref={formRef} onChange={checkValidity}>
           <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">Application Name</label>
-          <input placeholder="e.g., Instagram clone and todo list" type="text" name="name" className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm" />
+          <input required placeholder="e.g., Instagram clone and todo list" type="text" name="name" className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm" />
           <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mt-4">Summary</label>
-          <textarea  maxLength={122} name="summary" className="text-black dark:text-neutral-400 mt-1 block w-full border-2 border-gray-300 dark:bg-transparent dark:border-neutral-700 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm resize-none" placeholder="Enter a description about your project..."/>
+          <textarea required maxLength={122} name="summary" className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 border-gray-300 dark:bg-transparent dark:border-neutral-700 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm resize-none" placeholder="Enter a description about your project..."/>
           <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mt-4">Site URL</label>
-          <input placeholder="Website or app store url" type="text" name="siteUrl" className="p-2  text-black dark:text-neutral-400 mt-1 block border-2 w-full dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm" />
+          <input required placeholder="Website or app store url" type="text" name="siteUrl" className="p-2  text-black dark:text-neutral-400 mt-1 block border-2 w-full dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm" />
           <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mt-4">Type</label>
-          <select name="type" className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm">
+          <select required name="type" className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm">
             <option value="web">Web</option>
             <option value="mobile">Mobile</option>
             <option value="desktop">Desktop</option>
@@ -105,17 +140,19 @@ export const PLAddApplicationModal = ({ open, setOpen }: { open: boolean, setOpe
               </div>
             </div>
           </div>
-          {goals.map(({goal, isLongTerm}, index) => {
-            return (
-              <div key={index} className="flex items-center gap-2 mt-2">
-                <i className="ri-crosshair-2-fill text-red-500"></i>
-                <p>{goal} - {isLongTerm ? 'Long' : 'Short'} Term</p>
-              </div>
-            )
-          })}
+          <input type="hidden" name="repositories" ref={repositoryJsonInputRef} required onChange={() => checkValidity()}/>
         </Form>
+        {goals.map(({goal, isLongTerm}, index) => {
+          return (
+            <div key={index} className="flex items-center gap-2 mt-2">
+              <i className="ri-crosshair-2-fill text-red-500"></i>
+              <p>{goal} - {isLongTerm ? 'Long' : 'Short'} Term</p>
+            </div>
+          )
+        })}
+        <PLNewRepositoryComponent applicationId={appId} onRepositoriesChange={onRepositoriesChange}/>
       </div>
-      <PLModalFooter submitText="Add" closeText="Cancel" onClose={handleClose} onSubmit={submitApplication}/>
+      <PLModalFooter submitText="Add" closeText="Cancel" onClose={handleClose} onSubmit={submitApplication} submitDisabled={!isValid}/>
     </PLBaseModal>
   )
 }
