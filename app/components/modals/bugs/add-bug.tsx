@@ -7,13 +7,12 @@ import { PLAddBugModalProps } from "~/types/component.types"
 export function PLAddBugModal({open, onClose, setOpen}: PLAddBugModalProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
     formRef.current?.submit()
     setOpen(false)
   }
   return (
     <PLBaseModal open={open} onClose={onClose} title="Add Bug" setOpen={setOpen}>
-      <Form className="relative p-6 flex-auto rounded px-8 pt-6 pb-2 w-full" method="POST" ref={formRef}>
+      <form className="relative p-6 flex-auto rounded px-8 pt-6 pb-2 w-full" method="post" ref={formRef}>
         <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">Title</label>
         <input placeholder="e.g., User authentication not working" type="text" name="title" className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm" />
         <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mt-4">Description</label>
@@ -41,7 +40,7 @@ export function PLAddBugModal({open, onClose, setOpen}: PLAddBugModalProps) {
           <option value="other">Other</option>
         </select>
         <input type="hidden" name="action" value="add"/>
-      </Form>
+      </form>
       <PLModalFooter closeText="Cancel" submitText="Add" onClose={onClose} onSubmit={onSubmit}/>
     </PLBaseModal>
   )

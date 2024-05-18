@@ -167,9 +167,9 @@ function FeaturesSection() {
     "ProductLamb auto generates sprints in your preferred management tool by analyzing your goals, code repository issues, user feedback, self reported bugs, and more.",
     "Working on multiple things? ProductLamb can help plan sprints and tasks across all of your projects. Easily switch between projects and see your progress.",
     "Connect to your favorite tools to increase productivity. We support over 10+ integrations including Google Calendar, Slack, and Notion.",
-    "See all reported bugs in one place. ProductLamb will automatically track bugs reported in PM tool, in your code repository, and manually added ones.",
+    "See all reported bugs in one place. ProductLamb will automatically track bugs reported in your code repository and manually added ones.",
     "Jot down notes anywhere in the app. Notes are saved and can be accessed at any time. Never forget that great idea you had.",
-    "Never feel locked in. Export all of your task data at any time. ProductLamb is here to help you, not make things harder when you need to pivot."
+    "Never feel locked in. Export your data at any time to CSV. ProductLamb is here to help you, not make things harder when you need to pivot."
   ]
 
   function changeFeatureDisplay(i: number) {
@@ -229,9 +229,8 @@ function PricingSection() {
     "2 sprints per month (bi-weekly)",
     "Connect to Github or Gitlab",
     "Export your data any time to CSV",
-    "Integrate with 10+ 3rd party tools",
-    "Manually bulk upload bugs and user feedback",
-    "Up to 5 team members",
+    "Integrate with several 3rd party tools",
+    "Manually and bulk upload user feedback",
     "Dashboard access with analytics",
   ]
   return (

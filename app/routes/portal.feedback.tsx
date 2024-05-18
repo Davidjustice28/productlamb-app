@@ -1,11 +1,13 @@
 import { ApplicationFeedback, PrismaClient } from "@prisma/client";
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, json, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
+import { parse } from "papaparse";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { FeedbackClient } from "~/backend/database/feedback/client";
 import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLAddFeedbackModal } from "~/components/modals/feedback/add-feedback";
+import { PLCsvUploadModal } from "~/components/modals/feedback/csv-upload";
 import { PLSelectorModal } from "~/components/modals/selector";
 import { PLSelectorModalOption } from "~/types/component.types";
 import { FeedbackSource } from "~/types/database.types";
@@ -20,16 +22,41 @@ export const action: ActionFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
+  const dbClient = new PrismaClient()
   const feedbackDbClient = FeedbackClient(new PrismaClient().applicationFeedback)
-  const formData = Object.fromEntries(await request.formData()) as unknown as NewFeedbackData & {action: string}
+  if (request.headers.get('content-type')?.includes('multipart')) {
+    const uploadHandler = unstable_composeUploadHandlers(
+      unstable_createFileUploadHandler({
+        maxPartSize: 5_000_000,
+        file: ({ filename }) => filename,
+      }),
+      // parse everything else into memory
+      unstable_createMemoryUploadHandler()
+    );
+    const form = await unstable_parseMultipartFormData(request, uploadHandler)
+    const formData = Object.fromEntries(form)
+    // let formData = await request.formData();
+    let file = formData.csv as Blob;
 
-  if (formData.action === 'add') {
-    const {feedback, source, date} = formData
-    const dateCreated = new Date(date)
-    await feedbackDbClient.createFeedback(applicationId, feedback, source as FeedbackSource, dateCreated)
-    const {data: allFeedback} = await feedbackDbClient.getApplicationFeedback(applicationId)
-    return json({updatedFeedback: allFeedback ?? null})
-  } 
+    if (file) {
+      let text = await file.text();
+      let csvData = (parse(text, { header: true }).data as Array<any>).filter(d => "feedback" in d && "source" in d && "date" in d) as Array<NewFeedbackData>
+      const uploadData = csvData.map(({feedback, source, date}) => ({application_id: applicationId , comment: feedback, source: source as FeedbackSource, dateCreated: new Date(date)}))
+      const {data: updatedFeedback} = await feedbackDbClient.bulkCreateFeedback(applicationId, uploadData)
+      return json({ updatedFeedback: updatedFeedback ?? null });
+    }
+
+  } else {
+    const formData = Object.fromEntries(await request.formData()) as unknown as NewFeedbackData & {action: string}
+  
+    if (formData.action === 'add') {
+      const {feedback, source, date} = formData
+      const dateCreated = new Date(date)
+      await feedbackDbClient.createFeedback(applicationId, feedback, source as FeedbackSource, dateCreated)
+      const {data: allFeedback} = await feedbackDbClient.getApplicationFeedback(applicationId)
+      return json({updatedFeedback: allFeedback ?? null})
+    } 
+  }
 
   return json({updatedFeedback: null})
 
@@ -41,6 +68,7 @@ export const loader: LoaderFunction = async ({request}) => {
   const applicationId = accountCookie.selectedApplicationId as number
   const feedbackDbClient = FeedbackClient(new PrismaClient().applicationFeedback)
   const {data: feedback} = await feedbackDbClient.getApplicationFeedback(applicationId)
+  console.log('loaded feedback: ', feedback)
   return json({feedback: feedback || []})
 }
 
@@ -50,6 +78,7 @@ export default function FeedbackPage() {
   const [feedback, setFeedback] = useState<Array<ApplicationFeedback>>(updatedFeedback ?? loadedFeedback)
   const [addModalOpen, setAddModalOpen] = useState<boolean>(false)
   const [bulkUploadModalOpen, setBulkModalOpen] = useState(false)
+  const [csvUploadModalOpen, setCsvUploadModalOpen] = useState(false)
   const modalOptions: Array<PLSelectorModalOption> = [
     {
       name: 'CSV',
@@ -77,6 +106,13 @@ export default function FeedbackPage() {
     setBulkModalOpen(true)
   }
 
+  const handleOptionClick = (option: PLSelectorModalOption) => {
+    setBulkModalOpen(false)
+    if (option.value === 'manual') {
+      setCsvUploadModalOpen(true)
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between w-full">
@@ -96,17 +132,16 @@ export default function FeedbackPage() {
         }
       </div>
       <PLAddFeedbackModal open={addModalOpen} setOpen={setAddModalOpen} onClose={() => setAddModalOpen(false)}/>
-      <PLSelectorModal open={bulkUploadModalOpen} setOpen={setBulkModalOpen} options={modalOptions} message="Choose the source you prefer to upload user feedback from." title="Bulk upload feedback"/>
+      <PLSelectorModal open={bulkUploadModalOpen} setOpen={setBulkModalOpen} options={modalOptions} message="Choose the source you prefer to upload user feedback from." title="Bulk upload feedback" onClick={handleOptionClick}/>
+      <PLCsvUploadModal open={csvUploadModalOpen} setOpen={setCsvUploadModalOpen} onClose={() => setCsvUploadModalOpen(false)}/>
     </div>
   )
 }
 
 function UserFeedbackRow({feedback}: {feedback: ApplicationFeedback}) {
   return (
-    <div className="flex flex-col gap-5 justify-between items-center border-2 rounded-xl dark:border-neutral-500 dark:bg-transparent bg-white px-6 py-5">
-      <div className="flex flex-col gap-2">
-        <p className="font-semibold text-black dark:text-neutral-400">"{feedback.feedback}"</p>
-      </div>
+    <div className="flex flex-col gap-5 justify-between items-start border-2 rounded-xl dark:border-neutral-500 dark:bg-transparent bg-white px-6 py-5">
+      <p className="font-semibold text-black dark:text-neutral-400">"{feedback.feedback}"</p>
       <div className="flex flow-row items-center justify-between w-full">
         <div className="flex flow-row items-center justify-start gap-2">
           <i className="ri ri-file-line text-2xl dark:text-neutral-300 text-black"></i>

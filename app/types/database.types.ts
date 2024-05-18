@@ -18,7 +18,7 @@ export interface NewApplicationData {
   siteUrl: string
   type: "web" | "mobile" | "desktop"
   goals: string
-  logo_url?: string
+  logo_url?: string|null
   repositories: string
 }
 

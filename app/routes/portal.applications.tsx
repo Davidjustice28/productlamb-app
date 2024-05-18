@@ -48,6 +48,7 @@ export let action: ActionFunction = async ({ request }) => {
     })
   } else if ('name' in data) {
     const {data: createAppResult } = await appDbClient.addApplication(accountId, data)
+    console.log('created app id: ', createAppResult?.id)
     if (createAppResult) {
       const goals = data.goals.length < 0 ? [] : JSON.parse(data.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)
@@ -171,7 +172,7 @@ if (individualAppPage) {
       </div>
       <PLConfirmModal open={deleteConfirmModalOpen} setOpen={setDeleteConfirmModalOpen} message="Are you sure you would like to delete this application?" onConfirm={(e) => confirmAppDeletion(e)}/>
       <PLConfirmModal open={switchConfirmModalOpen} setOpen={setSwitchConfirmModalOpen} message="Are you sure you would like to switch applications?" onConfirm={(e) => confirmAppSwitch(e)}/>
-      <PLAddApplicationModal open={applicationModalOpen} setOpen={setApplicationModalOpen} appId={activeAppId}/>
+      <PLAddApplicationModal open={applicationModalOpen} setOpen={setApplicationModalOpen}/>
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { PLBaseModal, PLModalFooter } from "./base";
 
 const defaultMessage = "Choose an option below"
 
-export const PLSelectorModal = ({ options, title, open, setOpen, message=defaultMessage, size="sm" }: { onConfirm?: (...args:any[]) => any, open: boolean, setOpen: (open: boolean) => void, message?: string, options: Array<PLSelectorModalOption>, size?: "xsm"|"sm"|"md"|"lg" , title: string}) => {
+export const PLSelectorModal = ({ options, title, open, setOpen, message=defaultMessage, size="sm",onClick }: { onClick: (item: any) => void, open: boolean, setOpen: (open: boolean) => void, message?: string, options: Array<PLSelectorModalOption>, size?: "xsm"|"sm"|"md"|"lg" , title: string}) => {
   const handleClose = () => {
     setOpen(false)
   }
@@ -15,7 +15,7 @@ export const PLSelectorModal = ({ options, title, open, setOpen, message=default
         <div className="flex gap-5 items-center justify-center">
           {options.map(o => {
             return (
-              <button className="border-black border-2 rounded-md dark:border-neutral-400 font-2 flex flex-col items-center w-40 gap-3 h-40 justify-center">
+              <button className="border-black border-2 rounded-md dark:border-neutral-400 font-2 flex flex-col items-center w-40 gap-3 h-40 justify-center" onClick={() => onClick(o)}>
                 {
                   o.logo_url ? 
                   <img src={o.logo_url} className="h-10"/> : 

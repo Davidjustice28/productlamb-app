@@ -13,7 +13,7 @@ interface NewGoalData {
   isLongTerm: boolean
 }
 
-export const PLAddApplicationModal = ({ open, setOpen, appId }: { open: boolean, setOpen: (open: boolean) => void, appId: number }) => {
+export const PLAddApplicationModal = ({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) => {
   const [goals, setGoals] = useState<NewGoalData[]>([])
   const [isValid, setIsValid] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
@@ -150,7 +150,7 @@ export const PLAddApplicationModal = ({ open, setOpen, appId }: { open: boolean,
             </div>
           )
         })}
-        <PLNewRepositoryComponent applicationId={appId} onRepositoriesChange={onRepositoriesChange}/>
+        <PLNewRepositoryComponent onRepositoriesChange={onRepositoriesChange}/>
       </div>
       <PLModalFooter submitText="Add" closeText="Cancel" onClose={handleClose} onSubmit={submitApplication} submitDisabled={!isValid}/>
     </PLBaseModal>

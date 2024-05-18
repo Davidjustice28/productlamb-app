@@ -1,4 +1,4 @@
-import { AccountApplication, ApplicationGoal, PrismaClient } from "@prisma/client"
+import { AccountApplication, ApplicationCodeRepositoryInfo, ApplicationGoal, PrismaClient } from "@prisma/client"
 import { ActionFunction, LoaderFunction, json, redirect, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
 import { Form, useActionData, useLoaderData } from "@remix-run/react"
 import { useState, useRef } from "react"
@@ -13,6 +13,8 @@ import { Storage } from "@google-cloud/storage";
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
 import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client"
+import { PLNewRepositoryComponent } from "~/components/modals/applications/add-repository"
+import { RepositoryCreationBaseInfo } from "~/backend/database/code-repository-info/addRepository"
 
 
 interface NewGoalData {
@@ -21,6 +23,7 @@ interface NewGoalData {
 }
 
 export const action: ActionFunction = async ({ request, params }) => {
+  console.log('action hit')
   const ifMultipartForm = request.headers.get('content-type')?.includes('multipart')
   console.log(ifMultipartForm, 'ifMultipartForm')
   const dbClient = new PrismaClient()
@@ -57,11 +60,34 @@ export const action: ActionFunction = async ({ request, params }) => {
     const formData = await request.formData()
     const data = Object.fromEntries(formData)
 
-    if ('fileToDelete' in data) {
-      const {data: appAfterImageDeletion} = await appDbClient.updateApplication(parseInt(id!), {logo_url: undefined})
+    if('repositories' in data) {
+
+      const updateRepositoryData = data as unknown as {repositories: string}
+
+      const {repositories} = JSON.parse(updateRepositoryData.repositories) as {repositories: Array<ApplicationCodeRepositoryInfo>}
+      console.log('repos', repositories)
+      const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
+      await repoDbClient.deleteAllApplicationRepositories(parseInt(id!))
+      if (!repositories.length) {
+        return json({
+          updatedRepos: []
+        })
+      }
+      const {data: updatedRepos} = await repoDbClient.addMultipleRepositories(parseInt(id!), repositories as any)
+      return json({
+        updatedRepos
+      })
+
+
+    }
+    else if ('fileToDelete' in data) {
+      const {data: appAfterImageDeletion} = await appDbClient.updateApplication(parseInt(id!), {logo_url: null})
       if (!appAfterImageDeletion) {
+        await deleteFileFromCloudStorage(data.fileToDelete as string)
+        console.log('error deleting image')
         return json({ errors: [4] })
       } else {
+        console.log('deleted image: ', appAfterImageDeletion.logo_url)
         return json({ updatedApplication: appAfterImageDeletion })
       }
     } else {
@@ -94,10 +120,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
   const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
 
-  const {data:goals} = await goalDbClient.getGoals(parseInt(id))
-  const {data: application} = await appDbClient.getApplicationById(parseInt(id))
-  const {data: repositories} = await repoDbClient.getAllApplicationRepositories(parseInt(id))
-  // console.log('repos:', repositories)
+  const appId = parseInt(id)
+  console.log('app id', appId)
+
+  const {data:goals} = await goalDbClient.getGoals(appId)
+  const {data: application} = await appDbClient.getApplicationById(appId)
+  const {data: repositories} = await repoDbClient.getAllApplicationRepositories(appId)
 
   if (!application) {
     return redirect('/portal/applications')
@@ -107,13 +135,16 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     return redirect('/portal/applications')
   }
 
-  return json({application, goals})
+  console.log(repositories)
+
+  return json({application, goals, repositories})
 }
 
 export default function IndividualApplicationsPage() {
-  const {goals: currentGoals, application: currentApplicationData} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication}>()
-  const { updatedApplication, updatedGoals } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null}
+  const {goals: currentGoals, application: currentApplicationData, repositories: currentRepos} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, repositories: Array<ApplicationCodeRepositoryInfo>}>()
+  const { updatedApplication, updatedGoals, updatedRepos } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null, updateRepos: null}
   const [goals, setGoals] = useState<NewGoalData[]>(updatedGoals ?? currentGoals)
+  const [repos, setRepos] = useState(updatedRepos || currentRepos)
   const [name, setName] = useState(updatedApplication ? updatedApplication.name :currentApplicationData.name)
   const [summary, setSummary] = useState(updatedApplication ? updatedApplication.summary : currentApplicationData.summary)
   const [siteUrl, setSiteUrl] = useState(updatedApplication ? updatedApplication.siteUrl : currentApplicationData.siteUrl)
@@ -124,7 +155,7 @@ export default function IndividualApplicationsPage() {
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const deleteFormRef = useRef<HTMLFormElement>(null)
-
+ const reposFormRef = useRef<HTMLFormElement>(null)
   const addGoal = (e: React.FormEvent<HTMLButtonElement>, isLongTerm: boolean) => {
     e.preventDefault()
     let goal: NewGoalData
@@ -177,12 +208,22 @@ export default function IndividualApplicationsPage() {
     setChangesDetected(false)
   }
 
-  function updateApplication() {
-    formRef.current?.requestSubmit()
+  function updateRepos() {
+    reposFormRef.current?.requestSubmit()
+    console.log('updated repos')
   }
 
   function deleteAppImg() {
     deleteFormRef.current?.requestSubmit()
+    console.log('deleted image')
+
+  }
+
+  const repositoryJsonInputRef = useRef<HTMLInputElement>(null)
+
+  const onRepositoriesChange = (repos: RepositoryCreationBaseInfo[]) => {
+    repositoryJsonInputRef.current!.value = JSON.stringify({repositories: repos})
+    console.log('repos', repositoryJsonInputRef.current!.value)
   }
 
   return (
@@ -191,13 +232,13 @@ export default function IndividualApplicationsPage() {
         <div className="mb-2 flex gap-2 items-end">
           <PLPhotoUploader shape="square" size="small" currentImageUrl={logoUrl}/>
           {logoUrl && (
-            <Form method="post" ref={deleteFormRef}>
+            <form method="post" ref={deleteFormRef}>
               <input type="hidden" name="fileToDelete" value={logoUrl} />
               <PLIconButton icon="ri-delete-bin-6-line" onClick={deleteAppImg} />
-            </Form>
+            </form>
           )}
         </div>
-        <Form method="post" ref={formRef}>
+        <form method="post">
           <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">Application Name</label>
           <input value={name} 
             onChange={(v) => {
@@ -238,17 +279,18 @@ export default function IndividualApplicationsPage() {
             onChange={(v) => {
               setType(v.target.value)
               checkForChanges()
-            }} 
+            }}
+            value={type.toLowerCase()}
             className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm"
           >
-            <option value="web" selected={type.toLowerCase() === 'web'}>Web</option>
-            <option value="mobile" selected={type.toLowerCase() === 'mobile'}>Mobile</option>
-            <option value="desktop" selected={type.toLowerCase() === 'desktop'}>Desktop</option>
-            <option value="api" selected={type.toLowerCase() === 'api'}>API</option>
-            <option value="game" selected={type.toLowerCase() === 'game'}>Game</option>
-            <option value="library" selected={type.toLowerCase() === 'library'}>Library</option>
-            <option value="cli-tool" selected={type.toLowerCase() === 'cli-tool'}>CLI Tool</option>
-            <option value="other" selected={type.toLowerCase() === 'other'}>Other</option>
+            <option value="web">Web</option>
+            <option value="mobile">Mobile</option>
+            <option value="desktop">Desktop</option>
+            <option value="api">API</option>
+            <option value="game">Game</option>
+            <option value="library">Library</option>
+            <option value="cli-tool">CLI Tool</option>
+            <option value="other">Other</option>
           </select>
           <div className="mt-4 flex flex-col gap-5 text-black dark:text-neutral-400 " >
             <input type="hidden" name="goals" value={JSON.stringify(goals)} />
@@ -301,9 +343,13 @@ export default function IndividualApplicationsPage() {
               </div>
             )
           })}
-          
-          <PLBasicButton text="Save Changes" colorClasses={"bg-primary-300 dark:bg-primary-300 dark:text-black px-3 py-0 text-md mt-4" + (!changesDetected ? ' hover:bg-primary-300 dark:hover:bg-primary-300 dark:hover:text-black' : '')} disabled={!changesDetected}/>
-        </Form>
+          <PLBasicButton text="Update Details" colorClasses={"bg-primary-300 dark:bg-primary-300 dark:text-black px-3 py-0 text-md mt-4" + (!changesDetected ? ' hover:bg-primary-300 dark:hover:bg-primary-300 dark:hover:text-black' : '')} disabled={!changesDetected}/>
+        </form>
+        <PLNewRepositoryComponent onRepositoriesChange={onRepositoriesChange} initialRepos={repos}/>
+        <form method="post" ref={reposFormRef}>
+          <input type="hidden" name="repositories" ref={repositoryJsonInputRef} required />
+          <PLBasicButton text="Update Repos" colorClasses={"bg-primary-300 dark:bg-primary-300 dark:text-black px-3 py-0 text-md mt-4"} onClick={updateRepos}/>
+        </form>
       </div>
     </div>
   )

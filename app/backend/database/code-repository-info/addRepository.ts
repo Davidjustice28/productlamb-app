@@ -3,7 +3,6 @@ import { BaseResponse } from '../../../types/base.types'
 import { PrismaClient, Account, AccountApplication, ApplicationCodeRepositoryInfo } from '@prisma/client'
 
 export interface RepositoryCreationBaseInfo {
-  applicationId: number
   platform: string
   secret: string
 }
@@ -24,11 +23,11 @@ export function wrapAddApplicationRepository(client: PrismaClient['applicationCo
     let data: any = {}
 
     if (platform === 'github') {
-      const {repositoryName, repositoryOwner, secret, applicationId} = info as GithubRepositoryInfo
-      data = {repositoryName, repositoryOwner, secret, applicationId, platform, archived: false}
+      const {repositoryName, repositoryOwner, secret} = info as GithubRepositoryInfo
+      data = {repositoryName, repositoryOwner, secret, platform, archived: false}
     } else {
-      const {repositoryId, secret, applicationId} = info as GitlabRepositoryInfo
-      data = {repositoryId, secret, platform, applicationId, archived: false}
+      const {repositoryId, secret} = info as GitlabRepositoryInfo
+      data = {repositoryId, secret, platform, archived: false}
     }
     try {
       const repo = await client.create({data: data})
@@ -46,11 +45,11 @@ export function wrapAddMultipleRepositories(client: PrismaClient['applicationCod
     const response = await client.createMany({
       data: repositories.map(repo => {
         if (repo.platform === 'github') {
-          const {repositoryName, repositoryOwner, secret, applicationId, platform} = repo as GithubRepositoryInfo
-          return {repositoryName, repositoryOwner, secret, applicationId, platform, archived: false}
+          const {repositoryName, repositoryOwner, secret, platform} = repo as GithubRepositoryInfo
+          return {repositoryName, repositoryOwner, secret, platform, archived: false, applicationId: application_id}
         } else {
-          const {repositoryId, secret, applicationId, platform} = repo as GitlabRepositoryInfo
-          return {repositoryId, secret, platform, applicationId, archived: false}
+          const {repositoryId, secret, platform} = repo as GitlabRepositoryInfo
+          return {repositoryId, secret, platform, applicationId: application_id, archived: false}
         }
       })
     })

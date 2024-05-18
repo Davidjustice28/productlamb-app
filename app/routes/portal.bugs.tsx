@@ -133,10 +133,10 @@ export default function BugsPage() {
           <PLIconButton icon="ri-add-line" onClick={() => setAddModalOpen(true)} />
         </div>
       </div>
-      <Form method="POST" ref={deleteFormRef}>
+      <form method="post" ref={deleteFormRef}>
         <input type="hidden" name="ids" ref={deleteInputRef}/>
         <input type="hidden" name="action" value="delete"/>
-      </Form>
+      </form>
       <PLTable data={filterBugs} checked={[]} actionsAvailable={true} columns={columns} tableModalName="bugs" onCheck={onCheck}/>
       <PLConfirmModal open={deleteModalOpen} setOpen={setDeleteModalOpen} message="Are you sure you want to delete the selected bugs?" onConfirm={submitDeleteRequest}/>
       <PLAddBugModal open={addModalOpen} onClose={() => setAddModalOpen(false)} setOpen={setAddModalOpen}/>
