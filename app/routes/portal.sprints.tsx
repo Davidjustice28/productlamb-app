@@ -3,10 +3,22 @@ import { Colors } from "~/types/base.types"
 import { useState } from "react"
 import { Sprint, mockSprints } from "~/backend/mocks/sprints"
 import { PLIconButton } from "~/components/buttons/icon-button"
+import { Outlet, useLocation } from "@remix-run/react"
 
 
 export default function SprintPage() {
   const [sprints, setSprints] = useState<Array<Sprint>>(mockSprints)
+  const {pathname} = useLocation()
+  const parsedPath = pathname.split('/sprints/')
+  const generationPage = parsedPath.length > 1 && parsedPath[1] === 'generation'
+
+  if (generationPage) {
+    return (
+      <div>
+        <Outlet />
+      </div>
+    )
+  }
   return (
     <div className="w-full flex flex-col">
       <div className="flex items-center justify-between w-full">

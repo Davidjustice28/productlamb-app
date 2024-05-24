@@ -1,4 +1,4 @@
-import { SignInButton, useUser } from "@clerk/remix";
+import { SignInButton, SignUpButton, useUser } from "@clerk/remix";
 import { ActionFunction, json } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import React from "react";
@@ -57,10 +57,10 @@ export default function LandingPage() {
           <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
             <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
           </SignInButton>
-          {/* <SignUpButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
+          <SignUpButton mode="modal" forceRedirectUrl={'/portal/setup'}>
             <PLBasicButton text="Sign Up" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
-          </SignUpButton> */}
-          <PLBasicButton text="Coming June 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600 cursor-default"/>
+          </SignUpButton>
+          {/* <PLBasicButton text="Coming June 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600 cursor-default"/> */}
         </div>
       </div>
       <div className="flex w-full flex-col my-auto mb-8 md:flex-row xl:gap-14 md:gap-5">

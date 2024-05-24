@@ -58,6 +58,7 @@ export const loader: LoaderFunction = (args) => {
     const accountCookie = (await account.parse(cookieHeader) || {});
     const { userId } = request.auth
     const isPortalRoute = request.url.includes('/portal')
+    console.log('isPortalRoute', isPortalRoute, 'userId', userId)
     if ((!userId )) {
       if (isPortalRoute) {
         return redirect('/')

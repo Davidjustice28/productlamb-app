@@ -44,7 +44,6 @@ export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {
       }
     }
     const updatedRepositories = [...repositories, newRepoData]
-    console.log(newRepoData)
     setRepositories(updatedRepositories)
     setPlatform("Github")
     secretInputRef.current!.value = ""
@@ -107,12 +106,7 @@ export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {
       </>
     )
   }
-
-  useEffect(() => {
-    console.log('initial repos', initialRepos)
-  }, [])
   
-
   return (
     <div className="w-full mt-5 gap-2 flex flex-col">
       <div className='w-full flex flex-col gap-3'>

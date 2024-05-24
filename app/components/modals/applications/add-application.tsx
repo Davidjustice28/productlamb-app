@@ -13,7 +13,7 @@ interface NewGoalData {
   isLongTerm: boolean
 }
 
-export const PLAddApplicationModal = ({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) => {
+export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (data: any) => void, open: boolean, setOpen: (open: boolean) => void }) => {
   const [goals, setGoals] = useState<NewGoalData[]>([])
   const [isValid, setIsValid] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
@@ -43,13 +43,18 @@ export const PLAddApplicationModal = ({ open, setOpen }: { open: boolean, setOpe
 
   const submitApplication = async (e: React.FormEvent<HTMLButtonElement>) => {
     // e.preventDefault()
-    formRef.current?.submit()  
+    if(onSubmit) {
+      const form = new FormData(formRef.current!)
+      const data = Object.fromEntries(form.entries())
+      onSubmit(data)
+    } else {
+      formRef.current?.submit()
+    }
     setOpen(false)
   }
 
   const onRepositoriesChange = (repos: RepositoryCreationBaseInfo[]) => {
     repositoryJsonInputRef.current!.value = JSON.stringify({repositories: repos})
-    console.log('repos', repositoryJsonInputRef.current!.value)
   }
 
   const validateApplication = () => {

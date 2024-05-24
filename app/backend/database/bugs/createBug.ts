@@ -19,13 +19,10 @@ export function wrapCreateBug(client: PrismaClient['applicationBug']) {
           applicationId: application_id,
         }
       })
-      console.log('bug created: ', entry)
       if (!entry) {
-        console.log('error creating bug: ', entry)
       }
       return {data: entry, errors: []}
     } catch (error) {
-      console.log('error creating bug: ', error)
       return {data: undefined,errors: [1]}
     }
   }

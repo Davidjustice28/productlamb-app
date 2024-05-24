@@ -108,3 +108,81 @@ interface TypeformAnswer {
     ref: string;
   };
 }
+
+export interface BaseIntegrationSetupFormData {
+  integration_name: string
+}
+
+export interface TypeformIntegrationSetupFormData extends BaseIntegrationSetupFormData {
+  api_token: string
+  typeform_form_id: string
+}
+
+export interface TypeformIntegrationMetaData {
+  tag_name: string
+  form_id: string
+  webhook_id?: string
+}
+
+
+export interface TypeformFormResponseEntry {
+  answers: Array<
+    | {
+        field: {
+          id: string;
+          ref: string;
+          type: 'dropdown' | 'short_text' | 'long_text' | 'email' | 'number' | 'rating' | 'opinion_scale' | 'date' | 'picture_choice' | 'ranking' | 'multiple_choice' | 'file_upload' | 'legal' | 'yes_no';
+        };
+        type: 'text' | 'boolean' | 'email' | 'number' | 'choices' | 'date' | 'choice' | 'file_url';
+        text?: string;
+        boolean?: boolean;
+        number?: number;
+        choices?: {
+          labels: string[];
+        };
+        choice?: {
+          label: string;
+        };
+        date?: string;
+        file_url?: string;
+      }
+  >;
+  calculated: {
+    score: number;
+  };
+  hidden: Record<string, unknown>;
+  landed_at: string;
+  landing_id: string;
+  metadata: {
+    browser: string;
+    network_id: string;
+    platform: string;
+    referer: string;
+    user_agent: string;
+  };
+  response_id: string;
+  submitted_at: string;
+  token: string;
+  variables: Array<{
+    key: string;
+    type: 'number' | 'text';
+    number?: number;
+    text?: string;
+  }>;
+}
+
+export interface TypeformWebhookEntry {
+  created_at: string;
+  enabled: boolean;
+  form_id: string;
+  id: string;
+  tag: string;
+  updated_at: string;
+  url: string;
+  verify_ssl: boolean;
+}
+export interface TypeformListResponse<T=any>{
+  items: Array<T>;
+  page_count: number;
+  total_items: number;
+}

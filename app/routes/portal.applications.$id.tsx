@@ -23,9 +23,7 @@ interface NewGoalData {
 }
 
 export const action: ActionFunction = async ({ request, params }) => {
-  console.log('action hit')
   const ifMultipartForm = request.headers.get('content-type')?.includes('multipart')
-  console.log(ifMultipartForm, 'ifMultipartForm')
   const dbClient = new PrismaClient()
   const appDbClient = ApplicationsClient(dbClient.accountApplication)
   if (ifMultipartForm) {
@@ -65,7 +63,6 @@ export const action: ActionFunction = async ({ request, params }) => {
       const updateRepositoryData = data as unknown as {repositories: string}
 
       const {repositories} = JSON.parse(updateRepositoryData.repositories) as {repositories: Array<ApplicationCodeRepositoryInfo>}
-      console.log('repos', repositories)
       const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
       await repoDbClient.deleteAllApplicationRepositories(parseInt(id!))
       if (!repositories.length) {
@@ -84,10 +81,8 @@ export const action: ActionFunction = async ({ request, params }) => {
       const {data: appAfterImageDeletion} = await appDbClient.updateApplication(parseInt(id!), {logo_url: null})
       if (!appAfterImageDeletion) {
         await deleteFileFromCloudStorage(data.fileToDelete as string)
-        console.log('error deleting image')
         return json({ errors: [4] })
       } else {
-        console.log('deleted image: ', appAfterImageDeletion.logo_url)
         return json({ updatedApplication: appAfterImageDeletion })
       }
     } else {
@@ -119,10 +114,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const appDbClient = ApplicationsClient(dbClient.accountApplication)
   const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
   const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
-
   const appId = parseInt(id)
-  console.log('app id', appId)
-
   const {data:goals} = await goalDbClient.getGoals(appId)
   const {data: application} = await appDbClient.getApplicationById(appId)
   const {data: repositories} = await repoDbClient.getAllApplicationRepositories(appId)
@@ -134,8 +126,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   if (!goals) {
     return redirect('/portal/applications')
   }
-
-  console.log(repositories)
 
   return json({application, goals, repositories})
 }
@@ -210,20 +200,16 @@ export default function IndividualApplicationsPage() {
 
   function updateRepos() {
     reposFormRef.current?.requestSubmit()
-    console.log('updated repos')
   }
 
   function deleteAppImg() {
     deleteFormRef.current?.requestSubmit()
-    console.log('deleted image')
-
   }
 
   const repositoryJsonInputRef = useRef<HTMLInputElement>(null)
 
   const onRepositoriesChange = (repos: RepositoryCreationBaseInfo[]) => {
     repositoryJsonInputRef.current!.value = JSON.stringify({repositories: repos})
-    console.log('repos', repositoryJsonInputRef.current!.value)
   }
 
   return (

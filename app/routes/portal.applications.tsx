@@ -48,12 +48,10 @@ export let action: ActionFunction = async ({ request }) => {
     })
   } else if ('name' in data) {
     const {data: createAppResult } = await appDbClient.addApplication(accountId, data)
-    console.log('created app id: ', createAppResult?.id)
     if (createAppResult) {
       const goals = data.goals.length < 0 ? [] : JSON.parse(data.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)
       const {repositories} = JSON.parse(data.repositories) as {repositories: Array<ApplicationCodeRepositoryInfo>}
-      console.log('repos', repositories)
       await repoDbClient.addMultipleRepositories(createAppResult.id, repositories as any)
     }
 
@@ -66,7 +64,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const client = ApplicationsClient(new PrismaClient().accountApplication)
-  const {data: apps} = await client.getAccountApplications(1)
+  const {data: apps} = await client.getAccountApplications(Number(accountCookie.accountId))
   return json({apps: apps ?? [], activeIdOnLoad: accountCookie.selectedApplicationId})
 }
 export default function ApplicationsPage() {

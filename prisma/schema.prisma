@@ -1,9 +1,3 @@
-// Prisma Schema.
-// Learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Disclaimer: This is a Stripe demo schema.
-// It can be used in production, but you will have to adapt it to your own needs.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,113 +8,119 @@ datasource db {
 }
 
 model Account {
-  id    Int     @id @default(autoincrement())
-  dateCreated DateTime
+  id               Int                  @id @default(autoincrement())
+  dateCreated      DateTime
   subscriptionType String
-  status String
-  user_prisma_id String
-  applications AccountApplication[]
+  status           String
+  user_prisma_id   String
+  applications     AccountApplication[]
+  isSetup Boolean
 }
 
 model AccountApplication {
-  id    Int     @id @default(autoincrement())
-  name String
-  summary String
-  archived Boolean
-  siteUrl String?
-  type String
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade) 
-  logo_url String?
-  accountId Int
-  goals ApplicationGoal[]
-  initiatives GeneratedInitiative[]
-  integrations ApplicationIntegration[]
+  id                 Int                             @id @default(autoincrement())
+  name               String
+  summary            String
+  archived           Boolean
+  siteUrl            String?
+  type               String
+  accountId          Int
+  logo_url           String?
+  account            Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  bugs               ApplicationBug[]
   codeRepositoryInfo ApplicationCodeRepositoryInfo[]
-  sprints ApplicationSprint[]
-  tasks GeneratedTask[]
-  bugs ApplicationBug[]
-  feedback ApplicationFeedback[]
+  feedback           ApplicationFeedback[]
+  goals              ApplicationGoal[]
+  integrations       ApplicationIntegration[]
+  sprints            ApplicationSprint[]
+  initiatives        GeneratedInitiative[]
+  tasks              GeneratedTask[]
 }
 
 model ApplicationGoal {
-  id Int @id @default(autoincrement())
-  goal String
-  isLongTerm Boolean
-  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id            Int                @id @default(autoincrement())
+  goal          String
+  isLongTerm    Boolean
   applicationId Int
+  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model ApplicationFeedback {
-  id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id            Int                @id @default(autoincrement())
   applicationId Int
-  feedback String
-  feedbackDate String
-  source String
+  feedback      String
+  source        String
+  feedbackDate  String
+  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
+
 model GeneratedInitiative {
-  id Int @id @default(autoincrement())
-  description String
-  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id            Int                @id @default(autoincrement())
+  description   String
   applicationId Int
-  sprint ApplicationSprint @relation(fields: [sprintId], references: [id])
-  sprintId Int @unique
+  sprintId      Int                @unique
+  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  sprint        ApplicationSprint  @relation(fields: [sprintId], references: [id])
+  tasks         GeneratedTask[]
 }
 
 model ApplicationIntegration {
-  id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id])
-  applicationId Int
-  name String
-  secret String
+  id                   Int                @id @default(autoincrement())
+  applicationId        Int
+  name                 String
+  secret               String
   secretExpirationDate String?
+  metadata             String?
+  application          AccountApplication @relation(fields: [applicationId], references: [id])
 }
 
 model ApplicationCodeRepositoryInfo {
-  id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  applicationId Int
-  platform String
-  secret String
+  id                   Int                @id @default(autoincrement())
+  applicationId        Int
+  platform             String
+  secret               String
+  repositoryName       String?
+  repositoryId         Int?
   secretExpirationDate String?
-  repositoryName String?
-  repositoryId Int?
-  repositoryOwner String?
-  archived Boolean
+  repositoryOwner      String?
+  archived             Boolean
+  application          AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model GeneratedTask {
-  id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id            Int                 @id @default(autoincrement())
   applicationId Int
-  sprint ApplicationSprint @relation(fields: [sprintId], references: [id])
-  sprintId Int
-  title String
-  summary String
-  status String
-  points Int
+  sprintId      Int
+  title         String
+  status        String
+  points        Int?
+  description   String
+  initiativeId  Int
+  reason        String
+  application   AccountApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  initiative    GeneratedInitiative @relation(fields: [initiativeId], references: [id])
+  sprint        ApplicationSprint   @relation(fields: [sprintId], references: [id])
 }
 
-
 model ApplicationSprint {
-  id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  applicationId Int
-  startDate String
-  endDate String
-  completed Boolean
+  id             Int                  @id @default(autoincrement())
+  applicationId  Int
+  startDate      String?
+  endDate        String?
+  completed      Boolean
+  application    AccountApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  initiative     GeneratedInitiative?
   generatedTasks GeneratedTask[]
-  initiative GeneratedInitiative?
 }
 
 model ApplicationBug {
-  id Int @id @default(autoincrement())
-  application AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id            Int                @id @default(autoincrement())
   applicationId Int
-  title String
-  description String
-  status String
+  title         String
+  description   String
+  priority      String
   createdDateMs String
-  priority String
-  source String
+  source        String
+  status        String
+  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }

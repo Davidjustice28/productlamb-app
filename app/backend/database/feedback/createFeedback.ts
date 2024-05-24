@@ -6,7 +6,6 @@ export function wrapCreateFeedback(client: PrismaClient['applicationFeedback']) 
   return createFeedback
 
   async function createFeedback(application_id: number, comment: string, source: FeedbackSource, dateCreated?: Date) {
-    console.log('dateCreated: ', dateCreated)
     const date = dateCreated ? dateCreated.toISOString() : new Date().toISOString()
     try {
       const entry = await client.create({
@@ -36,15 +35,12 @@ export function wrapBulkCreateFeedback(client: PrismaClient['applicationFeedback
         return {applicationId: d.application_id, feedback: d.comment, source: d.source, feedbackDate: date}
       })})
       if (entries.count !== feedbackData.length) {
-        console.log(`Error creating feedback entries: ${entries.count} created, ${feedbackData.length} expected`)
         return {data: [], errors: [1]}
       }
       const feedback = await client.findMany({ where: {applicationId: application_id} })
-      console.log(`Created ${entries.count} feedback entries`)
       return {data: feedback, errors: []}
     } catch (error) {
-      console.log('Error creating feedback entries: ', error)
-      return {data: [], errors: [1]}
+      return {data: [], errors: [2]}
     }
   }
 }

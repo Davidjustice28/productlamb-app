@@ -4,7 +4,7 @@ import { PLIntegrationOption } from "~/components/integrations/integration"
 import { availableIntegrations } from "~/static/integration-options"
 import { IntegrationSetupComponent } from "~/components/integrations/setup-component"
 
-export function PLIntegrationOptionsModal({open, onClose, setOpen, configuredIntegrations }: {open: boolean, onClose?: () => void, setOpen: (open: boolean) => void, configuredIntegrations: Array<number>}) {
+export function PLIntegrationOptionsModal({open, onClose, setOpen, configuredIntegrations, onSubmit }: {open: boolean, onClose?: () => void, setOpen: (open: boolean) => void, configuredIntegrations: Array<number>, onSubmit?: (data: any) => void}) {
   const [integrationSelected, setIntegrationSelected] = useState<number|null>(null) 
   const onAddButtonClick = (id: number) => {
     setIntegrationSelected(id)
@@ -16,7 +16,7 @@ export function PLIntegrationOptionsModal({open, onClose, setOpen, configuredInt
         integrationSelected !== null &&
         (
           <div style={{height: "590px"}}>
-            <IntegrationSetupComponent integration={availableIntegrations.find(i => i.id === integrationSelected)!} onBackButtonClick={() => setIntegrationSelected(null)}/>
+            <IntegrationSetupComponent integration={availableIntegrations.find(i => i.id === integrationSelected)!} onBackButtonClick={() => setIntegrationSelected(null)} onSubmit={onSubmit}/>
           </div> 
         )
       }
@@ -24,7 +24,7 @@ export function PLIntegrationOptionsModal({open, onClose, setOpen, configuredInt
         integrationSelected === null &&
         (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 my-5 p-5 overflow-scroll" style={{height: "550px"}}>
-            { availableIntegrations.filter(i => !configuredIntegrations.includes(i.id)).map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={true} onAddButtonClick={() => onAddButtonClick(integration.id)}/>) }
+            { availableIntegrations.filter(i => !configuredIntegrations.includes(i.id)).sort((a,b) => (a.available && !b.available ? -1 : 1 )).map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={true} onAddButtonClick={() => onAddButtonClick(integration.id)}/>) }
           </div>
         )
       }

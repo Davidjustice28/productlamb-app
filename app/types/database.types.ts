@@ -34,3 +34,4 @@ export interface BugCreateData {
 }
 
 export type FeedbackSource = 'Notion' | 'Google Review' | 'SurveyMonkey' | 'YouTube' | 'Other' | 'Jira' | 'Email'
+export type PLAvailableIntegrationNames = 'google calendar' | 'google drive' | 'google sheets' | 'google forms' | 'excel' | 'typeform' | 'jotform' | 'slack' | 'gmail' | 'excel' | 'discord'

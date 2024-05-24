@@ -11,7 +11,7 @@ export function PLIntegrationOption({ integration, addMode=false, onAddButtonCli
 
   if (!integration) return null
   return (
-    <div className="group flex flex-col bg-white rounded-lg shadow-lg dark:bg-neutral-800">
+    <div className={"group flex flex-col bg-white rounded-lg shadow-lg dark:bg-neutral-800 " + (!integration.available ? ' opacity-45' : '')}>
       <div className="flex items-center justify-between p-4 border-b dark:border-neutral-700">
         <div className="flex items-center">
           <img src={integration.img_url} alt="app icon" className="w-10 h-10 rounded-full" />
@@ -22,9 +22,13 @@ export function PLIntegrationOption({ integration, addMode=false, onAddButtonCli
             addMode ?
             <>
               <div className="flex flex-row">
-                <button className="p-2 text-gray-600 rounded-full dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700" aria-label="Options" onClick={onAddButtonClick}>
-                  <i className="ri ri-add-line"></i>
-                </button>
+                {
+                  integration.available && (
+                    <button className="p-2 text-gray-600 rounded-full dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700" aria-label="Options" onClick={onAddButtonClick}>
+                      <i className="ri ri-add-line"></i>
+                    </button>
+                  )
+                }
         
               </div>
             </> :

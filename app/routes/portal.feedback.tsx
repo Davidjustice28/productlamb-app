@@ -7,9 +7,7 @@ import { account } from "~/backend/cookies/account";
 import { FeedbackClient } from "~/backend/database/feedback/client";
 import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLAddFeedbackModal } from "~/components/modals/feedback/add-feedback";
-import { PLCsvUploadModal } from "~/components/modals/feedback/csv-upload";
-import { PLSelectorModal } from "~/components/modals/selector";
-import { PLSelectorModalOption } from "~/types/component.types";
+import { PLBulkUploadFeedbackModal } from "~/components/modals/feedback/bulk-upload/bulk-upload";
 import { FeedbackSource } from "~/types/database.types";
 
 export interface NewFeedbackData {
@@ -68,7 +66,6 @@ export const loader: LoaderFunction = async ({request}) => {
   const applicationId = accountCookie.selectedApplicationId as number
   const feedbackDbClient = FeedbackClient(new PrismaClient().applicationFeedback)
   const {data: feedback} = await feedbackDbClient.getApplicationFeedback(applicationId)
-  console.log('loaded feedback: ', feedback)
   return json({feedback: feedback || []})
 }
 
@@ -78,39 +75,10 @@ export default function FeedbackPage() {
   const [feedback, setFeedback] = useState<Array<ApplicationFeedback>>(updatedFeedback ?? loadedFeedback)
   const [addModalOpen, setAddModalOpen] = useState<boolean>(false)
   const [bulkUploadModalOpen, setBulkModalOpen] = useState(false)
-  const [csvUploadModalOpen, setCsvUploadModalOpen] = useState(false)
-  const modalOptions: Array<PLSelectorModalOption> = [
-    {
-      name: 'CSV',
-      iconClass: 'ri-file-line',
-      value: 'manual'
-    },
-    {
-      name: 'Typeform',
-      value: 'integration',
-      logo_url: 'https://storage.googleapis.com/productlamb-platform-images/typeform.svg'
-    },
-    {
-      name: 'Jotform',
-      value: 'integration',
-      logo_url: 'https://storage.googleapis.com/productlamb-platform-images/jotform.svg'
-    },
-    {
-      name: 'Google Forms',
-      value: 'integration',
-      logo_url: 'https://storage.googleapis.com/productlamb-platform-images/google-forms.svg'
-    }
-  ]
+
 
   const openBulkUploadModal = () => {
     setBulkModalOpen(true)
-  }
-
-  const handleOptionClick = (option: PLSelectorModalOption) => {
-    setBulkModalOpen(false)
-    if (option.value === 'manual') {
-      setCsvUploadModalOpen(true)
-    }
   }
 
   return (
@@ -132,8 +100,7 @@ export default function FeedbackPage() {
         }
       </div>
       <PLAddFeedbackModal open={addModalOpen} setOpen={setAddModalOpen} onClose={() => setAddModalOpen(false)}/>
-      <PLSelectorModal open={bulkUploadModalOpen} setOpen={setBulkModalOpen} options={modalOptions} message="Choose the source you prefer to upload user feedback from." title="Bulk upload feedback" onClick={handleOptionClick}/>
-      <PLCsvUploadModal open={csvUploadModalOpen} setOpen={setCsvUploadModalOpen} onClose={() => setCsvUploadModalOpen(false)}/>
+      <PLBulkUploadFeedbackModal open={bulkUploadModalOpen} setOpen={setBulkModalOpen} onClose={() => setBulkModalOpen(false)}/>
     </div>
   )
 }

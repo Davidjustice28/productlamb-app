@@ -26,15 +26,18 @@ export const loader: LoaderFunction = args => {
     let selectedApplicationName: string| undefined = accountCookie.selectedApplicationName
     
     const dbClient = new PrismaClient()
-    if (accountId === undefined || setupIsComplete === undefined) {
+    if (!accountId || !setupIsComplete) {
       const accountClient = AccountsClient(dbClient.account)
       const {data: accountData} = await accountClient.getAccountByUserId(userId || "")
+      console.log("Account Data: ", accountData)
+      if (!accountData || !accountData.isSetup) {
+        return redirect("/portal/setup")
+      } 
       accountCookie.accountId = accountData?.id || undefined
       accountId = accountCookie.accountId
-    
       const applicationClient = ApplicationsClient(dbClient.accountApplication)
       const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
-      accountCookie.setupIsComplete = applications ? !!applications.length : false
+      accountCookie.setupIsComplete = true
       setupIsComplete = accountCookie.setupIsComplete
       if (selectedApplicationId === undefined && applications && applications.length > 0) {
         accountCookie.selectedApplicationId = applications[0].id
@@ -46,7 +49,7 @@ export const loader: LoaderFunction = args => {
       return redirect("/portal/dashboard", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
       // return json({ darkMode, hasApplication, accountId, selectedApplicationId, selectedApplicationName }, { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
     } else {
-      setupIsComplete = accountCookie.setupIsComplete
+      setupIsComplete = true
       accountId = accountCookie.accountId
       
       if (selectedApplicationId === undefined) {
@@ -73,7 +76,6 @@ export default function DashboardPage() {
   const [chartIndex, setChartIndex] = useState<number>(0)
   const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(null)
   const [tasks, setTasks] = useState<GeneratedTask[]>([])
-  const xKey = "name"
   const yKey = chartIndex == 0 ? "taskCount" : "percentage"
 
   const handleChartChange = (goingForward: boolean) => {
@@ -91,14 +93,6 @@ export default function DashboardPage() {
         setChartIndex(chartIndex - 1)
       }
     }
-  }
-
-  const calculateDaysLeft = (sprint: ApplicationSprint) => {
-    const startDate = new Date(sprint.startDate)
-    const endDate = new Date(sprint.endDate)
-    const currentDate = new Date()
-    const daysLeft = Math.floor((endDate.getTime() - currentDate.getTime()) / (1000 * 3600 * 24))
-    return daysLeft
   }
 
   const columns: Array<TableColumn> = [
@@ -150,7 +144,7 @@ export default function DashboardPage() {
             </div>
             <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
               <p className="text-black text-xs dark:text-gray-500">Days</p>
-              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">{currentSprint ? calculateDaysLeft(currentSprint) : 'N/A'}</h3>
+              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">{currentSprint ? 5 : 'N/A'}</h3>
               <p className="text-black text-xs dark:text-gray-500">Left</p>
             </div>
           </div>

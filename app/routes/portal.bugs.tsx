@@ -46,7 +46,6 @@ export const action: ActionFunction = async ({request}) => {
   }
 
   if (data.action === 'delete') {
-    console.log('delete bug: ', data)
     const ids = data.ids.split(',').map(id => parseInt(id))
     await bugClient.deleteBugs(applicationId, ids)
     const {data: bugs} = await bugClient.getAllBugs(applicationId)

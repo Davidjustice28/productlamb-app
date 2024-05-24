@@ -8,10 +8,8 @@ export function wrapDeleteBugs(client: PrismaClient['applicationBug']) {
     try {
       const result = await client.deleteMany({ where: query })
       const success = ids ? result.count === ids.length : true
-      console.log('deleted bugs: ', result)
       return {data: success, errors: []}
     } catch (error) {
-      console.log('error deleting bugs: ', error)
       return {data: false, errors: [1]}
     }
   }

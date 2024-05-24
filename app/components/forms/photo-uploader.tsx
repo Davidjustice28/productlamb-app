@@ -19,7 +19,6 @@ export function PLPhotoUploader({shape='circle', size='small', currentImageUrl }
     const file = files[0]
     file.stream
     setFile(file)  
-    console.log(`File: ${file.name} ready to uploaded!`)
     formRef.current?.submit()
   }
   return (

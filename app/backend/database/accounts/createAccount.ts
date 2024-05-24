@@ -10,7 +10,8 @@ export function wrapCreateAccount(accountsClient: PrismaClient['account']) {
         user_prisma_id: id,
         dateCreated: new Date(),
         subscriptionType,
-        status: 'pending'
+        status: 'pending',
+        isSetup: false
       }})
       return {data: account, errors: []}
     } catch (e) {
