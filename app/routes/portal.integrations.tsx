@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { ApplicationIntegration, PrismaClient } from "@prisma/client"
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
 import { useState } from "react"
@@ -13,7 +13,19 @@ import { IntegrationOptions } from "~/types/component.types"
 import { PLAvailableIntegrationNames } from "~/types/database.types"
 import { TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types"
 
+function getIntegrationsByname(setupIntegrations: Array<ApplicationIntegration>, options: Array<IntegrationOptions>) {
+  const configuredOptions: Array<IntegrationOptions> = []
+  const integrations = setupIntegrations.forEach(element => {
+    const integration = options.find(i => i.name === element.name)
+    if (integration)  {
+      configuredOptions.push(integration)
+    }
+  });
+  return configuredOptions
+}
+
 export const action: ActionFunction = async ({ request }) => {
+  console.log('integration page action called')
   const cookies = request.headers.get('Cookie')
   const form = await request.formData()
   const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData
@@ -23,8 +35,10 @@ export const action: ActionFunction = async ({ request }) => {
   const dbClient = new PrismaClient().applicationIntegration
   const integrationClient = IntegrationClient(dbClient)
   if ('integration_name' in formData) {
+    console.log('integration_name', formData.integration_name,)
     const integrationOptionData = availableIntegrations.find(i => i.name.toLowerCase() === formData.integration_name)
     if (integrationOptionData && integrationOptionData.name === 'typeform') {
+      console.log('integrationOptionData', integrationOptionData)
       // const webhookId = await integrationOptionData.onAdd(dbClient, formData.typeform_form_id, 'productlamb-webhook', applicationId)
       await integrationClient.addIntegration<TypeformIntegrationMetaData>(applicationId, formData.integration_name as PLAvailableIntegrationNames, formData.api_token, {
         form_id: formData.typeform_form_id,
@@ -45,6 +59,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
+  console.log('integrations loader', {applicationId})
   const dbClient = new PrismaClient().applicationIntegration
   const integrationClient = IntegrationClient(dbClient) 
   const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId) 
@@ -56,15 +71,15 @@ export default function IntegrationsPage() {
   const {updatedIntegrations} = useLoaderData<typeof action>() || {updatedIntegrations: null }
   const { integrations: configuredIntegrations } = useLoaderData<typeof loader>() || { integrations: [] }
   const [integrations, setIntegrations] = useState(updatedIntegrations || configuredIntegrations)
+  const [integrationsSetup, setIntegrationsSetup] = useState(getIntegrationsByname(integrations, availableIntegrations))
   const [optionsModalOpen, setOptionsModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationOptions|null>(null)
 
-  const getIntegrationsById = (ids: Array<number>) => availableIntegrations.filter(i => ids.includes(i.id))
-  const getIntegrationById = (id: number) => availableIntegrations.find(i => i.id === id)!
+  const getIntegrationById = (name: string) => availableIntegrations.find(i => i.name === name)!
 
-  const openEditModal = (id: number) => {
-    const integration = getIntegrationById(id)
+  const openEditModal = (integration_name: string) => {
+    const integration = getIntegrationById(integration_name)
     setSelectedIntegration(integration)
     setEditModalOpen(true)
   }
@@ -76,7 +91,7 @@ export default function IntegrationsPage() {
         <PLIconButton icon="ri-add-line" onClick={() => setOptionsModalOpen(true)}/>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-5">
-        { getIntegrationsById(integrations).map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={false} onEditButtonClick={() => openEditModal(integration.id)}/>) }
+        { integrationsSetup.map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={false} onEditButtonClick={() => openEditModal(integration.name)}/>) }
       </div>
       <PLIntegrationOptionsModal open={optionsModalOpen} setOpen={setOptionsModalOpen} configuredIntegrations={[]}/>
       <PLIntegrationEditModal open={editModalOpen} setOpen={setEditModalOpen} integration={selectedIntegration}/>

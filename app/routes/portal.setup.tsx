@@ -41,7 +41,7 @@ export const loader: LoaderFunction = args => {
     const cookieHeader = request.headers.get("Cookie");
     const accountCookie = (await account.parse(cookieHeader) || {});
     let accountId: number| undefined = accountCookie.accountId
-    console.log({accountId, userId})
+    console.log('set page loader called', {accountId, userId})
     if (!userId) {
       return redirect('/')
     }
@@ -62,39 +62,28 @@ export const loader: LoaderFunction = args => {
       } 
 
       const {data: apps} = await appClient.getAccountApplications(accountData.id)
-      const isSetup = (accountData.isSetup || !!apps?.length)
+      const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
+      const isSetup = (accountData.isSetup)
       accountCookie.accountId = accountData.id
       accountCookie.setupIsComplete = isSetup
 
       if (!isSetup) {
-        return json({hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: false, providedFeedback: false}, {headers: {
+        return json({hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false}, {headers: {
           "Set-Cookie": await account.serialize(accountCookie)
         }})
       } else {
-        const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
-        return json({hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false}, {headers: {
+        return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: integrations ? integrations.length : false, providedFeedback: false}, {headers: {
           "Set-Cookie": await account.serialize(accountCookie)
         }})
       }
     } else {
+      const {data: accountData} = await accountClient.getAccountById(accountId)
       const {data: apps} = await appClient.getAccountApplications(accountId)
-      if (!apps || !apps.length) {
-        console.log("No apps found for account.")
-        return json({hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false}, {
-          headers: {
-            "Set-Cookie": await account.serialize(accountCookie)
-          }
-        })
-      }
-      const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps[0].id)
-      console.log({apps, integrations})
-      const isSetup = (!!apps?.length)
-      accountCookie.setupIsComplete = isSetup
-      return json({isSetup, hasApplication: apps ? apps.length > 0 : false, hasIntegration: integrations ? integrations.length > 0 : false, providedFeedback: false}, {
-        headers: {
-          "Set-Cookie": await account.serialize(accountCookie)
-        }
-      })
+      const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
+
+      if (accountData && !accountData.isSetup) return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: integrations ? integrations.length : false, providedFeedback: false})
+      if (accountData && accountData.isSetup) return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie)}})
+      return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: integrations ? integrations.length : false, providedFeedback: false})
     }
   })
 }
@@ -111,9 +100,9 @@ export let action: ActionFunction = async ({ request }) => {
   const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
   const accountClient = AccountsClient(dbClient.account)
   const integrationClient = IntegrationClient(dbClient.applicationIntegration)
-  console.log({data})
   if ('setup_complete' in data) {
     await accountClient.updateAccount(accountId, {isSetup: true})
+    const {data: accountData} = await appDbClient.getAccountApplications(accountId)
     accountCookie.setupIsComplete = true
 
     return redirect('/portal/dashboard', {
@@ -132,16 +121,12 @@ export let action: ActionFunction = async ({ request }) => {
         await repoDbClient.addMultipleRepositories(createAppResult.id, repositories as any)
       }
     }
-    await accountClient.updateAccount(accountId, {isSetup: true})
-    return json({hasApplication: true, isSetup: true})
+    return json({hasApplication: true})
   }  else if ('integration' in data) {
-    console.log('Adding Integration')
-    // if you can add an integration, then you have an application and it will only be one
     const {data: apps} = await appDbClient.getAccountApplications(accountId)
     const integrationData = JSON.parse(data.integration as string) as TypeformIntegrationSetupFormData
     const integrationOptionData = availableIntegrations.find(i => i.name.toLowerCase() === integrationData.integration_name)
     if (integrationOptionData && integrationOptionData.name === 'typeform') {
-      console.log('Adding Typeform Integration')
       await integrationClient.addIntegration<TypeformIntegrationMetaData>(apps![0].id, integrationData.integration_name as PLAvailableIntegrationNames, integrationData.api_token, {
         form_id: integrationData.typeform_form_id,
         tag_name: 'productlamb-webhook',
@@ -152,19 +137,7 @@ export let action: ActionFunction = async ({ request }) => {
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
     return json({hasIntegration: integrations ? integrations.length > 0 : false})
   } else {
-    const {data: accountData} = await accountClient.getAccountById(accountId)
-    if (!accountData) {
-      return json({hasApplication: false, isSetup: false})
-    } else {
-      if(!accountData.isSetup) {
-        const {data: apps} = await appDbClient.getAccountApplications(accountId)
-        const hasApplication = apps ? apps.length : false
-        accountCookie.setupIsComplete = hasApplication
-        return json({hasApplication: hasApplication, isSetup: hasApplication})
-      } else {
-        return json({hasApplication: true, isSetup: true})
-      }
-    }
+    return json({})
   }
 }
 
@@ -172,11 +145,11 @@ export default function SetupPage() {
   const { hasApplication: loaderHasApplication, isSetup: loaderIsSetup, providedFeedback, hasIntegration: loaderHasIntegration } = useLoaderData<{hasApplication: boolean, isSetup: boolean, hasIntegration: boolean, providedFeedback: boolean}>()
   const { hasApplication: actionHasApplication, isSetup: actionIsSetup, hasIntegration: actionHasIntegration } = useActionData<{hasApplication?: boolean|null, isSetup?: boolean|null, hasIntegration?: boolean|null, providedFeedback?: boolean|null}>() || {hasApplication: null, isSetup: null, hasIntegration: null, hasFeedback: null}
   const hasApplication = loaderHasApplication ?? actionHasApplication
-  const isSetup = loaderIsSetup ?? actionIsSetup
   const hasIntegration = loaderHasIntegration ?? actionHasIntegration
   const [addApplicationModalOpen, setAddApplicationModalOpen] = useState(false);
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const isSetup = hasApplication
   const [stepsMap, setStepsMap] = useState<{[key: number]: {completed: boolean, enabled: boolean}}>({
     0: {completed: hasApplication, enabled: true},
     1: {completed: hasIntegration, enabled: hasApplication},
@@ -268,10 +241,6 @@ export default function SetupPage() {
     setupCompleteInputRef.current!.value = 'true'
     setupCompleteFormRef.current!.submit()
   }
-  
-  useEffect(() => {
-    console.log({hasApplication, isSetup, providedFeedback, hasIntegration})
-  }, [])
 
   return (
     <div className="flex flex-col h-full items-center text-black">
@@ -311,9 +280,6 @@ export default function SetupPage() {
 
 function SetupFieldComponent({fieldInfo,enabled, completed}: {fieldInfo: SetupFieldProps, enabled?: boolean, completed?: boolean}) {
   const {title, description, onClick, buttonText, icon} = fieldInfo;
-  useEffect(() => {
-    console.log({enabled, completed, title})
-  },[])
   return (
     <div className={"w-full flex items-center gap-7 "}>
       <div className={"h-[50px] w-[50px] border-2 border-black rounded-sm flex justify-center items-center " +  (completed ? " opacity-50" : "")}>

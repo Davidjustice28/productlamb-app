@@ -20,6 +20,7 @@ export interface NewApplicationData {
   goals: string
   logo_url?: string|null
   repositories: string
+  projectManagementTool: string
 }
 
 export type BugSource = 'repository' | 'self-identified' | 'productLamb' | 'integration' | 'pm-tool' | 'other'

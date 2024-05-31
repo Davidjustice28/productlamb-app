@@ -105,7 +105,7 @@ export const availableIntegrations: Array<IntegrationOptions>= [
     onAdd: async (client: PrismaClient['applicationIntegration'], form_id: string, api_token: string, application_id: number) => {
       const integrationClient = IntegrationClient(client)
       const typeform = new TypeformClient(api_token, form_id)
-      const webhook = await typeform.createWebhook(`https://productlamb.com/api/feedback/${application_id}`, 'productlamb-webhook')
+      const webhook = await typeform.createWebhook(application_id, 'productlamb-webhook')
       return webhook.id!
     }
   },

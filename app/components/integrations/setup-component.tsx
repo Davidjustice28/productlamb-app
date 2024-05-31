@@ -14,7 +14,6 @@ export function IntegrationSetupComponent({integration, onBackButtonClick, showB
     if (onSubmit) { 
       const formData = new FormData(formRef.current!)
       const data = Object.fromEntries(formData.entries())
-      console.log('onSubmit in IntegrationSetupComponent called. Heres data being sent: ', data)
       onSubmit(data)
     } else { 
       formRef.current?.submit()
@@ -58,8 +57,8 @@ export function IntegrationSetupComponent({integration, onBackButtonClick, showB
             })
           }
         </div>
-        <PLBasicButton text="Enable Integration" colorClasses="bg-blue-500 text-white hover:bg-blue-600 w-52" rounded={true} onClick={onFormSubmit} disabled={!formIsValid}/>
       </form>
+      <PLBasicButton text="Enable Integration" colorClasses="bg-blue-500 text-white hover:bg-blue-600 w-52" rounded={true} onClick={onFormSubmit} disabled={!formIsValid}/>
     </div>
   )
 }

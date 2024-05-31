@@ -17,7 +17,6 @@ export class TypeformClient {
   private token: string = ''
 
   constructor(api_token: string, form_id: string) {
-    console.log('api_token: ', api_token)
     this.form_id = form_id;
     this.token = api_token;
   }
@@ -34,7 +33,6 @@ export class TypeformClient {
         throw new Error('Failed to fetch typeform forms');
       }
       const data = await response.json() as TypeformFormResponseEntry
-      console.log('Form GET data: ', data)
       return data;
     } catch (e) {
       throw e;
@@ -53,7 +51,6 @@ export class TypeformClient {
         throw new Error('Failed to fetch typeform forms');
       }
       const data = await response.json() as TypeformListResponse<TypeformFormResponseEntry>
-      console.log('Form responses: ', data)
       return data.items;
     } catch (e) {
       throw e;
@@ -71,7 +68,6 @@ export class TypeformClient {
         throw new Error('Failed to fetch typeform forms');
       }
       const data = await response.json() as TypeformListResponse<TypeformWebhookEntry[]>
-      console.log('Form webhooks: ', data)
       return data.items;
     } catch (e) {
       throw e;
@@ -108,7 +104,6 @@ export class TypeformClient {
         throw new Error('Failed to fetch typeform forms');
       }
       const data = await response.json() as TypeformWebhookEntry
-      console.log('Webhook created: ', data)
       return data;
     } catch (e) {
       throw e;
@@ -127,7 +122,6 @@ export class TypeformClient {
         throw new Error('Failed to fetch typeform forms');
       }
       const deleted = response.status === 204
-      console.log('Webhook deleted: ', deleted)
       return deleted;
     } catch (e) {
       throw e;

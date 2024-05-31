@@ -26,6 +26,11 @@ model AccountApplication {
   type               String
   accountId          Int
   logo_url           String?
+  pm_tool            String?
+  clickup_integration ApplicationClickupIntegration? @relation(fields: [clickup_integration_id], references: [id], onDelete: Cascade)
+  clickup_integration_id Int? @unique
+  notion_integration  ApplicationNotionIntegration? @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
+  notion_integration_id Int? @unique
   account            Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
   bugs               ApplicationBug[]
   codeRepositoryInfo ApplicationCodeRepositoryInfo[]
@@ -58,9 +63,9 @@ model GeneratedInitiative {
   id            Int                @id @default(autoincrement())
   description   String
   applicationId Int
-  sprintId      Int                @unique
   application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   sprint        ApplicationSprint  @relation(fields: [sprintId], references: [id])
+  sprintId      Int 
   tasks         GeneratedTask[]
 }
 
@@ -90,7 +95,7 @@ model ApplicationCodeRepositoryInfo {
 model GeneratedTask {
   id            Int                 @id @default(autoincrement())
   applicationId Int
-  sprintId      Int
+  sprintId      Int?
   title         String
   status        String
   points        Int?
@@ -99,7 +104,7 @@ model GeneratedTask {
   reason        String
   application   AccountApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   initiative    GeneratedInitiative @relation(fields: [initiativeId], references: [id])
-  sprint        ApplicationSprint   @relation(fields: [sprintId], references: [id])
+  sprint        ApplicationSprint?   @relation(fields: [sprintId], references: [id])
 }
 
 model ApplicationSprint {
@@ -109,7 +114,9 @@ model ApplicationSprint {
   endDate        String?
   completed      Boolean
   application    AccountApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  initiative     GeneratedInitiative?
+  initiative     GeneratedInitiative[]
+  status         String
+  selectedInitiative Int?
   generatedTasks GeneratedTask[]
 }
 
@@ -123,4 +130,24 @@ model ApplicationBug {
   source        String
   status        String
   application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model ApplicationClickupIntegration {
+  id            Int                @id @default(autoincrement())
+  applicationId Int
+  name          String
+  api_token        String
+  parent_folder_id Int
+  sprints_list_id Int?
+  application AccountApplication?
+}
+
+model ApplicationNotionIntegration {
+  id            Int                @id @default(autoincrement())
+  applicationId Int
+  name          String
+  api_token        String
+  parent_page_id String
+  sprints_page_id String?
+  application   AccountApplication?
 }

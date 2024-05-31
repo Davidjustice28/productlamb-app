@@ -15,6 +15,8 @@ import { ClerkApp } from '@clerk/remix'
 import { getSharedEnvs } from './utils/envs';
 import { preferences } from './backend/cookies/preferences';
 import { account } from './backend/cookies/account';
+import { AccountsClient } from './backend/database/accounts/client';
+import { PrismaClient } from '@prisma/client';
 
 export const links: LinksFunction = () => {
   return [
@@ -58,14 +60,25 @@ export const loader: LoaderFunction = (args) => {
     const accountCookie = (await account.parse(cookieHeader) || {});
     const { userId } = request.auth
     const isPortalRoute = request.url.includes('/portal')
-    console.log('isPortalRoute', isPortalRoute, 'userId', userId)
     if ((!userId )) {
-      if (isPortalRoute) {
-        return redirect('/')
-      }
+      if (isPortalRoute) return redirect('/')
     } else {
+
+      if((!accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) && accountCookie.accountId) {
+        const dbClient = new PrismaClient()
+        const accountClient = AccountsClient(dbClient.account)
+        const {data: accountData} = await accountClient.getAccountById(accountCookie.accountId)
+        if (accountData) {
+          accountCookie.setupIsComplete = accountData.isSetup
+        } 
+      
+        if (!accountData || !accountData.isSetup) {
+          return redirect("/portal/setup", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+        } 
+      }
+
       if( !isPortalRoute ) {
-        return redirect(accountCookie.setupIsComplete ? '/portal/dashboard' : '/portal/setup')
+        return redirect(accountCookie.setupIsComplete ? '/portal/dashboard' : '/portal/setup' , { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
       }
     }
     return { darkMode: preferencesCookie.darkMode, ENV: getSharedEnvs(), navBarExpanded: preferencesCookie.navBarMode, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete};

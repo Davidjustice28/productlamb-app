@@ -149,7 +149,7 @@ export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {
               <p>
                 {repo.platform} - {repo.platform === "Github" ? (repo as GithubRepositoryInfo).repositoryName : (repo as GitlabRepositoryInfo).repositoryId}
               </p>
-              <PLStatusBadge text="Connected" color={Colors.GREEN}/>
+              <PLStatusBadge text="Ready" color={Colors.GREEN}/>
               <PLIconButton icon="ri-close-line" colorClasses="text-red-600 text-lg hover:bg-neutral-100" onClick={() => removeRepository(index)}/>
             </div>
           ))

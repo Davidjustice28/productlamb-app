@@ -29,7 +29,7 @@ export const loader: LoaderFunction = args => {
     if (!accountId || !setupIsComplete) {
       const accountClient = AccountsClient(dbClient.account)
       const {data: accountData} = await accountClient.getAccountByUserId(userId || "")
-      console.log("Account Data: ", accountData)
+      console.log('dashboard loader', accountData, userId, {accountCookie})
       if (!accountData || !accountData.isSetup) {
         return redirect("/portal/setup")
       } 

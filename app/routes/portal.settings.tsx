@@ -5,6 +5,7 @@ import { NotificationsSettings } from "~/components/settings/notifications";
 import { PreferencesSettings } from "~/components/settings/preferences";
 import { SettingsTabGroup } from "~/types/database.types";
 
+
 export default function SettingsPage() {
   const userSettingsGroups = Object.values(SettingsTabGroup)
 
