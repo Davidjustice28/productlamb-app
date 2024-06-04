@@ -21,6 +21,8 @@ export interface NewApplicationData {
   logo_url?: string|null
   repositories: string
   projectManagementTool: string
+  clickup_integration_id?: number
+  notion_integration_id?: number
 }
 
 export type BugSource = 'repository' | 'self-identified' | 'productLamb' | 'integration' | 'pm-tool' | 'other'
@@ -36,3 +38,19 @@ export interface BugCreateData {
 
 export type FeedbackSource = 'Notion' | 'Google Review' | 'SurveyMonkey' | 'YouTube' | 'Other' | 'Jira' | 'Email'
 export type PLAvailableIntegrationNames = 'google calendar' | 'google drive' | 'google sheets' | 'google forms' | 'excel' | 'typeform' | 'jotform' | 'slack' | 'gmail' | 'excel' | 'discord'
+
+export enum PROJECT_MANAGEMENT_TOOL {
+  CLICKUP = "ClickUp",
+  // JIRA = "Jira", tbd
+  NOTION = "Notion",
+}
+
+export interface NotionData {
+  apiKey: string
+  parentPageId: string
+}
+
+export interface ClickUpData {
+  apiToken: string
+  parentFolderId: number
+}

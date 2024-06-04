@@ -1,11 +1,7 @@
 import { Form } from "@remix-run/react";
 import { PLBaseModal, PLModalFooter } from "../base";
 import { useEffect, useRef, useState } from "react";
-import { PLBasicButton } from "~/components/buttons/basic-button";
-import { PLStatusBadge } from "~/components/common/status-badge";
-import { Colors } from "~/types/base.types";
 import { PLNewRepositoryComponent } from "./add-repository";
-import { Repositories } from "@gitbeaker/rest";
 import { RepositoryCreationBaseInfo } from "~/backend/database/code-repository-info/addRepository";
 import { PLProjectManagementToolLink } from "./link-pm-tool";
 
@@ -19,10 +15,25 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
   const [isValid, setIsValid] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
+  // initials values
   const repositoryJsonInputRef = useRef<HTMLInputElement>(null)
   const pmToolRef = useRef<HTMLInputElement>(null)
-
   const formRef = useRef<HTMLFormElement>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  const summaryInputRef = useRef<HTMLTextAreaElement>(null)
+  const siteUrlInputRef = useRef<HTMLInputElement>(null)
+  const typeInputRef = useRef<HTMLSelectElement>(null)
+  const goalInputRef = useRef<HTMLInputElement>(null)
+
+  // form refs
+  const formRepositoryInputRef = useRef<HTMLInputElement>(null)
+  const formPmToolRef = useRef<HTMLInputElement>(null)
+  const formNameInputRef = useRef<HTMLInputElement>(null)
+  const formSummaryInputRef = useRef<HTMLInputElement>(null)
+  const formSiteUrlInputRef = useRef<HTMLInputElement>(null)
+  const formTypeInputRef = useRef<HTMLInputElement>(null)
+  const formGoalInputRef = useRef<HTMLInputElement>(null)
+
   const handleClose = () => {
     setOpen(false)
   }
@@ -45,9 +56,17 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
 
   const submitApplication = async (e: React.FormEvent<HTMLButtonElement>) => {
     // e.preventDefault()
+    formNameInputRef.current!.value = nameInputRef.current!.value
+    formSummaryInputRef.current!.value = summaryInputRef.current!.value
+    formSiteUrlInputRef.current!.value = siteUrlInputRef.current!.value
+    formTypeInputRef.current!.value = typeInputRef.current!.value
+    formGoalInputRef.current!.value = JSON.stringify(goals)
+    formRepositoryInputRef.current!.value = repositoryJsonInputRef.current!.value
+    formPmToolRef.current!.value = pmToolRef.current!.value
+    const form = new FormData(formRef.current!)
+    const data = Object.fromEntries(form.entries())
+    console.log('submitting form: ', data)
     if(onSubmit) {
-      const form = new FormData(formRef.current!)
-      const data = Object.fromEntries(form.entries())
       onSubmit(data)
     } else {
       formRef.current?.submit()
@@ -61,19 +80,15 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
   }
 
   const validateApplication = () => {
-    const nameInput = formRef.current?.elements.namedItem('name') as HTMLInputElement
-    const summaryInput = formRef.current?.elements.namedItem('summary') as HTMLInputElement
-    const siteUrlInput = formRef.current?.elements.namedItem('siteUrl') as HTMLInputElement
-    const typeInput = formRef.current?.elements.namedItem('type') as HTMLSelectElement
-    const repositoriesInput = formRef.current?.elements.namedItem('repositories') as HTMLInputElement
-    const repositoryCount = repositoriesInput && repositoriesInput.value.length ? JSON.parse(repositoriesInput.value).repositories.length : 0
-    const pmToolConfigured = pmToolRef.current?.value.length
-
-    if (nameInput?.value.length && summaryInput?.value.length && siteUrlInput?.value.length && typeInput?.value.length && repositoryCount > 0 && pmToolConfigured) {
-      return true
-    } else {
-      return false
-    }
+    const name = nameInputRef.current?.value || ''
+    const summary = summaryInputRef.current?.value || ''
+    const siteUrl = siteUrlInputRef.current?.value || ''
+    const type = typeInputRef.current?.value || ''
+    const repositories = repositoryJsonInputRef.current?.value || ''
+    const repositoryCount = repositories.length ? JSON.parse(repositories).repositories.length : 0
+    const pmToolConfigured = !!pmToolRef.current?.value?.length
+    const valid = (name.length && summary.length && siteUrl.length && type.length && repositoryCount > 0 && pmToolConfigured) ? true : false
+    return valid
   
   }
 
@@ -97,7 +112,16 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
     <PLBaseModal title="New Application" open={open} setOpen={setOpen} titleCenter={true} size="md">
       <div className="relative p-6 flex-auto rounded px-8 pt-6 pb-2 w-full overflow-y-scroll">
         <Form method="post" ref={formRef}>
-          <div className="p-5 border-2 rounded dark:border-white flex flex-col gap-5">
+          <input type="hidden" name="name" ref={formNameInputRef}/>
+          <input type="hidden" name="summary" ref={formSummaryInputRef}/>
+          <input type="hidden" name="siteUrl" ref={formSiteUrlInputRef}/>
+          <input type="hidden" name="type" ref={formTypeInputRef}/>
+          <input type="hidden" name="goals" ref={formGoalInputRef}/>
+          <input type="hidden" name="repositories" ref={formRepositoryInputRef}/>
+          <input type="hidden" name="projectManagementTool" ref={formPmToolRef}/>
+        </Form>
+        <div>
+          <div className="p-5 border-2 rounded dark:border-neutral-400 flex flex-col gap-5">
             <h2 className="text-xl font-bold text-black dark:text-white">Application Details</h2>  
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">Application Name</label>
@@ -105,7 +129,7 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
                 required 
                 placeholder="e.g., Instagram clone and todo list" 
                 type="text" 
-                name="name"
+                ref={nameInputRef}
                 onChange={checkValidity}
                 className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm" 
               />
@@ -113,7 +137,7 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
               <textarea 
                 required 
                 maxLength={122} 
-                name="summary" 
+                ref={summaryInputRef}
                 className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 border-gray-300 dark:bg-transparent dark:border-neutral-700 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm resize-none" 
                 placeholder="Enter a description about your project..."
                 onChange={checkValidity}
@@ -123,12 +147,13 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
                 required 
                 placeholder="Website or app store url" 
                 type="text" 
-                name="siteUrl" 
+                ref={siteUrlInputRef}
                 onChange={checkValidity}
-                className="p-2  text-black dark:text-neutral-400 mt-1 block border-2 w-full dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm" 
+                className="p-2 text-black dark:text-neutral-400 mt-1 block border-2 w-full dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm" 
               />
               <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mt-4">Type</label>
               <select 
+                ref={typeInputRef}
                 required name="type"
                 onChange={checkValidity}
                 className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm"
@@ -142,7 +167,7 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
           </div>
           <PLProjectManagementToolLink onToolConfirmation={onToolConfirmation}/>
           <div className="mt-4 flex flex-col gap-5 text-black dark:text-neutral-400 " >
-            <input type="hidden" name="goals" value={JSON.stringify(goals)} />
+            <input type="hidden" name="goals" value={JSON.stringify(goals)} ref={goalInputRef}/>
             <div className="flex flex-col gap-2">
               <label>Short-Term Goals</label>
               <div className="flex gap-2 w-full">
@@ -184,10 +209,10 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
               </div>
             </div>
           </div>
-          <input type="hidden" name="repositories" ref={repositoryJsonInputRef} required onChange={() => checkValidity()}/>
-          <input type="hidden" name="projectManagementTool" ref={pmToolRef} required/>
+          <input type="hidden" ref={repositoryJsonInputRef} required onChange={() => checkValidity()}/>
+          <input type="hidden" ref={pmToolRef} required/>
 
-        </Form>
+        </div>
         {goals.map(({goal, isLongTerm}, index) => {
           return (
             <div key={index} className="flex items-center gap-2 mt-2 text-black dark-text-white">

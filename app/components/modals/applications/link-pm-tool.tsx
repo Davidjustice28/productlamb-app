@@ -1,21 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
+import { ClickUpData, NotionData, PROJECT_MANAGEMENT_TOOL } from "~/types/database.types"
 
-export enum PROJECT_MANAGEMENT_TOOL {
-  CLICKUP = "ClickUp",
-  // JIRA = "Jira", tbd
-  NOTION = "Notion",
-}
-
-interface NotionData {
-  apiKey: string
-  parenPageId: string
-}
-
-interface ClickUpData {
-  apiToken: string
-  parentFolderId: number
-}
 
 export function PLProjectManagementToolLink({onToolConfirmation}: {onToolConfirmation: (data: any) => void}) {
   const options = Object.values(PROJECT_MANAGEMENT_TOOL)
@@ -36,7 +22,7 @@ export function PLProjectManagementToolLink({onToolConfirmation}: {onToolConfirm
   }, [toolConfirmed])
 
   return (
-    <div className="flex-col flex gap-5 p-5 text-black dark:text-white border-2 rounded dark:border-white mt-8">
+    <div className="flex-col flex gap-5 p-5 text-black dark:text-white border-2 rounded dark:border-neutral-400 mt-8">
       <h2 className="text-xl font-bold">Connect to Project Management Tool</h2>
       <div className="flex gap-2">
         {options.map((tool, index) => {
@@ -75,15 +61,15 @@ const NotionToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfi
 
   return (
     <>
-    <div className="flex flex-col gap-5 text-black dark:text-white mb-5">
+    <div className="flex flex-col gap-5 text-black dark:text-neutral-400 mb-5">
       <div className="flex flex-col gap-2">
-        <label>API Key</label>
-        <input type="password" className="border-2 border-gray-300 rounded-md p-2" ref={tokenInputRef} onChange={checkValidity} disabled={confirmed}/>
+        <label className="dark:text-white">API Key</label>
+        <input type="password" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={tokenInputRef} onChange={checkValidity} disabled={confirmed}/>
         <small>Get your Notion API Token from <a href="https://www.notion.so/my-integrations">here</a></small>
       </div>
       <div className="flex flex-col gap-2">
-        <label>Parent Parent Id</label>
-        <input type="text" className="border-2 border-gray-300 rounded-md p-2" ref={parentIdInputRef} onChange={checkValidity} disabled={confirmed}/>
+        <label className="dark:text-white">Parent Parent Id</label>
+        <input type="text" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={parentIdInputRef} onChange={checkValidity} disabled={confirmed}/>
         <small>This page is where we create ProductLamb's page</small>
       </div>
     </div>
@@ -113,15 +99,15 @@ const ClickUpToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConf
 
   return (
     <>
-      <div className="flex flex-col gap-5 text-black dark:text-white mb-5">
+      <div className="flex flex-col gap-5 text-black dark:text-neutral-400 mb-5">
         <div className="flex flex-col gap-2">
-          <label>API Token</label>
-          <input type="password" className="border-2 border-gray-300 rounded-md p-2" ref={tokenInputRef} onChange={checkValidity} disabled={confirmed}/>
+          <label className="dark:text-white">API Token</label>
+          <input type="password" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={tokenInputRef} onChange={checkValidity} disabled={confirmed}/>
           <small>Get your ClickUp API Token from <a href="https://app.clickup.com/234234/settings">here</a></small>
         </div>
         <div className="flex flex-col gap-2">
-          <label>Parent Folder Id</label>
-          <input type="number" className="border-2 border-gray-300 rounded-md p-2" min={0} ref={parentIdInputRef} onChange={checkValidity} disabled={confirmed}/>
+          <label className="dark:text-white">Parent Folder Id</label>
+          <input type="number" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" min={0} ref={parentIdInputRef} onChange={checkValidity} disabled={confirmed}/>
           <small>This folder is where we create ProductLamb's folder</small>
         </div>
       </div>

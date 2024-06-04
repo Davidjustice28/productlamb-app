@@ -8,11 +8,12 @@ import { ApplicationBugsClient } from "~/backend/database/bugs/client"
 import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client"
 import { FeedbackClient } from "~/backend/database/feedback/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
+import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application"
 import { PLConfirmModal } from "~/components/modals/confirm"
-import { NewApplicationData } from "~/types/database.types"
+import { ClickUpData, NewApplicationData, NotionData } from "~/types/database.types"
 
 interface ApplicationDeleteData {
   applicationId: string
@@ -48,13 +49,56 @@ export let action: ActionFunction = async ({ request }) => {
     })
   } else if ('name' in data) {
     const {data: createAppResult } = await appDbClient.addApplication(accountId, data)
+    const pmToolClient = ApplicationPMToolClient(dbClient)
     if (createAppResult) {
       const goals = data.goals.length < 0 ? [] : JSON.parse(data.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)
       const {repositories} = JSON.parse(data.repositories) as {repositories: Array<ApplicationCodeRepositoryInfo>}
       await repoDbClient.addMultipleRepositories(createAppResult.id, repositories as any)
-    }
+      const pmToolData = JSON.parse(data.projectManagementTool) as ClickUpData | NotionData
 
+      let pmToolConfigurationResponseId: number| null = null
+      let pmToolType: 'clickup' | 'notion' | null = null
+      console.log(pmToolData)
+      if ('parentFolderId' in pmToolData) {
+        const {parentFolderId, apiToken} = pmToolData
+        console.log('attempting to add clickup config')
+        const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, createAppResult.id)
+        if (data) {
+          pmToolConfigurationResponseId = data.id
+          pmToolType = 'clickup'
+        }
+
+        if (errors) {
+          console.log('error adding clickup config', errors)
+        }
+
+      } else {
+        const {parentPageId, apiKey} = pmToolData
+        console.log('attempting to add notion config')
+        const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parentPageId, createAppResult.id)
+        if (data) {
+          pmToolConfigurationResponseId = data.id
+          pmToolType = 'notion'
+        } else {
+          console.error('error adding notion config', errors)
+        }
+      }
+      if (pmToolConfigurationResponseId && pmToolType) {
+        console.log(`adding pm tool config for app ${createAppResult.id}`)
+        if (pmToolType === 'clickup') {
+          const response = await appDbClient.updateApplication(createAppResult.id, {clickup_integration_id: pmToolConfigurationResponseId})
+          console.log('updated app with clickup config', response)
+        } else {
+          const response = await appDbClient.updateApplication(createAppResult.id, {notion_integration_id: pmToolConfigurationResponseId})
+          console.log('updated app with notion config', response)
+        }
+
+        console.log('added pm tool config')
+      } else {
+        console.log('failed to add pm tool config due to missing data')
+      }
+    }
     return json({})
   } else {
     return json({}, {status: 400})

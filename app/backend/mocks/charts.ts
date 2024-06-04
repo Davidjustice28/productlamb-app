@@ -1,3 +1,5 @@
+import { ApplicationSprint, GeneratedTask } from "@prisma/client";
+
 export const mockBarChartdata = [
   {
     name: 'Bugs',
@@ -79,3 +81,58 @@ export const mockSprintTaskCompletionPercentageData: Array<{name: string, percen
     percentage: 30,
   },
 ];
+
+
+export function createSprintTaskTotalsChartData(data: Array<{name: string, taskCount: number}>): Array<{name: string, taskCount: number}> {
+  return data.map(entry => {
+    return {
+      name:`Sprint ${entry.name}`,
+      taskCount: entry.taskCount,
+    }
+  })
+}
+
+export function createSprintTaskCompletionPercentageChartData(data: Array<{name: string, completed: number, total: number}>): Array<{name: string, percentage: number}> {
+  return data.map(entry => {
+    return {
+      name:`Sprint ${entry.name}`,
+      percentage: Math.floor(entry.completed / entry.total * 100),
+    }
+  })
+}
+
+export function createCurrentSprintChartsData(data: GeneratedTask[]) {
+  const taskTotals = {
+    bugs: 0,
+    features: 0,
+    chores: 0,
+    other: 0,
+  }
+
+  data.forEach(task => {
+    switch(task.category) {
+      case 'bug':
+        taskTotals.bugs += 1;
+        break;
+      case 'feature':
+        taskTotals.features += 1;
+        break;
+      case 'chore':
+        taskTotals.chores += 1;
+        break;
+      default:
+        taskTotals.other += 1;
+    }
+  })
+
+  const chartData: {name: string, total: number, incomplete: number, completed: number}[] = Object.entries(taskTotals).map(([category,count]) => {
+    return {
+      name: category,
+      total: count,
+      // right now we don't have a way to determine if a task is completed or not
+      incomplete: count,
+      completed: 0,
+    }
+  })
+  return chartData;
+}

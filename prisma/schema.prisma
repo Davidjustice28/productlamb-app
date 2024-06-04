@@ -40,6 +40,7 @@ model AccountApplication {
   sprints            ApplicationSprint[]
   initiatives        GeneratedInitiative[]
   tasks              GeneratedTask[]
+  notes              ApplicationNote[]
 }
 
 model ApplicationGoal {
@@ -102,6 +103,7 @@ model GeneratedTask {
   description   String
   initiativeId  Int
   reason        String
+  category         String
   application   AccountApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   initiative    GeneratedInitiative @relation(fields: [initiativeId], references: [id])
   sprint        ApplicationSprint?   @relation(fields: [sprintId], references: [id])
@@ -135,19 +137,25 @@ model ApplicationBug {
 model ApplicationClickupIntegration {
   id            Int                @id @default(autoincrement())
   applicationId Int
-  name          String
   api_token        String
-  parent_folder_id Int
-  sprints_list_id Int?
+  parent_folder_id BigInt
+  sprints_list_id BigInt?
   application AccountApplication?
 }
 
 model ApplicationNotionIntegration {
   id            Int                @id @default(autoincrement())
   applicationId Int
-  name          String
   api_token        String
   parent_page_id String
   sprints_page_id String?
   application   AccountApplication?
+}
+
+model ApplicationNote {
+  id            Int                @id @default(autoincrement())
+  applicationId Int
+  text       String
+  dateCreated String
+  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
