@@ -44,11 +44,12 @@ export function wrapAddMultipleRepositories(client: PrismaClient['applicationCod
   async function addMultipleRepositories(application_id: number, repositories: Array<GithubRepositoryInfo | GitlabRepositoryInfo>): Promise<BaseResponse<Array<ApplicationCodeRepositoryInfo>>> {
     const response = await client.createMany({
       data: repositories.map(repo => {
-        if (repo.platform === 'github') {
-          const {repositoryName, repositoryOwner, secret, platform} = repo as GithubRepositoryInfo
+        const platform = repo.platform.toLowerCase()
+        if (platform=== 'github') {
+          const {repositoryName, repositoryOwner, secret} = repo as GithubRepositoryInfo
           return {repositoryName, repositoryOwner, secret, platform, archived: false, applicationId: application_id}
         } else {
-          const {repositoryId, secret, platform} = repo as GitlabRepositoryInfo
+          const {repositoryId, secret} = repo as GitlabRepositoryInfo
           return {repositoryId, secret, platform, applicationId: application_id, archived: false}
         }
       })

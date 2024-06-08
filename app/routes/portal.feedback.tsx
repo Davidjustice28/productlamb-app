@@ -1,13 +1,15 @@
-import { ApplicationFeedback, PrismaClient } from "@prisma/client";
+import { ApplicationFeedback, ApplicationIntegration, PrismaClient } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { parse } from "papaparse";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { FeedbackClient } from "~/backend/database/feedback/client";
+import { IntegrationClient } from "~/backend/database/integrations/ client";
 import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLAddFeedbackModal } from "~/components/modals/feedback/add-feedback";
 import { PLBulkUploadFeedbackModal } from "~/components/modals/feedback/bulk-upload/bulk-upload";
+import { FeedbackIntegrations } from "~/types/component.types";
 import { FeedbackSource } from "~/types/database.types";
 
 export interface NewFeedbackData {
@@ -64,13 +66,18 @@ export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
+  
+  const dbClient = new PrismaClient().applicationIntegration
+  const integrationClient = IntegrationClient(dbClient) 
+  const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
+
   const feedbackDbClient = FeedbackClient(new PrismaClient().applicationFeedback)
   const {data: feedback} = await feedbackDbClient.getApplicationFeedback(applicationId)
-  return json({feedback: feedback || []})
+  return json({feedback: feedback || [], integrations: integrations ? integrations : []})
 }
 
 export default function FeedbackPage() {
-  const {feedback: loadedFeedback}: {feedback: Array<ApplicationFeedback>} = useLoaderData<typeof loader>() || {feedback: []}
+  const {feedback: loadedFeedback, integrations}: {feedback: Array<ApplicationFeedback>, integrations: Array<ApplicationIntegration>} = useLoaderData<typeof loader>() || {feedback: [], integrations: []}
   const { updatedFeedback } = useActionData<typeof action>() || {updatedFeedback: null}
   const [feedback, setFeedback] = useState<Array<ApplicationFeedback>>(updatedFeedback ?? loadedFeedback)
   const [addModalOpen, setAddModalOpen] = useState<boolean>(false)
@@ -79,6 +86,11 @@ export default function FeedbackPage() {
 
   const openBulkUploadModal = () => {
     setBulkModalOpen(true)
+  }
+
+  function filterAvailableIntegrations() {
+    const availableIntegrations = integrations.map(integration => integration.name).filter(name => Object.values(FeedbackIntegrations).includes(name as FeedbackIntegrations)) as Array<FeedbackIntegrations>
+    return availableIntegrations
   }
 
   return (
@@ -100,7 +112,7 @@ export default function FeedbackPage() {
         }
       </div>
       <PLAddFeedbackModal open={addModalOpen} setOpen={setAddModalOpen} onClose={() => setAddModalOpen(false)}/>
-      <PLBulkUploadFeedbackModal open={bulkUploadModalOpen} setOpen={setBulkModalOpen} onClose={() => setBulkModalOpen(false)}/>
+      <PLBulkUploadFeedbackModal open={bulkUploadModalOpen} setOpen={setBulkModalOpen} onClose={() => setBulkModalOpen(false)} availableIntegrations={filterAvailableIntegrations()}/>
     </div>
   )
 }

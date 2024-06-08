@@ -8,6 +8,8 @@ export function PLBarChart({darkMode=false, data, } : PLBarChartProps) {
   if (!data.length) {
     return <div className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>Insufficient data. Turn on a sprint generation to see analytics.</div>
   }
+
+
   return (
     <ResponsiveContainer height="100%">
       <BarChart

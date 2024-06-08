@@ -24,6 +24,7 @@ export const loader: LoaderFunction = args => {
     let setupIsComplete: boolean|undefined = accountCookie.setupIsComplete
     let accountId: number| undefined = accountCookie.accountId
     let selectedApplicationId: number| undefined = accountCookie.selectedApplicationId
+    console.log('dashboard app id', selectedApplicationId)
     let selectedApplicationName: string| undefined = accountCookie.selectedApplicationName
     const dbClient = new PrismaClient()
     if (!accountId || !setupIsComplete) {
@@ -137,7 +138,7 @@ export default function DashboardPage() {
     <div className="flex flex-col items-center gap-5 justify-start">
       <div className="w-full flex flex-col">
         <div className="flex flex-row justify-between w-full items-center">
-          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Completion Percentage' : 'Tasks Generated'}</span></h2>
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Completion Percentage' : 'Tasks Assigned'}</span></h2>
           <div className="inline-flex">
             <button 
               className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 1 || chartIndex == 0 ? "cursor-not-allowed" : "hover:text-gray-400")} 
@@ -175,7 +176,7 @@ export default function DashboardPage() {
             </div>
             <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
               <p className="text-black text-xs dark:text-gray-500">Days</p>
-              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">{currentSprintSummary?.days_left !== null ? currentSprintSummary?.days_left : 'N/A'}</h3>
+              <h3 className="text-black font-bold text-3xl dark:text-neutral-400">{currentSprintSummary && currentSprintSummary.days_left ? currentSprintSummary.days_left : 'N/A'}</h3>
               <p className="text-black text-xs dark:text-gray-500">Left</p>
             </div>
           </div>

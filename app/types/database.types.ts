@@ -1,7 +1,5 @@
 export enum BugGroup {
   ALL = "all",
-  COMPLETED = "completed",
-  DELETED = "deleted",
   HIGH_PRIORITY = "high priority",
 }
 
@@ -23,6 +21,7 @@ export interface NewApplicationData {
   projectManagementTool: string
   clickup_integration_id?: number
   notion_integration_id?: number
+  sprint_generation_enabled?: boolean
 }
 
 export type BugSource = 'repository' | 'self-identified' | 'productLamb' | 'integration' | 'pm-tool' | 'other'

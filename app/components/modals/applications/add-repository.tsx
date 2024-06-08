@@ -7,13 +7,13 @@ import { PLStatusBadge } from "~/components/common/status-badge"
 import { Colors } from "~/types/base.types"
 
 export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {initialRepos?:ApplicationCodeRepositoryInfo[],  onRepositoriesChange?: (repositories: RepositoryCreationBaseInfo[]) => void}) {
-  const [platform, setPlatform] = useState<"Github" | "Gitlab">("Github")
+  const [platform, setPlatform] = useState<"github" | "gitlab">("github")
   const [repositories, setRepositories] = useState<(GithubRepositoryInfo| GitlabRepositoryInfo)[]>(convertRepoEntries(initialRepos) ?? [])
   const [addingRepo, setAddingRepo] = useState(false)
 
   const maxRepositories = 5
 
-  const updatePlatform = (value: "Github" | "Gitlab") => {
+  const updatePlatform = (value: "github" | "gitlab") => {
     setPlatform(value)
   }
 
@@ -29,7 +29,7 @@ export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {
   const addRepository = () => {
     let newRepoData: GitlabRepositoryInfo | GithubRepositoryInfo 
 
-    if (platform === "Github") {
+    if (platform === "github") {
       newRepoData = {
         platform,
         secret: secretInputRef.current?.value || "",
@@ -45,9 +45,9 @@ export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {
     }
     const updatedRepositories = [...repositories, newRepoData]
     setRepositories(updatedRepositories)
-    setPlatform("Github")
+    setPlatform("github")
     secretInputRef.current!.value = ""
-    if (platform === "Github") {
+    if (platform === "github") {
       ownerInputRef.current!.value = ""
       repositoryNameInputRef.current!.value = ""
     } else {
@@ -68,10 +68,10 @@ export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {
 
   
 
-  function NewRepositoryVaryingFields({platform}: {platform: "Github" | "Gitlab"}) {
+  function NewRepositoryVaryingFields({platform}: {platform: "github" | "gitlab"}) {
     return (
       <>
-        {platform === "Github" ? 
+        {platform === "github" ? 
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">Repository Name</label>
@@ -120,11 +120,11 @@ export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {
             <select 
               name="platform"
               value={platform}
-              onChange={(e) => updatePlatform(e.target.value as "Github" | "Gitlab")}
+              onChange={(e) => updatePlatform(e.target.value as "github" | "gitlab")}
               className="p-2 text-black dark:text-neutral-300 mt-1 block w-32 border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm"
             >
-              <option value="Github">Github</option>
-              <option value="Gitlab">Gitlab</option>
+              <option value="github">Github</option>
+              <option value="gitlab">Gitlab</option>
             </select>
           </div>
           <div>
@@ -137,7 +137,7 @@ export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {
           </div>
           <NewRepositoryVaryingFields platform={platform} />
           <div className="h-10">
-            <PLBasicButton text="Link" icon={platform === "Github" ? "ri-github-fill" : "ri-gitlab-fill"} onClick={addRepository}/>
+            <PLBasicButton text="Link" icon={platform === "github" ? "ri-github-fill" : "ri-gitlab-fill"} onClick={addRepository}/>
           </div>
         </div>
       </div>
@@ -147,7 +147,7 @@ export function PLNewRepositoryComponent({onRepositoriesChange, initialRepos}: {
           repositories.map((repo, index) => (
             <div key={index} className="flex flex-row gap-3 text-black dark:text-neutral-300 items-center">
               <p>
-                {repo.platform} - {repo.platform === "Github" ? (repo as GithubRepositoryInfo).repositoryName : (repo as GitlabRepositoryInfo).repositoryId}
+                {repo.platform} - {repo.platform === "github" ? (repo as GithubRepositoryInfo).repositoryName : (repo as GitlabRepositoryInfo).repositoryId}
               </p>
               <PLStatusBadge text="Ready" color={Colors.GREEN}/>
               <PLIconButton icon="ri-close-line" colorClasses="text-red-600 text-lg hover:bg-neutral-100" onClick={() => removeRepository(index)}/>
@@ -163,7 +163,7 @@ function convertRepoEntries(dbEntries?: Array<ApplicationCodeRepositoryInfo>) : 
   if (!dbEntries) return []
 
   const initialData = dbEntries.map(({platform, id, secret, ...rest}) => {
-    if (platform === "Github") {
+    if (platform === "github") {
       return {
         applicationId: id,
         platform,

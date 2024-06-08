@@ -15,7 +15,7 @@ export function wrapAddAccountApplication(client: PrismaClient['accountApplicati
         type,
         siteUrl,
         archived: false,
-        
+        sprint_generation_enabled: false,
       }})
       return {data: app, errors: []}
     } catch (e) {

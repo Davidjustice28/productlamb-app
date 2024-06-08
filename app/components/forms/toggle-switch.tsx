@@ -1,8 +1,7 @@
 import { useLoaderData } from '@remix-run/react'
 import { ChangeEventHandler } from 'react'
 
-export const ToggleSwitch = ({onChangeHandler}: { onChangeHandler: ChangeEventHandler<HTMLInputElement>} ) => {
-  const { darkMode } = useLoaderData<{darkMode: boolean|undefined}>()
+export const ToggleSwitch = ({onChangeHandler, darkMode}: {darkMode: boolean, onChangeHandler: ChangeEventHandler<HTMLInputElement>} ) => {
   return (
     <label className="relative flex justify-between items-center group p-2 text-xl">
       <input type="checkbox" className="absolute left-1/2 -translate-x-1/2 w-full h-full peer appearance-none rounded-md" onChange={onChangeHandler} checked={darkMode}/>

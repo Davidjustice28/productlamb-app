@@ -27,6 +27,7 @@ model AccountApplication {
   accountId          Int
   logo_url           String?
   pm_tool            String?
+  sprint_generation_enabled Boolean
   clickup_integration ApplicationClickupIntegration? @relation(fields: [clickup_integration_id], references: [id], onDelete: Cascade)
   clickup_integration_id Int? @unique
   notion_integration  ApplicationNotionIntegration? @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
@@ -114,7 +115,6 @@ model ApplicationSprint {
   applicationId  Int
   startDate      String?
   endDate        String?
-  completed      Boolean
   application    AccountApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   initiative     GeneratedInitiative[]
   status         String

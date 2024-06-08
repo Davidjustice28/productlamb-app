@@ -6,6 +6,9 @@ import { useState } from "react";
 import { PLBasicButton } from "~/components/buttons/basic-button";
 import { PLDeveloperButton } from "~/components/buttons/label-button";
 import ConfettiExplosion from 'react-confetti-explosion';
+import { ToggleSwitch } from "~/components/forms/toggle-switch";
+import { PLStatusBadge } from "~/components/common/status-badge";
+import { Colors } from "~/types/base.types";
 
 export const action: ActionFunction = async ({ request }) => {
   const form = await request.formData()
@@ -57,10 +60,10 @@ export default function LandingPage() {
           <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
             <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
           </SignInButton>
-          <SignUpButton mode="modal" forceRedirectUrl={'/portal/setup'}>
-            <PLBasicButton text="Sign Up" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
-          </SignUpButton>
-          {/* <PLBasicButton text="Coming June 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600 cursor-default"/> */}
+          {/* <SignUpButton mode="modal" forceRedirectUrl={'/portal/setup'}>
+            <PLBasicButton text="Sign Up" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true}/>
+          </SignUpButton> */}
+          <PLBasicButton text="Coming July 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 dark:hover:bg-orange-200 hover:text-orange-600 cursor-default" noDefaultDarkModeStyles/>
         </div>
       </div>
       <div className="flex w-full flex-col my-auto mb-8 md:flex-row xl:gap-14 md:gap-5">
@@ -87,7 +90,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="items-center justify-end flex w-full md:w-1/2 md:flex">
-          <img className="w-full md:w-4/5 rounded-md h-lg" src="https://storage.googleapis.com/product-lamb-images/pl-header-img-3.png" alt="header image"/>
+          <img className="w-full md:w-4/5 rounded-md h-lg" src="https://storage.googleapis.com/productlamb_project_images/pl-header-img.png" alt="header image"/>
         </div>
       </div>
       <div className="w-full flex flex-col gap-10 mt-10 text-black items-center">
@@ -98,7 +101,7 @@ export default function LandingPage() {
         <PricingSection />
         <ContactUsSection />
       </div>
-      <footer className="bg-white dark:bg-gray-900 mt-20">
+      <footer className="bg-white mt-20">
         <div className="container px-6 py-8 mx-auto">
           <div className="flex flex-col items-center text-center">
             <a href="#"><img className="w-auto h-7" src="https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png" alt=""/></a>
@@ -145,31 +148,29 @@ function ProductSection() {
 
 function FeaturesSection() {
   const imgs = [
-    "https://storage.googleapis.com/productlamb-platform-images/notion_screenshot.png",
-    "https://storage.googleapis.com/productlamb-platform-images/projects-screenshot.png",
-    "https://storage.googleapis.com/productlamb-platform-images/integrations_screenshot.png",
-    "https://storage.googleapis.com/product-lamb-images/screely-1714683026541.png",
-    // add screenshots once they are available
-    "https://storage.googleapis.com/product-lamb-images/screely-1714683026541.png",
-    "https://storage.googleapis.com/product-lamb-images/screely-1714683026541.png",
+    "https://storage.googleapis.com/productlamb_project_images/clickup_screenshot.png",
+    "https://storage.googleapis.com/productlamb_project_images/apps_screenshot.png",
+    "https://storage.googleapis.com/productlamb_project_images/dashboard_screenshot.png",
+    "https://storage.googleapis.com/productlamb_project_images/integrations_screenshot.png",
+    "https://storage.googleapis.com/productlamb_project_images/notes_screenshot.png",
   ]
 
   const featureHeaders = [
     "Sprints Automatically Generated",
     "Manage Multiple Projects",
-    "Integrations For Days",
-    "Track Bugs From All Sources",
-    "Jot Down Notes Anywhere",
-    "Export Your Data At Any Time",
+    "Dashboard Analytics",
+    "Third Party Integrations",
+    "Proper Note Taking",
+    // "Export Your Data At Any Time",
   ]
 
   const featureDescriptions = [
     "ProductLamb auto generates sprints in your preferred management tool by analyzing your goals, code repository issues, user feedback, self reported bugs, and more.",
     "Working on multiple things? ProductLamb can help plan sprints and tasks across all of your projects. Easily switch between projects and see your progress.",
+    "Understand key metrics about your projects' development, like how many bugs were tackled, how many features were added, and how many tasks do you complete per sprint.",
     "Connect to your favorite tools to increase productivity. We support over 10+ integrations including Google Calendar, Slack, and Notion.",
-    "See all reported bugs in one place. ProductLamb will automatically track bugs reported in your code repository and manually added ones.",
     "Jot down notes anywhere in the app. Notes are saved and can be accessed at any time. Never forget that great idea you had.",
-    "Never feel locked in. Export your data at any time to CSV. ProductLamb is here to help you, not make things harder when you need to pivot."
+    // "Never feel locked in. Export your data at any time to CSV. ProductLamb is here to help you, not make things harder when you need to pivot."
   ]
 
   function changeFeatureDisplay(i: number) {
@@ -182,7 +183,7 @@ function FeaturesSection() {
     <div className="w-full flex flex-col items-center border-neutral-200 border-2 rounded-3xl p-10 -mb-10" id="features">
       <h1 className="font-bold text-xl text-center md:text-2xl mb-3">{featureHeaders[index]}</h1>
       <p className="font-regular w-full md:w-4/5  text-lg md:text-xl text-left md:text-center mb-12">{featureDescriptions[index]}</p>
-      <img className="w-full md:w-4/5" src={imgs[index]}/>
+      <img className="w-full lg-h-[600px] md-h-[500px] object-cover border-2 sm-h-[300px] md:w-4/5" src={imgs[index]}/>
       <div className="flex gap-2 mt-10">
         {imgs.map((_, i) => {
           return (
@@ -232,7 +233,15 @@ function PricingSection() {
     "Integrate with several 3rd party tools",
     "Manually and bulk upload user feedback",
     "Dashboard access with analytics",
+    "Dark mode"
   ]
+
+  const [isMonthly, setIsMonthly] = useState(true)
+
+  const toggleSubscription = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsMonthly((prev) => !prev)
+  }
+
   return (
     <div className="w-full" id="pricing">
       <div className="bg-white sm:pt-28">
@@ -264,13 +273,17 @@ function PricingSection() {
               <div className="rounded-2xl bg-gray-50 py-10 text-center ring-1 ring-inset ring-gray-900/5 lg:flex lg:flex-col lg:justify-center lg:py-16 h-full">
                 <div className="mx-auto max-w-xs px-8">
                   <p className="text-base font-semibold text-gray-600">Affordable pricing for all</p>
-                  <p className="mt-6 flex items-baseline justify-center gap-x-2 mb-10">
-                    <span className="text-5xl font-bold tracking-tight text-gray-900">$12</span>
+                  <p className="mt-6 flex items-baseline justify-center gap-x-2 mb-6">
+                    <span className="text-5xl font-bold tracking-tight text-gray-900">${isMonthly ? 12 : 100}</span>
                     <span className="text-sm font-semibold leading-6 tracking-wide text-gray-600">USD</span>
                   </p>
-                  <PLBasicButton text="Coming June 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600"/>
-
-                  <p className="mt-6 text-xs leading-5 text-gray-600">Invoices and receipts available for easy company reimbursement through stripe</p>
+                  {/* <PLBasicButton text="Coming July 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600"/> */}
+                  <p className="mt-2 text-xs leading-5 text-gray-600">Enjoy your first 14 day sprint on us.</p>
+                  <div className="mt-3 mb-4 flex items-center justify-center gap-2 -ml-8">
+                    <ToggleSwitch onChangeHandler={toggleSubscription} darkMode={!isMonthly} />
+                    <PLStatusBadge text={isMonthly ? 'Monthly' : 'Annually'} color={(isMonthly ? Colors.PINK: Colors.PURPLE)}/>
+                  </div>
+                  <p className={"text-xs leading-5 font-semibold text-gray-600 visible " + (isMonthly ? 'invisible' : '')}>That's 30% off!</p>
                 </div>
               </div>
             </div>
@@ -307,7 +320,7 @@ function ContactUsSection() {
                 <i className="ri-phone-fill text-3xl text-[#F28C28]"/> 
                 <p className="text-2xl font-extrabold text-dark-grey-900">Sales</p>
                 <p className="text-base leading-7 text-dark-grey-600">Schedule a 1-on-1 demo</p>
-                <PLBasicButton text="Coming Soon" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white"/>
+                <PLBasicButton text="Coming Soon" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles/>
               </div>
             </div>
           </div>
@@ -327,7 +340,7 @@ function ValueSection() {
             <p className="mt-2 text-left text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">What makes us different than tools like Jira and Trello?</p>
             <p className="mt-6 text-left text-md sm:text-lg leading-8 text-gray-600">We aren't looking to replace your favorite PM tools like Notion & ClickUp. We're here to relieve you of stress by managing them for you.</p>
             <p className="mt-6 text-left text-md sm:text-lg leading-8 text-gray-600">Project Managers are crucial personnel, especially in startups. But with an average salary cost of $70k - $120k, hiring one is just not an option. However, we do believe that all developers, who build projects, could benefit from someone or something
-              that can keep them accountable, really managed the lifecycle of new features, and manage a project's workload. So how do most people manage their projects? Either not at all or with a project management software with a kanban board. We decided to start here.</p>
+              that can keep them accountable, that really manages the lifecycle of new features, and plans a project's workload. So how do most people manage their projects? Either not at all or with a project management software with a kanban board. We decided to start here.</p>
             <p className="mt-6 text-md text-left sm:text-lg leading-8 text-gray-600">There are many great tools on the 
               market, but they are too complex and bloated. They are designed for big teams and big projects. ProductLamb is designed for you, the solo developer, the indiehacker, the small team. ProductLamb automates most of the things needed to keep your project on track to hit your goals,
               while providing the core features you care about, in the case that you want to get your hands dirty.</p>

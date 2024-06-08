@@ -1,5 +1,5 @@
 import { PLStatusBadge } from "~/components/common/status-badge"
-import { Colors } from "~/types/base.types"
+import { Colors, TableColumn } from "~/types/base.types"
 import { useState } from "react"
 import { Sprint, mockSprints } from "~/backend/mocks/sprints"
 import { PLIconButton } from "~/components/buttons/icon-button"
@@ -7,9 +7,10 @@ import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/reac
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
 import { account } from "~/backend/cookies/account"
-import { ApplicationCodeRepositoryInfo, ApplicationSprint, GeneratedInitiative, PrismaClient } from "@prisma/client"
+import { ApplicationCodeRepositoryInfo, ApplicationSprint, GeneratedInitiative, GeneratedTask, PrismaClient } from "@prisma/client"
 import { ApplicationSprintsClient } from "~/backend/database/sprints/client"
 import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client"
+import { PLTable } from "~/components/common/table"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
@@ -36,10 +37,10 @@ export const loader: LoaderFunction = async ({request}) => {
     })
   }
   const sprintInitiativesMap: Record<number, string> = {}
-  const taskCountMap: Record<number,number> = {}
+  const taskMap: Record<number,GeneratedTask[]> = {}
   if (sprints) {
     sprints.forEach(sprint => {
-      taskCountMap[sprint.id] = sprint.generatedTasks.length
+      taskMap[sprint.id] = sprint.generatedTasks
     })
     sprints.forEach(sprint => {
       sprintInitiativesMap[sprint.id] = sprint.selectedInitiative ? initiatives.find(initiative => initiative.id === sprint.selectedInitiative)?.description || "" : ""
@@ -47,13 +48,13 @@ export const loader: LoaderFunction = async ({request}) => {
   }
   return json({
     sprints,
-    taskCountMap,
+    taskMap,
     repositories,
     sprintInitiativesMap
   })
 }
 export default function SprintPage() {
-  const {sprints: loadedSprints, taskCountMap, repositories, sprintInitiativesMap } = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskCountMap: Record<number, number>, repositories: Array<ApplicationCodeRepositoryInfo>, sprintInitiativesMap: Record<number, string>}
+  const {sprints: loadedSprints, taskMap, repositories, sprintInitiativesMap } = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskMap: Record<number, GeneratedTask[]>, repositories: Array<ApplicationCodeRepositoryInfo>, sprintInitiativesMap: Record<number, string>}
   const [sprints, setSprints] = useState<Array<ApplicationSprint>>(loadedSprints || [])
   const {pathname} = useLocation()
   const parsedPath = pathname.split('/sprints/')
@@ -72,8 +73,8 @@ export default function SprintPage() {
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
       </div>
       <div className="mt-5 flex flex-col gap-3">
-        {sprints.map((sprint, index) => {
-          return <SprintTableRow data={sprint} key={index} repoPlatform={index % 2 === 0 ? 'github' : 'gitlab'} taskCount={taskCountMap[sprint.id]} repositories={repositories} initiative={sprintInitiativesMap[sprint.id]}/>
+        {sprints.sort((a,b) => a.id - b.id).reverse().map((sprint, index) => {
+          return <SprintTableRow data={sprint} key={index} repoPlatform={index % 2 === 0 ? 'github' : 'gitlab'} tasks={taskMap[sprint.id]} repositories={repositories} initiative={sprintInitiativesMap[sprint.id]}/>
         })}
       </div>
     </div>
@@ -81,7 +82,7 @@ export default function SprintPage() {
 }
 
 
-function SprintTableRow({data, repoPlatform, taskCount, repositories, initiative}: {data: ApplicationSprint, repoPlatform: 'github' | 'gitlab', taskCount: number, repositories: Array<ApplicationCodeRepositoryInfo>, initiative?: string}) {
+function SprintTableRow({data, repoPlatform, tasks, repositories, initiative}: {data: ApplicationSprint, repoPlatform: 'github' | 'gitlab', tasks?: GeneratedTask[], repositories: Array<ApplicationCodeRepositoryInfo>, initiative?: string}) {
   const [showDetails, setShowDetails] = useState<boolean>(false)
   const navigate = useNavigate()
   function toggleDetails() {
@@ -92,34 +93,56 @@ function SprintTableRow({data, repoPlatform, taskCount, repositories, initiative
     navigate(`/portal/planning/${data.id}`)
   }
 
+  function calculateDaysLeft() {
+    if (!data.startDate || !data.endDate) {
+      return 'N/A'
+    }
+    const startDate = new Date(data.startDate!)
+    const endDate = new Date(data.endDate!)
+    const today = new Date()
+    const daysLeft = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 3600 * 24))
+    return `${daysLeft}`
+  }
+  
+  const columns: Array<TableColumn> = [
+    {key: "category", type: "text"},
+    {key: "title", type: "text"},
+    {key: "description", type: "text"},
+    {key: "status", type: "status", sortable: true},
+    {key: "points", type: "text", sortable: true},
+  ]
+
   return (
     <div className="w-full p-5 rounded-lg bg-white dark:bg-neutral-800 divide-y-2 flex flex-col gap-5">
       <div className="w-full flex flex-col gap-2">
         <div className="w-full flex flex-row justify-between items-center">
           <h3 className="text-black dark:text-white font-semibold">Sprint <span className="text-gray-500">#{data.id}</span></h3>
-          <button className={"text-gray-500 dark:text-white font-semibold " + (data.status === 'Under Construction' ? ' text-neutral-300' : '')} onClick={toggleDetails} disabled={data.status === 'Under Construction'}>
+          <button className={"text-gray-500 dark:text-white font-semibold " + (data.status === 'Under Construction' ? ' hidden' : '')} onClick={toggleDetails} disabled={data.status === 'Under Construction'}>
             <i className={showDetails ? 'ri-arrow-up-double-fill' : "ri-arrow-down-double-fill"}></i>
           </button>
         </div>
         <div className="w-full flex justify-start items-center gap-5">
           {/* Make start date not optional */}
           <p className="italic text-gray-500 dark:text-white"><i className="ri ri-calendar-line"></i> {convertToDateString(data.startDate!)}</p>
-          <p className="italic text-gray-500 dark:text-white"><i className="ri-task-line"></i> {taskCount} tasks</p>
+          <p className="italic text-gray-500 dark:text-white"><i className="ri-task-line"></i> {tasks?.length ?? 0} tasks</p>
           <RepositoriesList repositories={repositories}/>
           <PLStatusBadge color={data.status === 'Completed' ? Colors.GREEN : data.status === 'In Progress' ? Colors.BLUE : data.status === 'Under Construction' ? Colors.YELLOW : Colors.RED} text={data.status}/>
           {data.status === 'Under Construction' && <PLBasicButton text="Start Planning" onClick={startPlanning} colorClasses="py-[3px] px-[8px] text-xs"/>}
+          {data.status === 'In Progress' && <p className="text-black dark:text-white">Days left: {calculateDaysLeft()}</p>}
         </div>
       </div>
-      <div className={"w-full pt-5 " + (showDetails ? '' : 'hidden')}>
+      <div className={"w-full pt-5 flex flex-col gap-5 " + (showDetails ? '' : 'hidden')}>
         <p className="text-neutral-700 dark:text-neutral-500"><span className="text-black dark:text-neutral-400 font-semibold">Initiative: </span>{initiative && initiative.length ? initiative : 'No initiative selected yet'}</p>
+        {tasks && <PLTable actionsAvailable={false} checked={[]} data={tasks} columns={columns}/>}
       </div>
     </div>
   )
 }
 
 function RepositoriesList({repositories}: {repositories: Array<ApplicationCodeRepositoryInfo>}) {
+  console.log(repositories)
  const getRepoLink = (repo: ApplicationCodeRepositoryInfo) => {
-    if (repo.platform === 'Github') {
+    if (repo.platform === 'github') {
       return `https://github.com/${repo.repositoryOwner}/${repo.repositoryName}`
     } else {
       return `https://gitlab.com/${repo.repositoryOwner}/${repo.repositoryName}`
@@ -128,7 +151,12 @@ function RepositoriesList({repositories}: {repositories: Array<ApplicationCodeRe
   return (
     <div className="flex flex-row gap-2 text-black dark:text-white">
       {repositories.slice(0,3).map((repo, index) => {
-        return <a href={getRepoLink(repo)}><button key={index}><i className={repo.platform === 'Github' ? "ri-github-fill" : 'ri-gitlab-fill'}></i></button></a>
+        return (
+          <div className="relative group">
+            <p className="text-black dark:text-white text-xs absolute bottom-8 border-2 rounded-md p-2 border-neutral-700 dark:border-neutral-300 invisible group-hover:visible">{getRepoLink(repo)}</p>
+            <a target="_blank" href={getRepoLink(repo)}><button key={index}><i className={repo.platform === 'github' ? "ri-github-fill" : 'ri-gitlab-fill'}></i></button></a>
+          </div>
+        )
       })}
       {repositories.length > 3 && <p className="text-black dark:text-white">+{repositories.length - 3} more</p>}
     </div>

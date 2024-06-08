@@ -5,7 +5,7 @@ import { PLConfirmModal } from '../modals/confirm'
 import { useClerk } from '@clerk/remix'
 
 
-export const LoggedInNavbar = ({darkMode, expanded, setupComplete}: {setupComplete: boolean, darkMode: boolean, expanded: boolean}) => {
+export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComplete}: {setExpandedMenu: (expanded: boolean) => void, setupComplete: boolean, darkMode: boolean, expanded: boolean, applicationSelected: boolean}) => {
   const location = useLocation()
   const navigate = useNavigate()
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
@@ -18,16 +18,15 @@ export const LoggedInNavbar = ({darkMode, expanded, setupComplete}: {setupComple
     { iconClass: "ri-file-list-line", absoluteHref: '/portal/sprints', text: 'Sprints', adminOnly: false},
     { iconClass: "ri-bug-line", absoluteHref: '/portal/bugs', text: 'Bugs', adminOnly: false},
     { iconClass: "ri-feedback-line", absoluteHref: '/portal/feedback', text: 'Feedback', adminOnly: false},
-    { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: true},
-    { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: true},
+    { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: false},
+    { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: false},
     { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Settings', adminOnly: false},
     // { iconClass: "ri-file-text-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]
+  
 
-  const formRef = useRef<HTMLFormElement>(null)
-  const handleNavCookieUpdate: MouseEventHandler<HTMLElement> = (e: any) => {
-    e.preventDefault()
-    formRef.current?.submit()
+  const toggleExpandedMenu = () => {
+    setExpandedMenu(!expanded)
   }
 
   const handleSigningOut = async () => {
@@ -44,10 +43,6 @@ export const LoggedInNavbar = ({darkMode, expanded, setupComplete}: {setupComple
         />
       </div>
       <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={expanded}/>
-
-      <Form method="post" ref={formRef}>
-        <input type="hidden" name="_navbarState" value={location.pathname} />
-      </Form>
       
       <button 
         className='w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 text-black dark:text-gray-500 dark:hover:text-white dark:hover:bg-neutral-800 hover:bg-[#f0f0f0]'
@@ -58,7 +53,7 @@ export const LoggedInNavbar = ({darkMode, expanded, setupComplete}: {setupComple
       </button>
       <i 
         className={'ri-arrow-right-s-line text-xl absolute bottom-5 cursor-pointer text-black dark:text-white ' + (expanded ? 'left-5 rotate-180' : 'mx-auto')}
-        onClick={handleNavCookieUpdate}
+        onClick={toggleExpandedMenu}
       ></i>
       <PLConfirmModal open={confirmModalOpen} setOpen={setConfirmModalOpen} message='Are you sure you would like to log out of your account?' onConfirm={handleSigningOut} size='xsm'/>
     </nav>

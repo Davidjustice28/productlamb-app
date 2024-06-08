@@ -102,12 +102,6 @@ export default function BugsPage() {
       setFilterBugs(bugs)
     } else {
       switch (group) {
-        case BugGroup.COMPLETED:
-          setFilterBugs(bugs.filter(bug => bug.status === 'fixed'))
-          break
-        case BugGroup.DELETED:
-          setFilterBugs(bugs.filter(bug => bug.status === 'archived'))
-          break
         case BugGroup.HIGH_PRIORITY:
           setFilterBugs(bugs.filter(bug => bug.priority === 'high'))
           break

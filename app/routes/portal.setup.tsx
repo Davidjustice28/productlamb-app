@@ -60,7 +60,7 @@ export const loader: LoaderFunction = args => {
           }
         })
       } 
-
+      console.log('account data', accountData)
       const {data: apps} = await appClient.getAccountApplications(accountData.id)
       const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
       const isSetup = (accountData.isSetup)
