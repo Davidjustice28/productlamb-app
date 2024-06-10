@@ -1,10 +1,12 @@
 import type { ActionFunction, LinksFunction, LoaderFunction } from '@remix-run/node'
 import {
+  Form,
   Links,
   LiveReload,
   Meta,
   Scripts,
   ScrollRestoration,
+  json,
   redirect,
   useLoaderData,
 } from '@remix-run/react'
@@ -17,6 +19,8 @@ import { preferences } from './backend/cookies/preferences';
 import { account } from './backend/cookies/account';
 import { AccountsClient } from './backend/database/accounts/client';
 import { PrismaClient } from '@prisma/client';
+import { useEffect, useState } from 'react';
+import React from 'react';
 
 export const links: LinksFunction = () => {
   return [
@@ -27,30 +31,18 @@ export const links: LinksFunction = () => {
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData()
-  const { _darkMode: previousPathA, _navbarState: previousPathB  } = Object.fromEntries(formData)
+  const { _navbarState: previousPath  } = Object.fromEntries(formData)
   const headers = new Headers();
   const cookieHeader = request.headers.get("Cookie");
   const preferencesCookie = (await preferences.parse(cookieHeader) || {});
-  let previousPath = '/'
-  if(!previousPathA && !previousPathB) {
-    previousPath = '/'
+  if (previousPath) { 
+    preferencesCookie.navBarMode = preferencesCookie.navBarMode === undefined ? true : !preferencesCookie.navBarMode;
+    headers.append('Set-Cookie', await preferences.serialize(preferencesCookie));
+    let redirectPath = previousPath.toString()
+    return redirect(redirectPath, { headers })
   } else {
-    if(previousPathA) { 
-      preferencesCookie.darkMode = preferencesCookie.darkMode ? false : true;
-      headers.append('Set-Cookie', await preferences.serialize(preferencesCookie));
-      previousPath = previousPathA.toString()
-    }
-    if(previousPathB) { 
-      preferencesCookie.navBarMode = preferencesCookie.navBarMode === undefined ? true : !preferencesCookie.navBarMode;
-      headers.append('Set-Cookie', await preferences.serialize(preferencesCookie));
-      previousPath = previousPathB.toString()
-    }
+    return json({})
   }
-
-
-  let redirectPath = previousPathB ? previousPathB.toString() : previousPathA ? previousPathA.toString() : ''
-
-  return redirect(redirectPath, { headers })
 }
 
 export const loader: LoaderFunction = (args) => {
@@ -60,10 +52,18 @@ export const loader: LoaderFunction = (args) => {
     const accountCookie = (await account.parse(cookieHeader) || {});
     const { userId } = request.auth
     const isPortalRoute = request.url.includes('/portal')
+    let darkMode: boolean = false
     if ((!userId )) {
       if (isPortalRoute) return redirect('/')
     } else {
-
+      if (accountCookie.accountId) {
+        const client = new PrismaClient()
+        const accountClient = AccountsClient(client.account)
+        const { data: accountData } = await accountClient.getAccountById(accountCookie.accountId)
+        if (accountData) {
+          darkMode = accountData.darkMode
+        }
+      }
       if((!accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) && accountCookie.accountId) {
         const dbClient = new PrismaClient()
         const accountClient = AccountsClient(dbClient.account)
@@ -81,22 +81,53 @@ export const loader: LoaderFunction = (args) => {
         return redirect(accountCookie.setupIsComplete ? '/portal/dashboard' : '/portal/setup' , { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
       }
     }
-    return { darkMode: preferencesCookie.darkMode, ENV: getSharedEnvs(), navBarExpanded: preferencesCookie.navBarMode, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete};
+    return { darkMode: darkMode, ENV: getSharedEnvs(), navBarExpanded: preferencesCookie.navBarMode, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null};
   });
 };
  
 export function App() {
-  const { ENV, darkMode, selectedApplicationName, setupIsComplete} = useLoaderData<typeof loader>()
+  const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, account_id} = useLoaderData<typeof loader>()
+  const {darkMode: actionDarkMode} = useLoaderData<typeof action>() || {darkMode: null}
+  const [ darkModeState, setDarkMode ] = useState<boolean>(actionDarkMode !== null ? actionDarkMode : loadedDarkMode)
+  
+  const darkmodeFormRef = React.useRef<HTMLFormElement>(null)
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const toggleDarkMode = () => {
+    const updatedDarkMode = !darkModeState
+    setDarkMode(updatedDarkMode)
+    inputRef.current!.value = updatedDarkMode ? 'true' : 'false'
+    handleFormSubmit()
+  }
+
+  const handleFormSubmit = async () => {
+    const darkMode = inputRef.current?.value === 'true' ? true : false
+    try {
+      const response = await fetch(`/api/preferences/${account_id}`, {
+        body: JSON.stringify({ darkMode: darkMode }),
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      const data = await response.json()
+    } catch (error) {
+      console.error('Error caught updating account dark mode: ', error)
+    }
+  };
+
   return (
-    <html lang="en" className={ (darkMode ? 'dark' : '') }>
+    <html lang="en" className={ (darkModeState ? 'dark' : '') }>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body className={darkMode ? 'bg-neutral-800' : 'bg-white'}>
-        <RootLayout appName={selectedApplicationName} setupIsComplete={setupIsComplete}/>
+      <body className='dark:bg-neutral-800 bg-white'>
+        <form ref={darkmodeFormRef}>
+          <input type="hidden" name="_darkMode" ref={inputRef}/>
+        </form>
+        <RootLayout appName={selectedApplicationName} setupIsComplete={setupIsComplete} toggleDarkMode={toggleDarkMode} darkMode={darkModeState}/>
         <ScrollRestoration />
         <Scripts />
 

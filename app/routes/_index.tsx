@@ -1,4 +1,4 @@
-import { SignInButton, SignUpButton, useUser } from "@clerk/remix";
+import { SignInButton, useUser } from "@clerk/remix";
 import { ActionFunction, json } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import React from "react";
@@ -33,6 +33,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
   return json({ joined: true }, { status: 200 })
 }
+
 export default function LandingPage() {
   const actionData = useActionData<typeof action>()
   const { isSignedIn } = useUser()

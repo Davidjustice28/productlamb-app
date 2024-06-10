@@ -4,33 +4,37 @@ import { ToggleSwitch } from "../forms/toggle-switch"
 import { PLSpinner } from "../common/spinner"
 import { LoggedInNavbar } from "../navigation/logged-in-navbar"
 import { useUser } from "@clerk/remix"
-import React from "react"
 
 
-export function AuthenticatedLayout({appName, setupIsComplete}: {setupIsComplete: boolean, appName?: string}) {
+export function AuthenticatedLayout({appName, setupIsComplete, toggleDarkMode, darkMode}: {setupIsComplete: boolean, appName?: string, toggleDarkMode: () => void, darkMode: boolean}) {
   const {user} = useUser()
   const location = useLocation()
-  const darkModeFormRef = useRef<HTMLFormElement>(null)
   const navBarStateFormRef = useRef<HTMLFormElement>(null)
   const loadedData = useLoaderData<{darkMode: boolean|undefined, navBarExpanded: boolean|undefined}>()
-  const { darkMode, navBarExpanded } = loadedData
+  const { navBarExpanded } = loadedData
+  const [darkModeState, setDarkModeState] = useState(darkMode)
   const contentBg = darkMode ? 'bg-neutral-950' : 'bg-neutral-200'
   const [expandedMenu, setExpandedMenu] = useState(!!navBarExpanded)
-  const [darkModeState, setDarkModeState] = useState(!!darkMode)
+  
+
+  const switchDarkModeSetting = () => {
+    setDarkModeState(!darkModeState)
+    toggleDarkMode()
+  }
 
   useEffect(() => {
     if (expandedMenu !== navBarExpanded) {
       navBarStateFormRef.current?.submit()
     } 
+  }, [expandedMenu])
 
-    if (darkModeState !== darkMode) {
-      darkModeFormRef.current?.submit()
-    }
-  }, [expandedMenu, darkModeState])
+  useEffect(() => {
+    setDarkModeState(darkMode)
+  }, [darkMode])
 
   return (
     <div className="flex">
-      <LoggedInNavbar darkMode={!!darkMode} expanded={expandedMenu} setExpandedMenu={setExpandedMenu} setupComplete={setupIsComplete} applicationSelected={!!(appName && appName.length)}/>
+      <LoggedInNavbar darkMode={darkModeState} expanded={expandedMenu} setExpandedMenu={setExpandedMenu} setupComplete={setupIsComplete} applicationSelected={!!(appName && appName.length)}/>
       <div className={"h-screen w-full py-3 px-6 overflow-scroll " + contentBg}>
         <div className="flex justify-between items-center w-full mb-2">
           <h1 className="text-gray-700 font-semibold uppercase text-md dark:text-gray-500">
@@ -41,14 +45,11 @@ export function AuthenticatedLayout({appName, setupIsComplete}: {setupIsComplete
           </h1>
           <div className="flex items-center justify-center gap-3 mr-3">
             <label className="inline-flex items-center cursor-pointer">
-              <Form method="post" ref={darkModeFormRef}>
-                <input type="hidden" name="_darkMode" value={location.pathname} />
-              </Form>
               <Form method="post" ref={navBarStateFormRef}>
                 <input type="hidden" name="_navbarState" value={location.pathname} />
               </Form>
               <PLSpinner />
-              <ToggleSwitch onChangeHandler={(e) => setDarkModeState(e.target.checked)} darkMode={darkModeState}/>
+              <ToggleSwitch onChangeHandler={switchDarkModeSetting} darkMode={darkModeState}/>
             </label>
             <div className="flex items-center gap-3">
               {

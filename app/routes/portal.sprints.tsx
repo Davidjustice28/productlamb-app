@@ -140,7 +140,6 @@ function SprintTableRow({data, repoPlatform, tasks, repositories, initiative}: {
 }
 
 function RepositoriesList({repositories}: {repositories: Array<ApplicationCodeRepositoryInfo>}) {
-  console.log(repositories)
  const getRepoLink = (repo: ApplicationCodeRepositoryInfo) => {
     if (repo.platform === 'github') {
       return `https://github.com/${repo.repositoryOwner}/${repo.repositoryName}`

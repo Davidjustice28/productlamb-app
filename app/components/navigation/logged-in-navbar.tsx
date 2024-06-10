@@ -42,7 +42,7 @@ export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComple
           className={'h-auto object-contain object-center ml-3' + (!expanded ? ' max-w-5' : ' max-w-40')}
         />
       </div>
-      <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={expanded}/>
+      <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={expanded} darkMode={darkMode}/>
       
       <button 
         className='w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 text-black dark:text-gray-500 dark:hover:text-white dark:hover:bg-neutral-800 hover:bg-[#f0f0f0]'
@@ -60,8 +60,7 @@ export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComple
   )
 }
 
-const NavOptionsComponent = ({ links, menuExpanded }: { links: Array<NavLink>, menuExpanded: boolean}) => {
-  const { darkMode } = useLoaderData<{darkMode: boolean|undefined}>()
+const NavOptionsComponent = ({ links, menuExpanded, darkMode}: { links: Array<NavLink>, menuExpanded: boolean, darkMode: boolean}) => {
   const location = useLocation()
   const lightModeStyle = (url: string) => (location.pathname.includes(url) ? 'text-white bg-[#F28C28]' : 'hover:bg-[#f0f0f0]') 
   const darkModeStyle = (url: string) => (location.pathname.includes(url) ? 'text-white bg-neutral-800' : 'hover:bg-neutral-800 hover:text-white')

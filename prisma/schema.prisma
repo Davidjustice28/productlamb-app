@@ -15,6 +15,7 @@ model Account {
   user_prisma_id   String
   applications     AccountApplication[]
   isSetup Boolean
+  darkMode Boolean @default(false)
 }
 
 model AccountApplication {
@@ -105,6 +106,8 @@ model GeneratedTask {
   initiativeId  Int
   reason        String
   category         String
+  notion_id     String?
+  clickup_id    String?
   application   AccountApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   initiative    GeneratedInitiative @relation(fields: [initiativeId], references: [id])
   sprint        ApplicationSprint?   @relation(fields: [sprintId], references: [id])
@@ -139,7 +142,9 @@ model ApplicationClickupIntegration {
   applicationId Int
   api_token        String
   parent_folder_id BigInt
+  team_id  BigInt @default(0)
   sprints_list_id BigInt?
+  webhook_id String?
   application AccountApplication?
 }
 
