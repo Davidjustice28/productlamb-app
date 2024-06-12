@@ -36,10 +36,13 @@ export function wrapGetAccountByUserId(accountsClient: PrismaClient['account']) 
     try {
       const account = await accountsClient.findFirst({where: {user_prisma_id: id}})
       if (!account) {
+        console.log(`Account not found for user with id: ${id}`)
         return {data: undefined, errors: [4]}
       }
+      console.log(`Account found for user with id: ${id}`)
       return {data: account, errors: []}
     } catch (e) {
+      console.log(`Error while getting account for user with id: ${id}`, e)
       return {data: undefined, errors: [3]}
     }
   }

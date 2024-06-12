@@ -46,8 +46,10 @@ export const loader: LoaderFunction = args => {
       return redirect('/')
     }
     if (accountId === undefined) {
+      console.log('account id is undefined on setup page loader')
       const {data: accountData} = await accountClient.getAccountByUserId(userId)
       if(!accountData) {
+        console.log('account data is undefined. creating account')
         const result = await accountClient.createAccount(userId, "free", SupportedTimezone.MST)
         // error handling maybe a boundary page
         if (result.errors.length > 0 || !result.data) return json({});

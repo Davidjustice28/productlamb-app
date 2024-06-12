@@ -15,8 +15,10 @@ export function wrapCreateAccount(accountsClient: PrismaClient['account']) {
         isSetup: false,
         timezone
       }})
+      console.log(`Account created for user with id: ${id}`)
       return {data: account, errors: []}
     } catch (e) {
+      console.log(`Error while creating account for user with id: ${id}`, e)
       return {data: undefined, errors: [1]}
     }
   }
