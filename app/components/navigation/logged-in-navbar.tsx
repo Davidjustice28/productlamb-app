@@ -1,13 +1,11 @@
 import { Form, Link, useLoaderData, useLocation, useNavigate } from '@remix-run/react'
 import { NavLink } from '~/types/base.types'
-import { MouseEventHandler, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { PLConfirmModal } from '../modals/confirm'
 import { useClerk } from '@clerk/remix'
 
 
 export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComplete}: {setExpandedMenu: (expanded: boolean) => void, setupComplete: boolean, darkMode: boolean, expanded: boolean, applicationSelected: boolean}) => {
-  const location = useLocation()
-  const navigate = useNavigate()
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
   const { signOut } = useClerk()
   const notSetupLinks: Array<NavLink> = [
@@ -24,13 +22,16 @@ export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComple
     // { iconClass: "ri-file-text-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]
   
-
+  const signoutFormRef = useRef<HTMLFormElement>(null)
   const toggleExpandedMenu = () => {
     setExpandedMenu(!expanded)
   }
 
   const handleSigningOut = async () => {
-    await signOut(() => navigate("/"))
+    await signOut(() => {
+      console.log('Signed out')
+    })
+    signoutFormRef.current?.submit()
   } 
 
   return (
@@ -55,6 +56,7 @@ export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComple
         className={'ri-arrow-right-s-line text-xl absolute bottom-5 cursor-pointer text-black dark:text-white ' + (expanded ? 'left-5 rotate-180' : 'mx-auto')}
         onClick={toggleExpandedMenu}
       ></i>
+      <Form method='post' action='/api/signout' className='hidden' ref={signoutFormRef}></Form>
       <PLConfirmModal open={confirmModalOpen} setOpen={setConfirmModalOpen} message='Are you sure you would like to log out of your account?' onConfirm={handleSigningOut} size='xsm'/>
     </nav>
   )

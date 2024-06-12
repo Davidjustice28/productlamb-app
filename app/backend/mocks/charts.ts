@@ -94,7 +94,6 @@ export function createSprintTaskTotalsChartData(data: Array<{name: string, taskC
 
 export function createSprintTaskCompletionPercentageChartData(data: Array<{name: string, completed: number, total: number}>): Array<{name: string, completed: number}> {
   return data.map(entry => {
-    console.log(entry)
     return {
       name:`Sprint ${entry.name}`,
       completed: entry.completed,

@@ -19,6 +19,8 @@ export const loader: LoaderFunction = args => {
     const { sessionId, userId, getToken } = request.auth;
     const cookieHeader = request.headers.get("Cookie");
     const accountCookie = (await account.parse(cookieHeader) || {});
+    console.log('account_id: ', accountCookie.accountId)
+    console.log('user_id', userId)
     let setupIsComplete: boolean|undefined = accountCookie.setupIsComplete
     let accountId: number| undefined = accountCookie.accountId
     let selectedApplicationId: number| undefined = accountCookie.selectedApplicationId
@@ -27,7 +29,6 @@ export const loader: LoaderFunction = args => {
     if (!accountId || !setupIsComplete) {
       const accountClient = AccountsClient(dbClient.account)
       const {data: accountData} = await accountClient.getAccountByUserId(userId || "")
-      console.log('dashboard loader', accountData, userId, {accountCookie})
       if (!accountData || !accountData.isSetup) {
         return redirect("/portal/setup")
       } 
@@ -77,7 +78,7 @@ export const loader: LoaderFunction = args => {
       const currentSprintTasksData = currentSprint ? createCurrentSprintChartsData(tasks.filter(t => t.sprintId === currentSprint.id)) : []
       const daysLeftInSprint = currentSprint && currentSprint.endDate ? Math.floor((new Date(currentSprint.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && t.status !== 'Done').length, days_left: daysLeftInSprint}
-      return json({ setupIsComplete, accountId, selectedApplicationName, selectedApplicationId, sprints, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint})
+      return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint})
     }
   });
 };
@@ -102,13 +103,12 @@ export const action: ActionFunction = async ({ request }) => {
 }
 
 export default function DashboardPage() {
-  const { accountId, setupIsComplete, sprints, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes: loadedNotes, currentSprint: loadedCurrentSprint } = useLoaderData<{setupIsComplete: boolean, accountId: number|undefined, selectedApplicationName: string| undefined, sprints: Array<ApplicationSprint>, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, days_left: number|null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null }>();
+  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes: loadedNotes, currentSprint: loadedCurrentSprint } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, days_left: number|null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null }>();
   const {notes: notesAfterAction } = useActionData<{notes: ApplicationNote[]|null}>() || {notes: null}
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
   const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || [])])
   const [chartIndex, setChartIndex] = useState<number>(0)
   const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(loadedCurrentSprint)
-  const [tasks, setTasks] = useState<GeneratedTask[]>([])
   const yKey = chartIndex == 0 ? "taskCount" : "completed"
   const [notes, setNotes] = useState<Array<{text: string, id: number}>>(notesAfterAction || loadedNotes);
   const [addNotemodalOpen, setAddNoteModalOpen] = useState<boolean>(false)
