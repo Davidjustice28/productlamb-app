@@ -18,9 +18,7 @@ export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {
     const { sessionId, userId, getToken } = request.auth;
     const cookieHeader = request.headers.get("Cookie");
-    const preferencesCookie = (await preferences.parse(cookieHeader) || {}); 
     const accountCookie = (await account.parse(cookieHeader) || {});
-    const darkMode = preferencesCookie.darkMode ? true : false;
     let setupIsComplete: boolean|undefined = accountCookie.setupIsComplete
     let accountId: number| undefined = accountCookie.accountId
     let selectedApplicationId: number| undefined = accountCookie.selectedApplicationId
@@ -73,21 +71,20 @@ export const loader: LoaderFunction = args => {
       )
 
       const taskPercentagesChartData = createSprintTaskCompletionPercentageChartData(
-        sprints.map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && t.status === 'completed').length, total: tasks.filter(t => t.sprintId === s.id).length}))
+        sprints.map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && t.status === 'Done').length, total: tasks.filter(t => t.sprintId === s.id).length}))
       )
 
       const currentSprint = sprints.find(s => s.status === 'In Progress')
       const currentSprintTasksData = currentSprint ? createCurrentSprintChartsData(tasks.filter(t => t.sprintId === currentSprint.id)) : []
       const daysLeftInSprint = currentSprint && currentSprint.endDate ? Math.floor((new Date(currentSprint.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
-      const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && t.status !== 'completed').length, days_left: daysLeftInSprint}
-      return json({ darkMode, setupIsComplete, accountId, selectedApplicationName, selectedApplicationId, sprints, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint})
+      const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && t.status !== 'Done').length, days_left: daysLeftInSprint}
+      return json({ setupIsComplete, accountId, selectedApplicationName, selectedApplicationId, sprints, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint})
     }
   });
 };
 
 export const action: ActionFunction = async ({ request }) => {
   const cookieHeader = request.headers.get("Cookie");
-  const preferencesCookie = (await preferences.parse(cookieHeader) || {}); 
   const accountCookie = (await account.parse(cookieHeader) || {});
   const dbClient = new PrismaClient()
   const formData  = await request.formData()
@@ -106,14 +103,14 @@ export const action: ActionFunction = async ({ request }) => {
 }
 
 export default function DashboardPage() {
-  const { darkMode, accountId, setupIsComplete, sprints, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes: loadedNotes, currentSprint: loadedCurrentSprint } = useLoaderData<{darkMode: boolean|undefined, setupIsComplete: boolean, accountId: number|undefined, selectedApplicationName: string| undefined, sprints: Array<ApplicationSprint>, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, days_left: number|null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null }>();
+  const { accountId, setupIsComplete, sprints, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes: loadedNotes, currentSprint: loadedCurrentSprint } = useLoaderData<{setupIsComplete: boolean, accountId: number|undefined, selectedApplicationName: string| undefined, sprints: Array<ApplicationSprint>, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, days_left: number|null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null }>();
   const {notes: notesAfterAction } = useActionData<{notes: ApplicationNote[]|null}>() || {notes: null}
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
   const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || [])])
   const [chartIndex, setChartIndex] = useState<number>(0)
   const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(loadedCurrentSprint)
   const [tasks, setTasks] = useState<GeneratedTask[]>([])
-  const yKey = chartIndex == 0 ? "taskCount" : "percentage"
+  const yKey = chartIndex == 0 ? "taskCount" : "completed"
   const [notes, setNotes] = useState<Array<{text: string, id: number}>>(notesAfterAction || loadedNotes);
   const [addNotemodalOpen, setAddNoteModalOpen] = useState<boolean>(false)
 
@@ -157,7 +154,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="rounded-xl w-full h-full bg-white dark:bg-neutral-800 p-5" style={{height: "325px"}}>
-          <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} darkMode={darkMode}/>
+          <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} />
         </div>
       </div>
       <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "350px"}}>
@@ -181,7 +178,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="rounded-xl mt-2 bg-white dark:bg-neutral-800 h-15 md:h-full pt-2">
-            <PLBarChart darkMode={darkMode} data={barChartData}/>
+            <PLBarChart data={barChartData}/>
           </div>
         </div>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">

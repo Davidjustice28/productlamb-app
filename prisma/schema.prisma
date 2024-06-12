@@ -16,6 +16,7 @@ model Account {
   applications     AccountApplication[]
   isSetup Boolean
   darkMode Boolean @default(false)
+  timezone String @default("America/Denver")
 }
 
 model AccountApplication {
@@ -33,6 +34,7 @@ model AccountApplication {
   clickup_integration_id Int? @unique
   notion_integration  ApplicationNotionIntegration? @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
   notion_integration_id Int? @unique
+  lastSprintCheck String?
   account            Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
   bugs               ApplicationBug[]
   codeRepositoryInfo ApplicationCodeRepositoryInfo[]
@@ -121,6 +123,7 @@ model ApplicationSprint {
   application    AccountApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   initiative     GeneratedInitiative[]
   status         String
+  notion_sprint_id String?
   selectedInitiative Int?
   generatedTasks GeneratedTask[]
 }

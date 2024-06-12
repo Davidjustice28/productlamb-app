@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { PLBarChartProps } from './area-chart';
 
-export function PLBarChart({darkMode=false, data, } : PLBarChartProps) {
-  const incompleteColor = darkMode ? 'black' : 'rgb(212 212 212)';
+export function PLBarChart({data, darkMode } : PLBarChartProps) {
+  const incompleteColor =  darkMode ? 'black' : 'rgb(212 212 212)';
 
   if (!data.length) {
     return <div className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>Insufficient data. Turn on a sprint generation to see analytics.</div>
@@ -20,7 +20,7 @@ export function PLBarChart({darkMode=false, data, } : PLBarChartProps) {
         <XAxis dataKey="name" />
         <YAxis dataKey="total"/>
         <Bar dataKey="incomplete" fill={incompleteColor} stackId="a" />
-        <Bar dataKey="completed" stroke="#F28C28" fill="#F28C28" stackId="a" opacity={0.75}/>
+        {/* <Bar dataKey="completed" stroke="#F28C28" fill="#F28C28" stackId="a" opacity={0.75}/> */}
       </BarChart>
     </ResponsiveContainer>
   );

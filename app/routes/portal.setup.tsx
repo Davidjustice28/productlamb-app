@@ -18,7 +18,7 @@ import { PLAddApplicationModal } from "~/components/modals/applications/add-appl
 import { PLIntegrationOptionsModal } from "~/components/modals/integrations/integration-options";
 import { availableIntegrations } from "~/static/integration-options";
 import { Colors } from "~/types/base.types";
-import { NewApplicationData, PLAvailableIntegrationNames } from "~/types/database.types";
+import { NewApplicationData, PLAvailableIntegrationNames, SupportedTimezone } from "~/types/database.types";
 import { TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types";
 
 interface SetupFieldProps {
@@ -48,7 +48,7 @@ export const loader: LoaderFunction = args => {
     if (accountId === undefined) {
       const {data: accountData} = await accountClient.getAccountByUserId(userId)
       if(!accountData) {
-        const result = await accountClient.createAccount(userId, "free")
+        const result = await accountClient.createAccount(userId, "free", SupportedTimezone.MST)
         // error handling maybe a boundary page
         if (result.errors.length > 0 || !result.data) return json({});
         accountId = result.data.id

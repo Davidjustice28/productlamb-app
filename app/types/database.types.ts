@@ -53,3 +53,15 @@ export interface ClickUpData {
   apiToken: string
   parentFolderId: number
 }
+
+export enum SupportedTimezone {
+  EST = "America/New_York",      // Eastern Time (US & Canada)
+  CST = "America/Chicago",       // Central Time (US & Canada)
+  MST = "America/Denver",        // Mountain Time (US & Canada)
+  PT = "America/Los_Angeles",   // Pacific Time (US & Canada)
+  WET = "Europe/London",         // Western European Time
+  CET = "Europe/Paris",          // Central European Time
+  MOSCOWTIME = "Europe/Moscow",         // Moscow Standard Time
+  JST = "Asia/Tokyo",            // Japan Standard Time
+  AET = "Australia/Sydney"  // Australian Eastern Time
+}
