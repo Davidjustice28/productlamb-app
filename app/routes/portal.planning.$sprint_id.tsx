@@ -50,7 +50,7 @@ export const action: ActionFunction  = async ({request, params}) => {
   const sprintData = JSON.parse(form.get('sprint_data') as string)
   const sprint_id = sprintData.sprint_id
   const dbClient = new PrismaClient()
-
+  
   const response = await dbClient.generatedTask.updateMany({where: {id: {in: sprintData.task_ids}}, data: {sprintId: sprint_id}})
   console.log('Updated tasks', response.count)
   if (sprintData.new_tasks.length) {
@@ -71,8 +71,8 @@ export const action: ActionFunction  = async ({request, params}) => {
   }
 
   await dbClient.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: sprintData.initiative_id}})
-  const url = process.env.NODE_ENV === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
-  await fetch(`http://localhost:8000/sprints/${sprint_id}/generate`, { method: 'POST' })
+  const url = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
+  await fetch(`${url}/${sprint_id}/generate`, { method: 'POST' })
   return redirect(`/portal/sprints`)
 }
 

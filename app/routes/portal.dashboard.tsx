@@ -15,14 +15,13 @@ import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLCreateNoteModal } from "~/components/modals/notes/create-note";
 
 export const loader: LoaderFunction = args => {
-  return rootAuthLoader(args, async ({ request }) => {
+  return rootAuthLoader(args, async ({ request }) => {    
     const { sessionId, userId, getToken } = request.auth;
     const cookieHeader = request.headers.get("Cookie");
     const accountCookie = (await account.parse(cookieHeader) || {});
     let setupIsComplete: boolean|undefined = accountCookie.setupIsComplete
     let accountId: number| undefined = accountCookie.accountId
     let selectedApplicationId: number| undefined = accountCookie.selectedApplicationId
-    console.log('dashboard app id', selectedApplicationId)
     let selectedApplicationName: string| undefined = accountCookie.selectedApplicationName
     const dbClient = new PrismaClient()
     if (!accountId || !setupIsComplete) {
