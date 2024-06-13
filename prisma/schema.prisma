@@ -124,6 +124,7 @@ model ApplicationSprint {
   initiative     GeneratedInitiative[]
   status         String
   notion_sprint_id String?
+  clickup_sprint_id String?
   selectedInitiative Int?
   generatedTasks GeneratedTask[]
 }
@@ -145,9 +146,6 @@ model ApplicationClickupIntegration {
   applicationId Int
   api_token        String
   parent_folder_id BigInt
-  team_id  BigInt @default(0)
-  sprints_list_id BigInt?
-  webhook_id String?
   application AccountApplication?
 }
 

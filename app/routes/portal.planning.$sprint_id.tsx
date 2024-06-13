@@ -63,16 +63,18 @@ export const action: ActionFunction  = async ({request, params}) => {
         sprintId: sprint_id,
         applicationId: accountCookie.selectedApplicationId,
         initiativeId: sprintData.initiative_id,
-        status: 'not-started',
+        status: 'To Do',
         reason: task.reason
       }
     })})
     console.log('Created tasks - ', createResponse.count)
+  } else {
+    console.log('No new tasks to create')
   }
 
   await dbClient.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: sprintData.initiative_id}})
   const url = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
-  await fetch(`${url}/${sprint_id}/generate`, { method: 'POST' })
+  await fetch(`${url}/sprints/${sprint_id}/generate`, { method: 'POST' })
   return redirect(`/portal/sprints`)
 }
 

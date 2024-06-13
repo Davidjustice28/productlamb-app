@@ -134,7 +134,7 @@ export default function DashboardPage() {
     <div className="flex flex-col items-center gap-5 justify-start">
       <div className="w-full flex flex-col">
         <div className="flex flex-row justify-between w-full items-center">
-          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Completion Percentage' : 'Tasks Assigned'}</span></h2>
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Task Completed' : 'Tasks Assigned'}</span></h2>
           <div className="inline-flex">
             <button 
               className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 1 || chartIndex == 0 ? "cursor-not-allowed" : "hover:text-gray-400")} 

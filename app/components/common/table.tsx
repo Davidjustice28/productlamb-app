@@ -185,6 +185,8 @@ function TableDataCellContent({type, data, key}: {type: "text"| "status"|"image"
 function getStatusColor(status: string) {
   switch (status.toLowerCase()) {
     case 'not started':
+    case 'to do':
+    case 'not-started':
       return Colors.GRAY
     case 'in progress':
       return Colors.BLUE
