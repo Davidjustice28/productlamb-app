@@ -74,7 +74,7 @@ export const action: ActionFunction  = async ({request, params}) => {
 
   await dbClient.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: sprintData.initiative_id}})
   const url = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
-  await fetch(`${url}/sprints/${sprint_id}/generate`, { method: 'POST' })
+  await fetch(`${url}/sprints/${sprint_id}/generate`, { method: 'POST', headers: { 'Authorization': `${process.env.SPRINT_GENERATION_SECRET}` } })
   return redirect(`/portal/sprints`)
 }
 
