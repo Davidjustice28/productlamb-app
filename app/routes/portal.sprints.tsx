@@ -1,11 +1,9 @@
 import { PLStatusBadge } from "~/components/common/status-badge"
 import { Colors, TableColumn } from "~/types/base.types"
 import { useState } from "react"
-import { Sprint, mockSprints } from "~/backend/mocks/sprints"
-import { PLIconButton } from "~/components/buttons/icon-button"
 import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
-import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
+import { LoaderFunction, json } from "@remix-run/node"
 import { account } from "~/backend/cookies/account"
 import { ApplicationCodeRepositoryInfo, ApplicationSprint, GeneratedInitiative, GeneratedTask, PrismaClient } from "@prisma/client"
 import { ApplicationSprintsClient } from "~/backend/database/sprints/client"
@@ -67,6 +65,7 @@ export default function SprintPage() {
       </div>
     )
   }
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex items-center justify-between w-full">
@@ -164,5 +163,5 @@ function RepositoriesList({repositories}: {repositories: Array<ApplicationCodeRe
 
 function convertToDateString(date_string: string) {
   const date = new Date(date_string)
-  return `${date.getDate()}/${date.getMonth()}/${date.getFullYear()}`
+  return `${date.getMonth() + 1}/${date.getDate() + 1}/${date.getFullYear()}`
 }
