@@ -30,6 +30,7 @@ model AccountApplication {
   logo_url           String?
   pm_tool            String?
   sprint_generation_enabled Boolean
+  sprint_interval String @default("weekly")
   clickup_integration ApplicationClickupIntegration? @relation(fields: [clickup_integration_id], references: [id], onDelete: Cascade)
   clickup_integration_id Int? @unique
   notion_integration  ApplicationNotionIntegration? @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)

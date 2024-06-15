@@ -9,7 +9,12 @@ export enum SettingsTabGroup {
   BILLING = "billing",
 }
 
-
+export enum SprintInterval {
+  DAILY = "daily",
+  WEEKLY = "weekly",
+  BIWEEKLY = "biweekly",
+  MONTHLY = "monthly",
+}
 export interface NewApplicationData {
   name: string
   summary: string
@@ -22,6 +27,7 @@ export interface NewApplicationData {
   clickup_integration_id?: number
   notion_integration_id?: number
   sprint_generation_enabled?: boolean
+  sprint_interval: SprintInterval
 }
 
 export type BugSource = 'repository' | 'self-identified' | 'productLamb' | 'integration' | 'pm-tool' | 'other'

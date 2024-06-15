@@ -13,7 +13,7 @@ export function wrapCreateAccount(accountsClient: PrismaClient['account']) {
         subscriptionType,
         status: 'pending',
         isSetup: false,
-        timezone
+        timezone,
       }})
       console.log(`Account created for user with id: ${id}`)
       return {data: account, errors: []}
