@@ -3,12 +3,13 @@ import { Colors, TableColumn } from "~/types/base.types"
 import { useState } from "react"
 import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
-import { LoaderFunction, json } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
 import { account } from "~/backend/cookies/account"
 import { ApplicationCodeRepositoryInfo, ApplicationSprint, GeneratedInitiative, GeneratedTask, PrismaClient } from "@prisma/client"
 import { ApplicationSprintsClient } from "~/backend/database/sprints/client"
 import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client"
 import { PLTable } from "~/components/common/table"
+import { ApplicationsClient } from "~/backend/database/applications/client"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
@@ -50,6 +51,61 @@ export const loader: LoaderFunction = async ({request}) => {
     repositories,
     sprintInitiativesMap
   })
+}
+
+export const action: ActionFunction = async ({request}) => {
+  const cookies = request.headers.get('Cookie')
+  const accountCookie = await account.parse(cookies)
+  const accountId = accountCookie.accountId
+  const application_id = accountCookie.selectedApplicationId
+  const dbClient = new PrismaClient()
+  const usersAccount = await dbClient['account'].findUnique({ where: { id: accountId } })
+  if (!usersAccount || application_id) {
+    return json({})
+  } 
+
+  const applicationClient = ApplicationsClient(dbClient.accountApplication)
+
+  await applicationClient.updateApplication(application_id, {sprint_generation_enabled: true})
+  const url = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
+  const response = await fetch(`${url}/sprints/suggest/${application_id}`, { method: 'POST', headers: { 'Authorization': `${process.env.SPRINT_GENERATION_SECRET}` } })
+  const sprintsClient = ApplicationSprintsClient(dbClient['applicationSprint'])
+  const codeRepositoryClient = CodeRepositoryInfoClient(dbClient['applicationCodeRepositoryInfo'])
+  const {data: sprints, errors} = await sprintsClient.getApplicationSprints(accountCookie.selectedApplicationId)
+  const {data: repositories} = await codeRepositoryClient.getAllApplicationRepositories(accountCookie.selectedApplicationId)
+  let sprintInitiativeIds: Array<number> = []
+  if ( sprints && sprints.length > 0) {
+   sprintInitiativeIds = sprints.filter(sprint => sprint.selectedInitiative ).map(sprint => sprint.selectedInitiative!)
+  }
+
+  let initiatives: Array<GeneratedInitiative> = []
+  if (sprintInitiativeIds.length) {
+    initiatives = await dbClient['generatedInitiative'].findMany({
+      where: {
+        applicationId: accountCookie.selectedApplicationId,
+        id: {
+          in: sprintInitiativeIds
+        }
+      }
+    })
+  }
+  const sprintInitiativesMap: Record<number, string> = {}
+  const taskMap: Record<number,GeneratedTask[]> = {}
+  if (sprints) {
+    sprints.forEach(sprint => {
+      taskMap[sprint.id] = sprint.generatedTasks
+    })
+    sprints.forEach(sprint => {
+      sprintInitiativesMap[sprint.id] = sprint.selectedInitiative ? initiatives.find(initiative => initiative.id === sprint.selectedInitiative)?.description || "" : ""
+    })
+  }
+  return json({
+    sprints,
+    taskMap,
+    repositories,
+    sprintInitiativesMap
+  })
+
 }
 export default function SprintPage() {
   const {sprints: loadedSprints, taskMap, repositories, sprintInitiativesMap } = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskMap: Record<number, GeneratedTask[]>, repositories: Array<ApplicationCodeRepositoryInfo>, sprintInitiativesMap: Record<number, string>}
