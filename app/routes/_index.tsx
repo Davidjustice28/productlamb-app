@@ -1,6 +1,6 @@
 import { SignInButton, useUser } from "@clerk/remix";
-import { ActionFunction, json } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
+import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useState } from "react";
 import { PLBasicButton } from "~/components/buttons/basic-button";
@@ -34,8 +34,14 @@ export const action: ActionFunction = async ({ request }) => {
   return json({ joined: true }, { status: 200 })
 }
 
+export const loader: LoaderFunction = async ({ request }) => {
+  const isLocalHost = process.env.SERVER_ENVIRONMENT !== 'production'
+  return json({ isLocalHost })
+}
+
 export default function LandingPage() {
   const actionData = useActionData<typeof action>()
+  const { isLocalHost } = useLoaderData<typeof loader>()
   const { isSignedIn } = useUser()
   const [showConfetti, setShowConfetti] = useState(actionData?.joined || false)
   const emailRef = React.createRef<HTMLInputElement>()
@@ -57,10 +63,13 @@ export default function LandingPage() {
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#values">Values</a>
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#contact-us">Contact Us</a>
         </div>
-        <div className="items-center hidden gap-8 md:flex">  
-          <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
-            <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
-          </SignInButton>
+        <div className="items-center hidden gap-8 md:flex">
+          {
+            isLocalHost && 
+            (<SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
+              <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
+            </SignInButton>)
+          }
           {/* <SignUpButton mode="modal" forceRedirectUrl={'/portal/setup'}>
             <PLBasicButton text="Sign Up" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true}/>
           </SignUpButton> */}
