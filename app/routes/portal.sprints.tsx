@@ -66,6 +66,18 @@ export default function SprintPage() {
     )
   }
 
+  if (sprints.length === 0) {
+    return (
+      <div className="w-full flex flex-col text-black">
+        <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
+        <p className="font-sm italic text-red-400  mt-5 mb-5">No sprints have been generated yet. Click button to start your first sprint planning session.</p>
+        <div>
+        <PLBasicButton text="Begin Sprint" rounded iconSide="right" icon="ri-circle-line" colorClasses="bg-white dark:bg-neutral-800 dark:text-neutral-100 text-black hover:bg-orange-400 hover:text-white dark:hover:bg-neutral-600" noDefaultDarkModeStyles iconColorClass="text-orange-400 group-hover:text-white dark:group-hover:text-orange-300"/>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex items-center justify-between w-full">
@@ -126,7 +138,7 @@ function SprintTableRow({data, repoPlatform, tasks, repositories, initiative}: {
           <p className="italic text-gray-500 dark:text-white"><i className="ri-task-line"></i> {tasks?.length ?? 0} tasks</p>
           <RepositoriesList repositories={repositories}/>
           <PLStatusBadge color={data.status === 'Completed' ? Colors.GREEN : data.status === 'In Progress' ? Colors.BLUE : data.status === 'Under Construction' ? Colors.YELLOW : Colors.RED} text={data.status}/>
-          {data.status === 'Under Construction' && <PLBasicButton text="Start Planning" onClick={startPlanning} colorClasses="py-[3px] px-[8px] text-xs"/>}
+          {data.status === 'Under Construction' && <PLBasicButton text="Start Planning" onClick={startPlanning} colorClasses="py-[3px] px-[8px] text-xs bg-green-200 dark:bg-green-300 hover:bg-green-300 dark:hover:bg-green-400" icon="ri-tools-line" noDefaultDarkModeStyles/>}
           {data.status === 'In Progress' && <p className="text-black dark:text-white">Days left: {calculateDaysLeft()}</p>}
         </div>
       </div>

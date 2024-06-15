@@ -21,8 +21,8 @@ export type PLBarChartProps = {
 export function PLAreaChart<T=any>(props: PLAreaChartProps) {
   // purple hex code: #8884d8
   const { data, xKey, yKey, fill='#F28C28', stroke='#F28C28', opacity=0.2, tooltip=false, darkMode} = props;
-  if (!data || !data.length) {
-    return <div className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>Insufficient data. Turn on a sprint generation to see analytics.</div>
+  if (data.length < 2) {
+    return <div className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>Insufficient data. {!data.length ? 'Turn on a sprint generation to see analytics' : 'Chart will be available next sprint'}.</div>
   }
   return (
     <ResponsiveContainer width="100%" height="100%">

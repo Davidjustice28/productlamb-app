@@ -5,7 +5,7 @@ import { BugSource, BugStatus, BugPriority, BugCreateData } from "~/types/databa
 
 export function wrapCreateBug(client: PrismaClient['applicationBug']) {
   return createBug
-  async function createBug(application_id: number, title: string, description: string, source: BugSource, status: BugStatus, priority: BugPriority = 'low' ): Promise<BaseResponse<ApplicationBug>> {
+  async function createBug(application_id: number, title: string, description: string, source: BugSource, priority: BugPriority = 'low' ): Promise<BaseResponse<ApplicationBug>> {
     const date = new Date().toISOString()
     try {
       const entry = await client.create({
@@ -13,9 +13,8 @@ export function wrapCreateBug(client: PrismaClient['applicationBug']) {
           title,
           description,
           source,
-          status,
           priority,
-          createdDateMs: date,
+          reported_date: date,
           applicationId: application_id,
         }
       })

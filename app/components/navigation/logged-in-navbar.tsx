@@ -18,8 +18,9 @@ export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComple
     { iconClass: "ri-feedback-line", absoluteHref: '/portal/feedback', text: 'Feedback', adminOnly: false},
     { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: false},
     { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: false},
+    { iconClass: "ri-file-list-line", absoluteHref: '/portal/backlog', text: 'Backlog', adminOnly: false},
     { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Settings', adminOnly: false},
-    // { iconClass: "ri-file-text-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
+    { iconClass: "ri-booklet-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]
   
   const signoutFormRef = useRef<HTMLFormElement>(null)
@@ -64,15 +65,15 @@ export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComple
 
 const NavOptionsComponent = ({ links, menuExpanded, darkMode}: { links: Array<NavLink>, menuExpanded: boolean, darkMode: boolean}) => {
   const location = useLocation()
-  const lightModeStyle = (url: string) => (location.pathname.includes(url) ? 'text-white bg-[#F28C28]' : 'hover:bg-[#f0f0f0]') 
-  const darkModeStyle = (url: string) => (location.pathname.includes(url) ? 'text-white bg-neutral-800' : 'hover:bg-neutral-800 hover:text-white')
+  const lightModeStyle = (url: string, linkLabel: string) => (location.pathname.includes(url) || (location.pathname.toLowerCase().includes('planning') &&  linkLabel.toLowerCase().includes('sprints')) ? 'text-white bg-[#F28C28]' : 'hover:bg-[#f0f0f0]') 
+  const darkModeStyle = (url: string, linkLabel: string) => (location.pathname.includes(url) || (location.pathname.toLowerCase().includes('planning') &&  linkLabel.toLowerCase().includes('sprints')) ? 'text-white bg-neutral-800' : 'hover:bg-neutral-800 hover:text-white')
   return(
     <ul className='p-0 m-0 list-none flex-col justify-evenly w-full'>
       {links.map((link, index) => {
         return (
           <li key={index} className='p-0 m-0 list-none'>
             <Link to={link.absoluteHref} className={'no-underline ' + (darkMode ? 'text-gray-500' : 'text-black')}>
-              <div className={'w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 ' + ( darkMode ? darkModeStyle(link.absoluteHref) : lightModeStyle(link.absoluteHref))}>
+              <div className={'w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 ' + ( darkMode ? darkModeStyle(link.absoluteHref, link.text) : lightModeStyle(link.absoluteHref, link.text))}>
                 <i className={link.iconClass + (menuExpanded ? " ml-3" : ' mx-auto')} style={{fontSize: '20px'}}></i>
                 <span className={'text-18 font-bold inline-block ' + (menuExpanded ? '' : 'hidden')}>{link.text}</span>
               </div>

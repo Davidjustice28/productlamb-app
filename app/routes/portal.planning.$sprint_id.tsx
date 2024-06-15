@@ -10,6 +10,16 @@ import { PLAddTaskModal } from "~/components/modals/tasks/add-task-modal"
 import { TableColumn } from "~/types/base.types"
 import { ManualTaskData } from "~/types/component.types"
 
+interface SprintPlanningResult {
+  sprint_id: number, 
+  task_ids: Array<number>,
+  initiative_id: number,
+  new_tasks: Array<ManualTaskData>,
+  task_backlogged_ids: Array<number>,
+  deleted_task_ids: Array<number>
+  backlog_ids_used: Array<number>
+}
+
 export const loader: LoaderFunction = async ({request, params}) => {
   const dbClient = new PrismaClient()
   const taskMap: Record<number, Array<GeneratedTask>> = {}
@@ -32,6 +42,8 @@ export const loader: LoaderFunction = async ({request, params}) => {
     return {initiative_id: initiative.id, tasks}
   }))
 
+  const backlog = await dbClient.generatedTask.findMany({where: {sprintId, backlog: true}})
+
   responses.forEach(response => {
     taskMap[response.initiative_id] = response.tasks
   })
@@ -39,7 +51,8 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
   return json({
     initiatives,
-    taskMap
+    taskMap,
+    backlog
   }) 
 }
 
@@ -47,14 +60,18 @@ export const action: ActionFunction  = async ({request, params}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const form = await request.formData()
-  const sprintData = JSON.parse(form.get('sprint_data') as string)
+  const sprintData = JSON.parse(form.get('sprint_data') as string) as SprintPlanningResult
   const sprint_id = sprintData.sprint_id
   const dbClient = new PrismaClient()
   
-  const response = await dbClient.generatedTask.updateMany({where: {id: {in: sprintData.task_ids}}, data: {sprintId: sprint_id}})
-  console.log('Updated tasks', response.count)
+  const selected_ids = sprintData.task_ids.concat(sprintData.backlog_ids_used)
+
+  if (selected_ids.length) {
+    await dbClient.generatedTask.updateMany({where: {id: {in: selected_ids}}, data: {sprintId: sprint_id, backlog: false, initiativeId: sprintData.initiative_id}})
+  }
+
   if (sprintData.new_tasks.length) {
-    const createResponse = await dbClient.generatedTask.createMany({data: sprintData.new_tasks.map((task: ManualTaskData) => {
+    await dbClient.generatedTask.createMany({data: sprintData.new_tasks.map((task: ManualTaskData) => {
       return {
         title: task.title,
         description: task.description,
@@ -67,9 +84,14 @@ export const action: ActionFunction  = async ({request, params}) => {
         reason: task.reason
       }
     })})
-    console.log('Created tasks - ', createResponse.count)
-  } else {
-    console.log('No new tasks to create')
+  }
+    
+  if (sprintData.task_backlogged_ids.length) {
+    await dbClient.generatedTask.updateMany({where: {id: {in: sprintData.task_backlogged_ids}}, data: {sprintId: null, backlog: true}})
+  }
+
+  if (sprintData.deleted_task_ids.length) {
+    await dbClient.generatedTask.deleteMany({where: {id: {in: sprintData.deleted_task_ids}}})
   }
 
   await dbClient.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: sprintData.initiative_id}})
@@ -79,12 +101,15 @@ export const action: ActionFunction  = async ({request, params}) => {
 }
 
 export default function SprintGenerationPage() {
-  const {taskMap: data, initiatives: loadedInitiatives} = useLoaderData() as {taskMap: Record<number, Array<GeneratedTask>>, initiatives: Array<GeneratedInitiative>}
-  const [step, setStep] = useState<0|1>(0)
+  const {taskMap: data, initiatives: loadedInitiatives, backlog} = useLoaderData() as {taskMap: Record<number, Array<GeneratedTask>>, initiatives: Array<GeneratedInitiative>, backlog: Array<GeneratedTask>}
+  const [step, setStep] = useState<number>(0)
+  const allTasks = Object.values(data).flat()
   const [selectedInitiative, setSelectedInitiative] = useState<number|null>()
   const [initiatives, setInitiatives] = useState<Array<GeneratedInitiative>>(loadedInitiatives || [])
   const [taskMap, setTaskMap] = useState<Record<number, Array<GeneratedTask>>>(data || {})
   const [itemsSelected, setItemsSelected] = useState(false)
+  const [backloggedTaskIds, setBacklogTaskIds] = useState<Array<number>>([])
+  const [selectedIdsFromBacklog, setSelectedIdsFromBacklog] = useState<Array<number>>([])
   const [manualTaskModalOpen, setManualTaskModalOpen] = useState(false)
   const [newTasks, setNewTasks] = useState<Array<ManualTaskData>>([])
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
@@ -94,13 +119,28 @@ export default function SprintGenerationPage() {
   const confirmationMessage = "Are you sure you want to close out planning and start the next sprint with the selected tasks?"
 
   function onConfirm() {
-    inputRef.current!.value = JSON.stringify({sprint_id: initiatives.find(initiative => initiative.id === selectedInitiative)?.sprintId, task_ids: idsChecked, initiative_id: selectedInitiative, new_tasks: newTasks})
+    inputRef.current!.value = JSON.stringify({
+      sprint_id: initiatives.find(initiative => initiative.id === selectedInitiative)?.sprintId, 
+      task_ids: idsChecked, initiative_id: selectedInitiative, 
+      new_tasks: newTasks, 
+      task_backlogged_ids: backloggedTaskIds,
+      backlog_ids_used: selectedIdsFromBacklog,
+      deleted_task_ids: getDeletedTasks().map(task => task.id)
+    })
     formRef.current?.submit()
   }
 
+  function getUnchosenTasks() {
+    return allTasks.filter(task => !idsChecked.includes(task.id))
+  }
+
+  function getDeletedTasks() {
+    return allTasks.filter(task => !idsChecked.includes(task.id) && !backloggedTaskIds.includes(task.id)) 
+  }
+
   const handleButtonClick = () => {
-    if(step === 0) {
-      setStep(1)
+    if(step < 3) {
+      setStep((prev) => prev + 1)
     } else {
       setConfirmModalOpen(true)
     }
@@ -116,7 +156,7 @@ export default function SprintGenerationPage() {
       {step === 0 ? 
         (
           <>
-            <p className="font-semibold text-black dark:text-white">Choose an overall initiative for the sprint you wish to generate.</p>
+            <p className="mt-5 mb-5 font-semibold text-neutral-800 dark:text-neutral-400">Choose an overall initiative for the sprint you wish to generate.</p>
             <div className="mt-5 flex flex-row gap-3">
               {initiatives.map((initiative, index) => {
                 return (
@@ -142,25 +182,36 @@ export default function SprintGenerationPage() {
             }
             </div>
           </>
-        ) : (
+        ) : step === 1 ? (
+          <div className="mt-5 mb-5 min-h-[600px]">
+            <p className="font-semibold text-neutral-800 dark:text-neutral-400">Here's your backlog. Pull in any items you want tackle this sprint.</p>
+            <BacklogTable tasks={backlog} setIdsChecked={setSelectedIdsFromBacklog} listType="backlog"/>
+          </div>
+        
+        ) : step == 2 ? (
           <>
-            <div className="flex flex-row justify-between w-full items-center mt-5">
-              <p className="font-semibold text-black dark:text-white">Manually add any tasks you would like in this sprint</p>
+            <div className="flex flex-row justify-between w-full items-center mt-5 mb-5">
+              <p className="font-semibold text-neutral-800 dark:text-neutral-400">Manually add any tasks you would like in this sprint</p>
               <div className="flex flex-row gap-3">
                 <PLBasicButton text="Add Task" onClick={() => setManualTaskModalOpen(true)} icon="ri-add-line"/>
               </div>
             </div>
-            <div className="mt-5 h-[550px] overflow-y-scroll mb-5">
+            <div className="min-h-[550px] mb-5">
               <PLTable data={newTasks} checked={[]} columns={[{key: 'title', type: 'text'}, {key: 'description', type: 'text'}, {key: 'points', type: 'text'}, {key: 'category', type: 'text'}]} actionsAvailable={false}/>
             </div>
           </>
+        ) : (
+          <div className="mt-5 mb-5 min-h-[600px]">
+            <p className="font-semibold text-neutral-800 dark:text-neutral-400">Mark unselected suggestions that you would like to move to your backlog. The rest will not be saved.</p>
+            <BacklogTable tasks={getUnchosenTasks()} setIdsChecked={setBacklogTaskIds} listType="suggestions"/>
+          </div>
         )
       }      
       <Form method="POST" ref={formRef}>
         <input type="hidden" ref={inputRef} name="sprint_data"/>
       </Form>
       <div>
-        <PLBasicButton text={step === 0 ? 'Go to Next Step' : "Start Sprint"} onClick={handleButtonClick} icon="ri-arrow-right-line" disabled={step === 0 && !itemsSelected}/>
+        <PLBasicButton text={step < 3 ? 'Go to Next Step' : "Start Sprint"} onClick={handleButtonClick} icon="ri-arrow-right-line" disabled={step === 0 && !itemsSelected}/>
       </div>
       <PLConfirmModal message={confirmationMessage} open={confirmModalOpen} setOpen={setConfirmModalOpen} onConfirm={onConfirm}/>
       <PLAddTaskModal open={manualTaskModalOpen} setOpen={setManualTaskModalOpen} onSubmit={onAddTask}/>
@@ -181,7 +232,29 @@ function SprintPlanningTaskTable({tasks, setItemsSelected, setIdsChecked}: {task
   ]
   if (tasks.length === 0) return <p>No tasks found for this initiative.</p>
   return (
-    <div className="mt-5 h-[450px] overflow-y-scroll mb-5">
+    <div className="mt-5 min-h-[450px] mb-5">
+      <PLTable data={tasks} checked={[]} columns={columns} onCheck={onCheck}/>
+    </div>
+  )
+}
+
+function BacklogTable({tasks, setIdsChecked, listType}: {tasks: Array<GeneratedTask>, setIdsChecked: (ids: Array<number>) => void, listType: 'backlog' | 'suggestions'}) {
+
+  function onCheck(ids:Array<number>) {
+    setIdsChecked(ids)
+  }
+
+  const columns: Array<TableColumn> = [
+    {key: "description", type: "text"},
+    {key: "reason", type: "text"},
+  ]
+  if (tasks.length === 0) return (
+    <p className="text-red-400 mt-3">
+      {listType === 'backlog' ? 'Your backlog is empty.' : 'There are no unused suggestions. All have been pulled into this sprint.'}
+    </p>
+  )
+  return (
+    <div className="mt-5 mb-5">
       <PLTable data={tasks} checked={[]} columns={columns} onCheck={onCheck}/>
     </div>
   )

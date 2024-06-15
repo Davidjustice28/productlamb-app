@@ -152,7 +152,11 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
   )
 }
 
-function TableDataCellContent({type, data, key}: {type: "text"| "status"|"image", data: any, key: string}) {
+function TableDataCellContent({type, data, key}: {type: "text"| "status"|"image"| "date", data: any, key: string}) {
+  if(type === 'date') {
+    const date_string = new Date(data).toDateString()
+    return <span>{date_string === 'Invalid Date' ? 'N/A' : date_string}</span>
+  }
   if(type === 'text') return <span>{data}</span>
   if(type === 'image') return data ? <img src={data} alt={key} className="w-10 h-10 rounded-full"/> : <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-600 flex flex-row items-center justify-center"><i className="ri-user-line dark:text-gray-400 text-black text-2xl"></i></div>
   let text = ''
@@ -188,15 +192,18 @@ function getStatusColor(status: string) {
     case 'to do':
     case 'not-started':
       return Colors.GRAY
+    case 'low':
     case 'in progress':
       return Colors.BLUE
     case 'completed':
     case 'done':
     case 'yes':
       return Colors.GREEN
+    case 'medium':
     case 'under construction':
       return Colors.YELLOW
     case 'canceled':
+    case 'high':
     case 'no':
       return Colors.RED
     default:

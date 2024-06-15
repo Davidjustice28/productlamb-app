@@ -139,14 +139,14 @@ export default function DashboardPage() {
             <button 
               className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 1 || chartIndex == 0 ? "cursor-not-allowed" : "hover:text-gray-400")} 
               onClick={() => handleChartChange(false)}
-              disabled={(chartData.length <= 1 || chartIndex == 0)}
+              disabled={(chartData[chartIndex] <= 1 || chartIndex == 0)}
             >
               <i className="ri ri-arrow-left-s-line"></i>
             </button>
             <button 
               className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 1 || chartIndex == chartData.length - 1 ? "cursor-not-allowed" : "hover:text-gray-400")}
               onClick={() => handleChartChange(true)}
-              disabled={(chartData.length <= 1 || chartIndex == chartData.length - 1)}
+              disabled={(chartData[chartIndex].length <= 1 || chartIndex == chartData.length - 1)}
             >
               <i className="ri ri-arrow-right-s-line"></i>
             </button>

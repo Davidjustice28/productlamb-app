@@ -20,7 +20,6 @@ interface NewOrEditBugData extends BaseFormData {
   action: 'add' | 'edit'
   title: string,
   description: string,
-  status: BugStatus,
   priority: BugPriority,
   source: BugSource
 }
@@ -39,8 +38,8 @@ export const action: ActionFunction = async ({request}) => {
   const dbClient = new PrismaClient()
   const bugClient = ApplicationBugsClient(dbClient.applicationBug)
   if (data.action === 'add') {
-    const {title, source, status, description, priority} = data
-    await bugClient.createBug(applicationId, title, description, source, status, priority)
+    const {title, source, description, priority} = data
+    await bugClient.createBug(applicationId, title, description, source, priority)
     const {data: bugs} = await bugClient.getAllBugs(applicationId)
     return json({updateBugs: bugs ?? null})
   }
@@ -91,8 +90,7 @@ export default function BugsPage() {
 
   const columns: Array<TableColumn> = [
     {key: "description", type: "text"},
-    {key: "status", type: "status", sortable: true},
-    {key: "created_date", type: "text", sortable: true},
+    {key: "priority", type: "status", sortable: true},
   ]
 
   function handleGroupChange(group: BugGroup) {

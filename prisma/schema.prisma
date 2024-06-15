@@ -61,6 +61,7 @@ model ApplicationFeedback {
   feedback      String
   source        String
   feedbackDate  String
+  ignored       Boolean           @default(false)
   application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
@@ -105,13 +106,14 @@ model GeneratedTask {
   status        String
   points        Int?
   description   String
-  initiativeId  Int
+  initiativeId  Int?
   reason        String
   category         String
   notion_id     String?
   clickup_id    String?
+  backlog Boolean?
   application   AccountApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  initiative    GeneratedInitiative @relation(fields: [initiativeId], references: [id])
+  initiative    GeneratedInitiative? @relation(fields: [initiativeId], references: [id])
   sprint        ApplicationSprint?   @relation(fields: [sprintId], references: [id])
 }
 
@@ -135,9 +137,8 @@ model ApplicationBug {
   title         String
   description   String
   priority      String
-  createdDateMs String
+  reported_date String?
   source        String
-  status        String
   application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 

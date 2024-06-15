@@ -4,6 +4,8 @@ export type PLButtonIcons = string | 'ri-add-line' | 'ri-equalizer-line' | 'ri-p
 
 export interface PLBasicButtonProps {
   icon?: PLButtonIcons
+  iconSide?: 'left' | 'right'
+  iconColorClass?: string
   text: string
   onClick?: () => void
   colorClasses?: string
@@ -30,7 +32,7 @@ export interface PLIconButtonProps {
 
 export interface PLTableProps<T> {
   data: Array<T>
-  columns?: Array<{key: string, type: "text" | "status" | "image", sortable?: boolean}>
+  columns?: Array<{key: string, type: "text" | "status" | "image"| "date", sortable?: boolean}>
   actionsAvailable?: boolean
   checked: Array<number>
   columnsVisible?: boolean
