@@ -1,7 +1,7 @@
 import { PLStatusBadge } from "~/components/common/status-badge"
 import { Colors, TableColumn } from "~/types/base.types"
 import { useState } from "react"
-import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
+import { Form, Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
 import { account } from "~/backend/cookies/account"
@@ -128,7 +128,9 @@ export default function SprintPage() {
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
         <p className="font-sm italic text-red-400  mt-5 mb-5">No sprints have been generated yet. Click button to start your first sprint planning session.</p>
         <div>
-        <PLBasicButton text="Begin Sprint" rounded iconSide="right" icon="ri-circle-line" colorClasses="bg-white dark:bg-neutral-800 dark:text-neutral-100 text-black hover:bg-orange-400 hover:text-white dark:hover:bg-neutral-600" noDefaultDarkModeStyles iconColorClass="text-orange-400 group-hover:text-white dark:group-hover:text-orange-300"/>
+        <Form method="post">
+          <PLBasicButton text="Begin Sprint" rounded iconSide="right" icon="ri-circle-line" colorClasses="bg-white dark:bg-neutral-800 dark:text-neutral-100 text-black hover:bg-orange-400 hover:text-white dark:hover:bg-neutral-600" noDefaultDarkModeStyles iconColorClass="text-orange-400 group-hover:text-white dark:group-hover:text-orange-300"/>
+        </Form>
         </div>
       </div>
     )
