@@ -283,11 +283,11 @@ function PricingSection() {
                 <div className="mx-auto max-w-xs px-8">
                   <p className="text-base font-semibold text-gray-600">Affordable pricing for all</p>
                   <p className="mt-6 flex items-baseline justify-center gap-x-2 mb-6">
-                    <span className="text-5xl font-bold tracking-tight text-gray-900">${isMonthly ? 12 : 100}</span>
+                    <span className="text-5xl font-bold tracking-tight text-gray-900">${isMonthly ? 10 : 75}</span>
                     <span className="text-sm font-semibold leading-6 tracking-wide text-gray-600">USD</span>
                   </p>
                   {/* <PLBasicButton text="Coming July 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600"/> */}
-                  <p className="mt-2 text-xs leading-5 text-gray-600">Enjoy your first 14 day sprint on us.</p>
+                  <p className="mt-2 text-xs leading-5 text-gray-600">Enjoy the benefits of your own project manager.</p>
                   <div className="mt-3 mb-4 flex items-center justify-center gap-2 -ml-8">
                     <ToggleSwitch onChangeHandler={toggleSubscription} darkMode={!isMonthly} />
                     <PLStatusBadge text={isMonthly ? 'Monthly' : 'Annually'} color={(isMonthly ? Colors.PINK: Colors.PURPLE)}/>
