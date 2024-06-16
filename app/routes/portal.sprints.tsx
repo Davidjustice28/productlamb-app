@@ -10,6 +10,7 @@ import { ApplicationSprintsClient } from "~/backend/database/sprints/client"
 import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client"
 import { PLTable } from "~/components/common/table"
 import { ApplicationsClient } from "~/backend/database/applications/client"
+import React from "react"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
@@ -60,7 +61,8 @@ export const action: ActionFunction = async ({request}) => {
   const application_id = accountCookie.selectedApplicationId
   const dbClient = new PrismaClient()
   const usersAccount = await dbClient['account'].findUnique({ where: { id: accountId } })
-  if (!usersAccount || application_id) {
+  if (!usersAccount || !application_id) {
+    console.error('No account or application found to generate sprints for.')
     return json({})
   } 
 
@@ -113,6 +115,12 @@ export default function SprintPage() {
   const {pathname} = useLocation()
   const parsedPath = pathname.split('/sprints/')
   const generationPage = parsedPath.length > 1 && parsedPath[1] === 'generation'
+  const formRef = React.createRef<HTMLFormElement>()
+
+  function generateFirstSprint() {
+    console.log('Generating first sprint')
+    formRef.current?.submit()
+  }
 
   if (generationPage) {
     return (
@@ -128,9 +136,18 @@ export default function SprintPage() {
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
         <p className="font-sm italic text-red-400  mt-5 mb-5">No sprints have been generated yet. Click button to start your first sprint planning session.</p>
         <div>
-        <Form method="post">
-          <PLBasicButton text="Begin Sprint" rounded iconSide="right" icon="ri-circle-line" colorClasses="bg-white dark:bg-neutral-800 dark:text-neutral-100 text-black hover:bg-orange-400 hover:text-white dark:hover:bg-neutral-600" noDefaultDarkModeStyles iconColorClass="text-orange-400 group-hover:text-white dark:group-hover:text-orange-300"/>
+        <Form method="post" ref={formRef}>
+          <input type="hidden" name="_navbarState" value={location.pathname} />
         </Form>
+          <PLBasicButton 
+            onClick={generateFirstSprint}
+            text="Begin Sprint" 
+            rounded iconSide="right" 
+            icon="ri-circle-line" 
+            colorClasses="bg-white dark:bg-neutral-800 dark:text-neutral-100 text-black hover:bg-orange-400 hover:text-white dark:hover:bg-neutral-600" 
+            noDefaultDarkModeStyles 
+            iconColorClass="text-orange-400 group-hover:text-white dark:group-hover:text-orange-300"
+          />
         </div>
       </div>
     )
