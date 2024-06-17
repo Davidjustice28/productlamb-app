@@ -92,16 +92,6 @@ export default function DocumentationPage() {
           </div>
         </div>
       </div>
-      <div className="w-full gap-5 flex flex-col">
-        <h2 className="text-2xl font-bold text-black dark:text-white">Videos</h2>
-        <div className="w-full flex flex-col items-center gap-10 pb-5">
-          {/* Update with real tutorial videos once created */}
-          <iframe className="w-full md:w-4/5 h-72 md:h-80 lg:h-96" src="https://www.youtube.com/embed/QBajJCMxByw?si=c40sx45nm8ehTGKH" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
-          <iframe className="w-full md:w-4/5 h-72 md:h-80 lg:h-96" src="https://www.youtube.com/embed/-793t2xzATQ?si=uigp8OmARHR8DTBeT" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
-          <iframe className="w-full md:w-4/5 h-72 md:h-80 lg:h-96" src="https://www.youtube.com/embed/ddTV12hErTc?si=S4UVZnEp3yUIWPT8" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
-        </div>
-      </div>
-
     </div>
   )
 }
