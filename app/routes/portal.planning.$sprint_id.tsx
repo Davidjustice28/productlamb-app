@@ -24,6 +24,9 @@ export const loader: LoaderFunction = async ({request, params}) => {
   const dbClient = new PrismaClient()
   const taskMap: Record<number, Array<GeneratedTask>> = {}
   const sprintId = parseInt(params.sprint_id || "-1")
+  const cookies = request.headers.get('Cookie')
+  const accountCookie = (await account.parse(cookies))
+  const applicationId = accountCookie.selectedApplicationId
   if(sprintId === -1) {
     return json({
       initiatives: [],
@@ -42,12 +45,11 @@ export const loader: LoaderFunction = async ({request, params}) => {
     return {initiative_id: initiative.id, tasks}
   }))
 
-  const backlog = await dbClient.generatedTask.findMany({where: {sprintId, backlog: true}})
+  const backlog = await dbClient.generatedTask.findMany({where: {applicationId, backlog: true}})
 
   responses.forEach(response => {
     taskMap[response.initiative_id] = response.tasks
   })
-  console.log('initiatives', initiatives)
 
   return json({
     initiatives,

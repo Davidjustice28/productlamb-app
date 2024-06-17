@@ -233,7 +233,7 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
         </div>
         {goals.map(({goal, isLongTerm}, index) => {
           return (
-            <div key={index} className="flex items-center gap-2 mt-2 text-black dark-text-white">
+            <div key={index} className="flex items-center gap-2 mt-2 text-black dark:text-neutral-400">
               <i className="ri-crosshair-2-fill text-red-500"></i>
               <small>{goal} - {isLongTerm ? 'Long' : 'Short'} Term</small>
             </div>
