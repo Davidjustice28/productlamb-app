@@ -65,9 +65,16 @@ export default function LandingPage() {
         </div>
         <div className="items-center hidden gap-8 md:flex">
          
-          <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
+          {/* <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
             <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
-          </SignInButton>
+          </SignInButton> */}
+
+          {
+            isLocalHost && 
+            (<SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'}>
+              <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
+            </SignInButton>)
+          }
           
           {/* <SignUpButton mode="modal" forceRedirectUrl={'/portal/setup'}>
             <PLBasicButton text="Sign Up" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true}/>
