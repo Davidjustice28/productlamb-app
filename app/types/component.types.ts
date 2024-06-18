@@ -48,7 +48,6 @@ export interface PLAddBugModalProps {
 }
 
 
-export type TypeformOnAddMethod = (client: PrismaClient['applicationIntegration'], form_id: string, api_token: string, application_id: number) => Promise<string>
 export interface IntegrationOptions{
   id: number, 
   name: string, 
@@ -56,7 +55,6 @@ export interface IntegrationOptions{
   description: string, 
   requiredFields: {[field:string]: {label: string, placeholder?: string, type: React.HTMLInputTypeAttribute }},
   available: boolean
-  onAdd: TypeformOnAddMethod | any
 }
 
 export interface PLSelectorModalOption<T=any> {
@@ -74,4 +72,9 @@ export enum FeedbackIntegrations {
   TYPEFORM = 'Typeform',
   JOTFORM = 'Jotform',
   GOOGLE_FORMS = 'Google Forms'
+}
+
+export interface PLChartProps {
+  data: Array<any>;
+  darkMode?: boolean;
 }

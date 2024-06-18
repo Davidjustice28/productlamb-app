@@ -136,3 +136,59 @@ export function createCurrentSprintChartsData(data: GeneratedTask[]) {
   })
   return chartData;
 }
+
+interface SprintTaskTypeData{
+    sprintName: string;
+    bugs: 0;
+    features: 0;
+    chores: 0;
+    other: 0;
+};
+
+interface SprintsTaskData {
+  [key: number]: SprintTaskTypeData;
+}
+
+export function createTaskTypeChartData(sprints: ApplicationSprint[], tasks: GeneratedTask[]) {
+  const sprintMap: SprintsTaskData = sprints.reduce((acc, sprint) => {
+    const sprintTasks = tasks.filter(task => task.sprintId === sprint.id)
+    const taskTotals: SprintTaskTypeData = {
+      bugs: 0,
+      features: 0,
+      chores: 0,
+      other: 0,
+      sprintName: `Sprint ${sprint.id}`
+    }
+    
+    sprintTasks.forEach(task => {
+      switch(task.category) {
+        case 'bug':
+          taskTotals.bugs += 1;
+          break;
+        case 'feature':
+          taskTotals.features += 1;
+          break;
+        case 'chore':
+          taskTotals.chores += 1;
+          break;
+        default:
+          taskTotals.other += 1;
+      }
+    })
+
+    acc[sprint.id] = taskTotals;
+    return acc;
+  }, {} as SprintsTaskData)
+
+  const chartData: Array<any> = Object.values(sprintMap).map((sprint, i) => {
+    return { 
+      name: sprint.sprintName,
+      bugs: sprint.bugs,
+      features: sprint.features,
+      chores: sprint.chores,
+      other: sprint.other,
+      count: i
+    }
+  })
+  return chartData;
+}

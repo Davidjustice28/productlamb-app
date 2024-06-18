@@ -38,7 +38,6 @@ model AccountApplication {
   lastSprintCheck String?
   account            Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
   bugs               ApplicationBug[]
-  codeRepositoryInfo ApplicationCodeRepositoryInfo[]
   feedback           ApplicationFeedback[]
   goals              ApplicationGoal[]
   integrations       ApplicationIntegration[]
@@ -84,19 +83,6 @@ model ApplicationIntegration {
   secretExpirationDate String?
   metadata             String?
   application          AccountApplication @relation(fields: [applicationId], references: [id])
-}
-
-model ApplicationCodeRepositoryInfo {
-  id                   Int                @id @default(autoincrement())
-  applicationId        Int
-  platform             String
-  secret               String
-  repositoryName       String?
-  repositoryId         Int?
-  secretExpirationDate String?
-  repositoryOwner      String?
-  archived             Boolean
-  application          AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model GeneratedTask {

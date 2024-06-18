@@ -11,12 +11,13 @@ import { PLIntegrationOptionsModal } from "~/components/modals/integrations/inte
 import { availableIntegrations } from "~/static/integration-options"
 import { IntegrationOptions } from "~/types/component.types"
 import { PLAvailableIntegrationNames } from "~/types/database.types"
-import { TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types"
+import { GithubIntegrationSetupFormData, GitlabIntegrationSetupFormData, TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types"
+import { encrypt } from "~/utils/encryption"
 
 function getIntegrationsByname(setupIntegrations: Array<ApplicationIntegration>, options: Array<IntegrationOptions>) {
   const configuredOptions: Array<IntegrationOptions> = []
   const integrations = setupIntegrations.forEach(element => {
-    const integration = options.find(i => i.name === element.name)
+    const integration = options.find(i => i.name.toLowerCase() === element.name.toLowerCase())
     if (integration)  {
       configuredOptions.push(integration)
     }
@@ -28,7 +29,7 @@ export const action: ActionFunction = async ({ request }) => {
   console.log('integration page action called')
   const cookies = request.headers.get('Cookie')
   const form = await request.formData()
-  const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData
+  const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData | GithubIntegrationSetupFormData | GitlabIntegrationSetupFormData
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
   // console.log({formData, applicationId})
@@ -36,17 +37,31 @@ export const action: ActionFunction = async ({ request }) => {
   const integrationClient = IntegrationClient(dbClient)
   if ('integration_name' in formData) {
     console.log('integration_name', formData.integration_name,)
-    const integrationOptionData = availableIntegrations.find(i => i.name.toLowerCase() === formData.integration_name)
-    if (integrationOptionData && integrationOptionData.name === 'typeform') {
+    const integrationOptionData = availableIntegrations.find(i => i.name.toLowerCase() === formData.integration_name.toLowerCase())
+    const iv = process.env.ENCRYPTION_IV 
+    const key = process.env.ENCRYPTION_KEY
+     if (!key || !iv) {
+       return json({updatedIntegrations: null})
+     }
+     
+    const encryptedToken = encrypt(formData.api_token, key, iv)
+    if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'typeform') {
       console.log('integrationOptionData', integrationOptionData)
-      // const webhookId = await integrationOptionData.onAdd(dbClient, formData.typeform_form_id, 'productlamb-webhook', applicationId)
       await integrationClient.addIntegration<TypeformIntegrationMetaData>(applicationId, formData.integration_name as PLAvailableIntegrationNames, formData.api_token, {
-        form_id: formData.typeform_form_id,
-        tag_name: 'productlamb-webhook',
-        webhook_id: ''
-        
+        form_id: (formData as TypeformIntegrationSetupFormData).typeform_form_id,
+        tag_name: 'productlamb-webhook',        
       })
-    } 
+    } else if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'github') {
+      await integrationClient.addIntegration(applicationId, formData.integration_name as PLAvailableIntegrationNames, formData.api_token, {
+        repository_name: (formData as GithubIntegrationSetupFormData).repository_name,
+        repository_owner: (formData as GithubIntegrationSetupFormData).repository_owner,
+      })
+
+    } else if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'gitlab') {
+      await integrationClient.addIntegration(applicationId, formData.integration_name as PLAvailableIntegrationNames, formData.api_token, {
+        project_id: (formData as GitlabIntegrationSetupFormData).project_id,
+      })
+    }
     
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
     return json({updatedIntegrations: integrations || [null]})

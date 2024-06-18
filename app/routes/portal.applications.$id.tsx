@@ -1,20 +1,15 @@
-import { AccountApplication, ApplicationCodeRepositoryInfo, ApplicationGoal, PrismaClient } from "@prisma/client"
+import { AccountApplication, ApplicationGoal, PrismaClient } from "@prisma/client"
 import { ActionFunction, LoaderFunction, json, redirect, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
-import { Form, useActionData, useLoaderData } from "@remix-run/react"
+import { useActionData, useLoaderData } from "@remix-run/react"
 import { useState, useRef } from "react"
 import { ApplicationsClient } from "~/backend/database/applications/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLPhotoUploader } from "~/components/forms/photo-uploader"
 import { NewApplicationData } from "~/types/database.types"
-import {createReadStream} from 'fs'
 import { uploadToPhotoToCloudStorage } from "~/services/gcp/upload-file"
-import { Storage } from "@google-cloud/storage";
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
-import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client"
-import { PLNewRepositoryComponent } from "~/components/modals/applications/add-repository"
-import { RepositoryCreationBaseInfo } from "~/backend/database/code-repository-info/addRepository"
 
 
 interface NewGoalData {
@@ -58,26 +53,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const formData = await request.formData()
     const data = Object.fromEntries(formData)
 
-    if('repositories' in data) {
-
-      const updateRepositoryData = data as unknown as {repositories: string}
-
-      const {repositories} = JSON.parse(updateRepositoryData.repositories) as {repositories: Array<ApplicationCodeRepositoryInfo>}
-      const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
-      await repoDbClient.deleteAllApplicationRepositories(parseInt(id!))
-      if (!repositories.length) {
-        return json({
-          updatedRepos: []
-        })
-      }
-      const {data: updatedRepos} = await repoDbClient.addMultipleRepositories(parseInt(id!), repositories as any)
-      return json({
-        updatedRepos
-      })
-
-
-    }
-    else if ('fileToDelete' in data) {
+    if ('fileToDelete' in data) {
       const {data: appAfterImageDeletion} = await appDbClient.updateApplication(parseInt(id!), {logo_url: null})
       if (!appAfterImageDeletion) {
         await deleteFileFromCloudStorage(data.fileToDelete as string)
@@ -113,11 +89,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const dbClient = new PrismaClient()
   const appDbClient = ApplicationsClient(dbClient.accountApplication)
   const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
-  const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
   const appId = parseInt(id)
   const {data:goals} = await goalDbClient.getGoals(appId)
   const {data: application} = await appDbClient.getApplicationById(appId)
-  const {data: repositories} = await repoDbClient.getAllApplicationRepositories(appId)
 
   if (!application) {
     return redirect('/portal/applications')
@@ -127,14 +101,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     return redirect('/portal/applications')
   }
 
-  return json({application, goals, repositories})
+  return json({application, goals})
 }
 
 export default function IndividualApplicationsPage() {
-  const {goals: currentGoals, application: currentApplicationData, repositories: currentRepos} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, repositories: Array<ApplicationCodeRepositoryInfo>}>()
-  const { updatedApplication, updatedGoals, updatedRepos } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null, updateRepos: null}
+  const {goals: currentGoals, application: currentApplicationData} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication}>()
+  const { updatedApplication, updatedGoals } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null}
   const [goals, setGoals] = useState<NewGoalData[]>(updatedGoals ?? currentGoals)
-  const [repos, setRepos] = useState(updatedRepos || currentRepos)
   const [name, setName] = useState(updatedApplication ? updatedApplication.name :currentApplicationData.name)
   const [summary, setSummary] = useState(updatedApplication ? updatedApplication.summary : currentApplicationData.summary)
   const [siteUrl, setSiteUrl] = useState(updatedApplication ? updatedApplication.siteUrl : currentApplicationData.siteUrl)
@@ -143,9 +116,8 @@ export default function IndividualApplicationsPage() {
   const [changesDetected, setChangesDetected] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
-  const formRef = useRef<HTMLFormElement>(null)
   const deleteFormRef = useRef<HTMLFormElement>(null)
- const reposFormRef = useRef<HTMLFormElement>(null)
+
   const addGoal = (e: React.FormEvent<HTMLButtonElement>, isLongTerm: boolean) => {
     e.preventDefault()
     let goal: NewGoalData
@@ -198,18 +170,8 @@ export default function IndividualApplicationsPage() {
     setChangesDetected(false)
   }
 
-  function updateRepos() {
-    reposFormRef.current?.requestSubmit()
-  }
-
   function deleteAppImg() {
     deleteFormRef.current?.requestSubmit()
-  }
-
-  const repositoryJsonInputRef = useRef<HTMLInputElement>(null)
-
-  const onRepositoriesChange = (repos: RepositoryCreationBaseInfo[]) => {
-    repositoryJsonInputRef.current!.value = JSON.stringify({repositories: repos})
   }
 
   return (
@@ -330,11 +292,6 @@ export default function IndividualApplicationsPage() {
             )
           })}
           <PLBasicButton text="Update Details" colorClasses={"bg-primary-300 dark:bg-primary-300 dark:text-black px-3 py-0 text-md mt-4" + (!changesDetected ? ' hover:bg-primary-300 dark:hover:bg-primary-300 dark:hover:text-black' : '')} disabled={!changesDetected}/>
-        </form>
-        <PLNewRepositoryComponent onRepositoriesChange={onRepositoriesChange} initialRepos={repos}/>
-        <form method="post" ref={reposFormRef}>
-          <input type="hidden" name="repositories" ref={repositoryJsonInputRef} required />
-          <PLBasicButton text="Update Repos" colorClasses={"bg-primary-300 dark:bg-primary-300 dark:text-black px-3 py-0 text-md mt-4"} onClick={updateRepos}/>
         </form>
       </div>
     </div>

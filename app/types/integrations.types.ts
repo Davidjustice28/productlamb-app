@@ -108,8 +108,22 @@ export interface BaseIntegrationSetupFormData {
 }
 
 export interface TypeformIntegrationSetupFormData extends BaseIntegrationSetupFormData {
+  integration_name: 'Typeform'
   api_token: string
   typeform_form_id: string
+}
+
+export interface GithubIntegrationSetupFormData extends BaseIntegrationSetupFormData {
+  integration_name: 'Github'
+  api_token: string
+  repository_name: string
+  repository_owner: string
+}
+
+export interface GitlabIntegrationSetupFormData extends BaseIntegrationSetupFormData {
+  integration_name: 'Gitlab'
+  api_token: string
+  project_id: number
 }
 
 export interface TypeformIntegrationMetaData {

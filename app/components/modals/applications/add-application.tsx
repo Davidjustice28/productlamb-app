@@ -1,8 +1,6 @@
 import { Form } from "@remix-run/react";
 import { PLBaseModal, PLModalFooter } from "../base";
 import { useEffect, useRef, useState } from "react";
-import { PLNewRepositoryComponent } from "./add-repository";
-import { RepositoryCreationBaseInfo } from "~/backend/database/code-repository-info/addRepository";
 import { PLProjectManagementToolLink } from "./link-pm-tool";
 import { SprintInterval } from "~/types/database.types";
 
@@ -27,8 +25,6 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
   const goalInputRef = useRef<HTMLInputElement>(null)
   const sprintIntervalInputRef = useRef<HTMLSelectElement>(null)
 
-  // form refs
-  const formRepositoryInputRef = useRef<HTMLInputElement>(null)
   const formPmToolRef = useRef<HTMLInputElement>(null)
   const formNameInputRef = useRef<HTMLInputElement>(null)
   const formSummaryInputRef = useRef<HTMLInputElement>(null)
@@ -58,13 +54,11 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
   }
 
   const submitApplication = async (e: React.FormEvent<HTMLButtonElement>) => {
-    // e.preventDefault()
     formNameInputRef.current!.value = nameInputRef.current!.value
     formSummaryInputRef.current!.value = summaryInputRef.current!.value
     formSiteUrlInputRef.current!.value = siteUrlInputRef.current!.value
     formTypeInputRef.current!.value = typeInputRef.current!.value
     formGoalInputRef.current!.value = JSON.stringify(goals)
-    formRepositoryInputRef.current!.value = repositoryJsonInputRef.current!.value
     formPmToolRef.current!.value = pmToolRef.current!.value
     formSprintIntervalRef.current!.value = sprintIntervalInputRef.current!.value
     const form = new FormData(formRef.current!)
@@ -78,21 +72,14 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
     setOpen(false)
   }
 
-  const onRepositoriesChange = (repos: RepositoryCreationBaseInfo[]) => {
-    repositoryJsonInputRef.current!.value = JSON.stringify({repositories: repos})
-    checkValidity()
-  }
-
   const validateApplication = () => {
     const name = nameInputRef.current?.value || ''
     const summary = summaryInputRef.current?.value || ''
     const siteUrl = siteUrlInputRef.current?.value || ''
     const type = typeInputRef.current?.value || ''
-    const repositories = repositoryJsonInputRef.current?.value || ''
-    const repositoryCount = repositories.length ? JSON.parse(repositories).repositories.length : 0
     const pmToolConfigured = !!pmToolRef.current?.value?.length
     const sprintInterval = sprintIntervalInputRef.current?.value || ''
-    const valid = (name.length && summary.length && siteUrl.length && type.length && repositoryCount > 0 && pmToolConfigured && sprintInterval.length) ? true : false
+    const valid = (name.length && summary.length && siteUrl.length && type.length && pmToolConfigured && sprintInterval.length) ? true : false
     return valid
   
   }
@@ -122,7 +109,6 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
           <input type="hidden" name="siteUrl" ref={formSiteUrlInputRef}/>
           <input type="hidden" name="type" ref={formTypeInputRef}/>
           <input type="hidden" name="goals" ref={formGoalInputRef}/>
-          <input type="hidden" name="repositories" ref={formRepositoryInputRef}/>
           <input type="hidden" name="projectManagementTool" ref={formPmToolRef}/>
           <input type="hidden" name="sprint_interval"ref={formSprintIntervalRef}/>
         </Form>
@@ -227,7 +213,6 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
               </div>
             </div>
           </div>
-          <input type="hidden" ref={repositoryJsonInputRef} required onChange={() => checkValidity()}/>
           <input type="hidden" ref={pmToolRef} required/>
 
         </div>
@@ -239,8 +224,6 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
             </div>
           )
         })}
-
-        <PLNewRepositoryComponent onRepositoriesChange={onRepositoriesChange}/>
       </div>
       <PLModalFooter submitText="Add" closeText="Cancel" onClose={handleClose} onSubmit={submitApplication} submitDisabled={!isValid}/>
     </PLBaseModal>

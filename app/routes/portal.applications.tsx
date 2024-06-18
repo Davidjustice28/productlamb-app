@@ -1,15 +1,11 @@
-import { AccountApplication, ApplicationCodeRepositoryInfo, PrismaClient } from "@prisma/client"
+import { AccountApplication, PrismaClient } from "@prisma/client"
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
-import { Form, Outlet, useActionData, useLoaderData, useLocation, useNavigate, useParams } from "@remix-run/react"
+import { Form, Outlet, useActionData, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { useRef, useState } from "react"
 import { account } from "~/backend/cookies/account"
 import { ApplicationsClient } from "~/backend/database/applications/client"
-import { ApplicationBugsClient } from "~/backend/database/bugs/client"
-import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client"
-import { FeedbackClient } from "~/backend/database/feedback/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client"
-import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application"
 import { PLConfirmModal } from "~/components/modals/confirm"
@@ -33,7 +29,6 @@ export let action: ActionFunction = async ({ request }) => {
   const dbClient = new PrismaClient()
   const appDbClient = ApplicationsClient(dbClient.accountApplication)
   const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
-  const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
   if ('applicationId' in data) {
     await appDbClient.deleteApplication(parseInt(data.applicationId))
     return json({})
@@ -53,8 +48,6 @@ export let action: ActionFunction = async ({ request }) => {
     if (createAppResult) {
       const goals = data.goals.length < 0 ? [] : JSON.parse(data.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)
-      const {repositories} = JSON.parse(data.repositories) as {repositories: Array<ApplicationCodeRepositoryInfo>}
-      await repoDbClient.addMultipleRepositories(createAppResult.id, repositories as any)
       const pmToolData = JSON.parse(data.projectManagementTool) as ClickUpData | NotionData
 
       let pmToolConfigurationResponseId: number| null = null

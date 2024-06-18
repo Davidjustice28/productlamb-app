@@ -1,23 +1,19 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import { ApplicationCodeRepositoryInfo, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
-import React, { useEffect } from "react";
+import React from "react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
-import { preferences } from "~/backend/cookies/preferences";
 import { AccountsClient } from "~/backend/database/accounts/client";
 import { ApplicationsClient } from "~/backend/database/applications/client";
-import { CodeRepositoryInfoClient } from "~/backend/database/code-repository-info/client";
 import { ApplicationGoalsClient } from "~/backend/database/goals/client";
 import { IntegrationClient } from "~/backend/database/integrations/ client";
 import { PLBasicButton } from "~/components/buttons/basic-button";
-import { PLAddAccountInfoModal } from "~/components/modals/account/add-account-info";
 import { PLOnboardingFeedbackModal } from "~/components/modals/account/onboarding-feedback";
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application";
 import { PLIntegrationOptionsModal } from "~/components/modals/integrations/integration-options";
 import { availableIntegrations } from "~/static/integration-options";
-import { Colors } from "~/types/base.types";
 import { NewApplicationData, PLAvailableIntegrationNames, SupportedTimezone } from "~/types/database.types";
 import { TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types";
 
@@ -99,7 +95,6 @@ export let action: ActionFunction = async ({ request }) => {
   const dbClient = new PrismaClient()
   const appDbClient = ApplicationsClient(dbClient.accountApplication)
   const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
-  const repoDbClient = CodeRepositoryInfoClient(dbClient.applicationCodeRepositoryInfo)
   const accountClient = AccountsClient(dbClient.account)
   const integrationClient = IntegrationClient(dbClient.applicationIntegration)
   if ('setup_complete' in data) {
@@ -117,11 +112,7 @@ export let action: ActionFunction = async ({ request }) => {
     const {data: createAppResult } = await appDbClient.addApplication(accountId, newAppData)
     if (createAppResult) {
       const goals = newAppData.goals.length < 0 ? [] : JSON.parse(newAppData.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
-      await goalDbClient.addMultipleGoals(createAppResult.id, goals)
-      const {repositories} = JSON.parse(newAppData.repositories) as {repositories: Array<ApplicationCodeRepositoryInfo>}
-      if (repositories.length > 0) {
-        await repoDbClient.addMultipleRepositories(createAppResult.id, repositories as any)
-      }
+      await goalDbClient.addMultipleGoals(createAppResult.id, goals)      
     }
     return json({hasApplication: true})
   }  else if ('integration' in data) {

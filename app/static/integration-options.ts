@@ -6,95 +6,70 @@ import { IntegrationOptions } from "~/types/component.types";
 export const availableIntegrations: Array<IntegrationOptions>= [
   {
     id: 0,
-    name: "discord",
-    img_url: 'https://storage.googleapis.com/productlamb-platform-images/discord.svg',
-    description: 'Get updates on various events related to sprints on your Discord server and notify your audience of changes in open source projects.',
+    name: "GitHub",
+    img_url: 'https://storage.googleapis.com/productlamb-platform-images/github.svg',
+    description: 'Allow ProductLamb to pull issues data from your GitHub repositories.',
     requiredFields: {
-      
+      api_token: { label: 'API Token', type: 'password'},
+      repo_owner: { label: 'Repository Owner', type: 'text'},
+      repo_name: { label: 'Repository Name', type: 'text'}
     },
-    available: false,
-    onAdd: null
+    available: true,
   },
   {
     id: 1,
-    name: "slack",
+    name: 'GitLab',
+    img_url: 'https://storage.googleapis.com/productlamb-platform-images/gitlab-icon.svg',
+    description: 'Allow ProductLamb to pull issues data from your GitLab repositories.',
+    requiredFields: {
+      api_token: { label: 'API Token', type: 'password'},
+      project_id: { label: 'Project ID', type: 'number'},
+    },
+    available: true,
+  },
+  {
+    id: 2,
+    name: "Slack",
     img_url: 'https://storage.googleapis.com/productlamb-platform-images/slack.svg',
     description: 'Get updates on various events related to sprints on your Slack workspace.',
     requiredFields: {
       
     },
     available: false,
-    onAdd: null
   },
   {
-    id: 2,
-    name: "google calendar",
+    id: 3,
+    name: "Google Calendar",
     img_url: 'https://storage.googleapis.com/productlamb-platform-images/google-calendar.svg',
     description: 'See when sprints start and when they end on your Google Calendar.',
     requiredFields: {
       
     },
     available: false,
-    onAdd: null
   },
   {
-    id: 3,
-    name: "gmail",
-    img_url: 'https://storage.googleapis.com/productlamb-platform-images/gmail.svg',
-    description: 'ProductLamb will send updates related to sprints to your Gmail mailbox.',
-    requiredFields: {
-      
-    },
-    available: false,
-    onAdd: null
-  },
-  {
-    id: 5,
-    name: "google drive",
-    img_url: 'https://storage.googleapis.com/productlamb-platform-images/google-drive.svg',
-    description: 'File storage and synchronization service developed by Google.',
-    requiredFields: {
-
-    },
-    available: false,
-    onAdd: null
-  },
-  {
-    id: 6,
-    name: "google sheets",
-    img_url: 'https://storage.googleapis.com/productlamb-platform-images/google-sheets.svg',
-    description: 'Export and import your data to and from Google sheets for easy access and analysis.',
-    requiredFields: {
-
-    },
-    available: false,
-    onAdd: null
-  },
-  {
-    id: 7,
-    name: "google forms",
+    id: 4,
+    name: "Google Forms",
     img_url: 'https://storage.googleapis.com/productlamb-platform-images/google-forms.svg',
     description: 'Pull user feedback and data from Google Forms.',
     requiredFields: {
 
     },
     available: false,
-    onAdd: null
   },
   {
-    id: 8,
-    name: "excel",
+    id: 5,
+    name: "Excel",
     img_url: 'https://storage.googleapis.com/productlamb-platform-images/file-type-excel.svg',
     description: 'Integrate to import/export data anytime to/from excel sheets.',
     requiredFields: {
 
     },
     available: false,
-    onAdd: null
   },
   {
-    id: 9,
-    name: "typeform",
+    id: 6,
+    name: "Typeform",
     img_url: 'https://storage.googleapis.com/productlamb-platform-images/typeform.svg',
     description: 'Pull user feedback and data from Typeform.',
     requiredFields: {
@@ -102,22 +77,15 @@ export const availableIntegrations: Array<IntegrationOptions>= [
       typeform_form_id: { label: 'Form ID', type: 'text'}
     },
     available: true,
-    onAdd: async (client: PrismaClient['applicationIntegration'], form_id: string, api_token: string, application_id: number) => {
-      const integrationClient = IntegrationClient(client)
-      const typeform = new TypeformClient(api_token, form_id)
-      const webhook = await typeform.createWebhook(application_id, 'productlamb-webhook')
-      return webhook.id!
-    }
   },
-    {
-    id: 10,
-    name: "jotform",
+  {
+    id: 7,
+    name: "Jotform",
     img_url: 'https://storage.googleapis.com/productlamb-platform-images/jotform.svg',
     description: 'Pull user feedback and data from Jotform.',
     requiredFields: {
 
     },
     available: false,
-    onAdd: null
   }
 ]

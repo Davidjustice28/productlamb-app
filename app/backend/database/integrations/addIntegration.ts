@@ -12,7 +12,7 @@ export function wrapAddIntegration(client: PrismaClient['applicationIntegration'
         data: {
           applicationId: application_id,
           name: integrationName,
-          secret,
+          secret: secret,
           metadata: metadata ? JSON.stringify(metadata) : null
         }
       })
