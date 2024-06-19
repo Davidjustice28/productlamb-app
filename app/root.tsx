@@ -48,7 +48,6 @@ export const action: ActionFunction = async ({ request }) => {
 export const loader: LoaderFunction = (args) => {
   return rootAuthLoader(args, async ({ request }) => {
     const cookieHeader = request.headers.get("Cookie");
-    const preferencesCookie = (await preferences.parse(cookieHeader) || {});  
     const accountCookie = (await account.parse(cookieHeader) || {});
     const { userId } = request.auth
     const isPortalRoute = request.url.includes('/portal')
@@ -81,7 +80,7 @@ export const loader: LoaderFunction = (args) => {
         return redirect(accountCookie.setupIsComplete ? '/portal/dashboard' : '/portal/setup' , { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
       }
     }
-    return { darkMode: darkMode, ENV: getSharedEnvs(), navBarExpanded: preferencesCookie.navBarMode, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null};
+    return { darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null};
   });
 };
  

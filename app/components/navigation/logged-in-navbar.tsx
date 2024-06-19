@@ -3,10 +3,12 @@ import { NavLink } from '~/types/base.types'
 import { useRef, useState } from 'react'
 import { PLConfirmModal } from '../modals/confirm'
 import { useClerk } from '@clerk/remix'
+import { useSidebar } from '~/backend/providers/siderbar'
 
 
-export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComplete}: {setExpandedMenu: (expanded: boolean) => void, setupComplete: boolean, darkMode: boolean, expanded: boolean, applicationSelected: boolean}) => {
+export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolean, darkMode: boolean, applicationSelected: boolean}) => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
+  const { isExpanded, toggleSidebar} = useSidebar()
   const { signOut } = useClerk()
   const notSetupLinks: Array<NavLink> = [
     { iconClass: "ri-play-circle-line", absoluteHref: '/portal/setup', text: `Setup Account`, adminOnly: false},
@@ -24,9 +26,6 @@ export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComple
   ]
   
   const signoutFormRef = useRef<HTMLFormElement>(null)
-  const toggleExpandedMenu = () => {
-    setExpandedMenu(!expanded)
-  }
 
   const handleSigningOut = async () => {
     await signOut(() => {
@@ -36,26 +35,26 @@ export const LoggedInNavbar = ({darkMode, expanded, setExpandedMenu, setupComple
   } 
 
   return (
-    <nav className={'h-screen px-5 bg-neutral-50 dark:bg-neutral-900 flex flex-col py-6 items-start' + (expanded ? ' w-80' : ' w-20')}>
+    <nav className={'h-screen px-5 bg-neutral-50 dark:bg-neutral-900 flex flex-col py-6 items-start' + (isExpanded ? ' w-80' : ' w-20')}>
       <div className='mb-10 w-full h-27'>
         <img 
-          src={expanded ? (darkMode ? 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_white.svg' : 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png') : 'https://storage.googleapis.com/product-lamb-images/productlamb_logo_icon.png'} 
+          src={isExpanded ? (darkMode ? 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_white.svg' : 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png') : 'https://storage.googleapis.com/product-lamb-images/productlamb_logo_icon.png'} 
           alt="Logo" 
-          className={'h-auto object-contain object-center ml-3' + (!expanded ? ' max-w-5' : ' max-w-40')}
+          className={'h-auto object-contain object-center ml-3' + (!isExpanded ? ' max-w-5' : ' max-w-40')}
         />
       </div>
-      <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={expanded} darkMode={darkMode}/>
+      <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={isExpanded} darkMode={darkMode}/>
       
       <button 
         className='w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 text-black dark:text-gray-500 dark:hover:text-white dark:hover:bg-neutral-800 hover:bg-[#f0f0f0]'
         onClick={() => setConfirmModalOpen(true)}
       >
-        <i className={'ri-logout-box-line text-xl cursor-pointer' + (expanded ? " ml-3" : ' mx-auto')} style={{fontSize: '20px'}}></i>
-        <span className={'text-18 font-bold inline-block ' + (expanded ? '' : 'hidden')}>Sign out</span>
+        <i className={'ri-logout-box-line text-xl cursor-pointer' + (isExpanded ? " ml-3" : ' mx-auto')} style={{fontSize: '20px'}}></i>
+        <span className={'text-18 font-bold inline-block ' + (isExpanded ? '' : 'hidden')}>Sign out</span>
       </button>
       <i 
-        className={'ri-arrow-right-s-line text-xl absolute bottom-5 cursor-pointer text-black dark:text-white ' + (expanded ? 'left-5 rotate-180' : 'mx-auto')}
-        onClick={toggleExpandedMenu}
+        className={'ri-arrow-right-s-line text-xl absolute bottom-5 cursor-pointer text-black dark:text-white ' + (isExpanded ? 'left-5 rotate-180' : 'mx-auto')}
+        onClick={toggleSidebar}
       ></i>
       <Form method='post' action='/api/signout' className='hidden' ref={signoutFormRef}></Form>
       <PLConfirmModal open={confirmModalOpen} setOpen={setConfirmModalOpen} message='Are you sure you would like to log out of your account?' onConfirm={handleSigningOut} size='xsm'/>

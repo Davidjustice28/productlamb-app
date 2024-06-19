@@ -5,17 +5,12 @@ import { PLSpinner } from "../common/spinner"
 import { LoggedInNavbar } from "../navigation/logged-in-navbar"
 import { useUser } from "@clerk/remix"
 
-
 export function AuthenticatedLayout({appName, setupIsComplete, toggleDarkMode, darkMode}: {setupIsComplete: boolean, appName?: string, toggleDarkMode: () => void, darkMode: boolean}) {
   const {user} = useUser()
   const location = useLocation()
   const navBarStateFormRef = useRef<HTMLFormElement>(null)
-  const loadedData = useLoaderData<{darkMode: boolean|undefined, navBarExpanded: boolean|undefined}>()
-  const { navBarExpanded } = loadedData
   const [darkModeState, setDarkModeState] = useState(darkMode)
   const contentBg = darkMode ? 'bg-neutral-950' : 'bg-neutral-200'
-  const [expandedMenu, setExpandedMenu] = useState(!!navBarExpanded)
-  
 
   const switchDarkModeSetting = () => {
     setDarkModeState(!darkModeState)
@@ -23,18 +18,12 @@ export function AuthenticatedLayout({appName, setupIsComplete, toggleDarkMode, d
   }
 
   useEffect(() => {
-    if (expandedMenu !== navBarExpanded) {
-      navBarStateFormRef.current?.submit()
-    } 
-  }, [expandedMenu])
-
-  useEffect(() => {
     setDarkModeState(darkMode)
   }, [darkMode])
 
   return (
     <div className="flex">
-      <LoggedInNavbar darkMode={darkModeState} expanded={expandedMenu} setExpandedMenu={setExpandedMenu} setupComplete={setupIsComplete} applicationSelected={!!(appName && appName.length)}/>
+      <LoggedInNavbar darkMode={darkModeState} setupComplete={setupIsComplete} applicationSelected={!!(appName && appName.length)}/>
       <div className={"h-screen w-full py-3 px-6 overflow-scroll " + contentBg}>
         <div className="flex justify-between items-center w-full mb-2">
           <h1 className="text-gray-700 font-semibold uppercase text-md dark:text-gray-500">

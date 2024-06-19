@@ -1,13 +1,12 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import { ApplicationNote, ApplicationSprint, GeneratedTask, PrismaClient } from "@prisma/client";
+import { ApplicationNote, ApplicationSprint, PrismaClient } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
-import { preferences } from "~/backend/cookies/preferences";
 import { AccountsClient } from "~/backend/database/accounts/client";
 import { ApplicationsClient } from "~/backend/database/applications/client";
-import { createCurrentSprintChartsData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData, mockBarChartdata, mockSprintTaskCompletionPercentageData, mockSprintTaskTotalData } from "~/backend/mocks/charts";
+import { createCurrentSprintChartsData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts";
 import { PLAreaChart } from "~/components/charts/area-chart";
 import { PLBarChart } from "~/components/charts/bar-chart";
 import { PLNotesDropBox } from "~/components/notes/notes-dropbox";
