@@ -33,9 +33,10 @@ export function FeedbackToolSelector({onClick, availableIntegrations}: {availabl
     <div className="relative p-6 flex-auto rounded px-8 pt-6 pb-10 w-full">
       <p className="text-neutral-700 dark:text-neutral-300 mb-6 text-center">Choose the source you prefer to upload user feedback from.</p>
       <div className="flex gap-5 items-center justify-center">
-        {modalOptions.map(o => {
+        {modalOptions.map((o, i) => {
           return (
             <button 
+              key={i}
               className={"border-black border-2 rounded-md dark:border-neutral-400 font-2 flex flex-col items-center w-40 gap-3 h-40 justify-center " + (!o.available ? 'opacity-45 cursor-not-allowed' : 'cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800')} 
               onClick={() => o.available ? onClick(o) : () => {}}
             >

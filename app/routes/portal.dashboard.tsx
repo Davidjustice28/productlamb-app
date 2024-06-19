@@ -15,6 +15,17 @@ import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLCreateNoteModal } from "~/components/modals/notes/create-note";
 import { PLLineChart } from "~/components/charts/line-chart";
 
+function calculateDaysLeft(start?: string, end?: string) {
+  if (!start || !end) {
+    return 'N/A'
+  }
+  const startDate = new Date(start!)
+  const endDate = new Date(end!)
+  const today = new Date()
+  const daysLeft = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 3600 * 24))
+  return `${daysLeft}`
+}
+
 export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {    
     const { sessionId, userId, getToken } = request.auth;
@@ -77,7 +88,7 @@ export const loader: LoaderFunction = args => {
       const currentSprint = sprints.find(s => s.status === 'In Progress')
       const currentSprintTasksData = currentSprint ? createCurrentSprintChartsData(tasks.filter(t => t.sprintId === currentSprint.id)) : []
       const taskTypesData = createTaskTypeChartData(sprints, tasks)
-      const daysLeftInSprint = currentSprint && currentSprint.endDate ? Math.floor((new Date(currentSprint.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
+      const daysLeftInSprint = currentSprint && currentSprint?.endDate ? calculateDaysLeft(new Date().toISOString(), currentSprint.endDate) : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, days_left: daysLeftInSprint}
       console.log('currentSprintSummary', currentSprintSummary)
       return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint, taskTypesData})
@@ -155,7 +166,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="rounded-xl w-full h-full bg-white dark:bg-neutral-800 pt-5 pb-3 px-2" style={{height: "325px"}}>
-          {(chartIndex < 2 ) && <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} />}
+          {(chartIndex < 2 ) && <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} fill={chartIndex === 1 ? "#82ca9d" : "#F28C28"}/>}
           {(chartIndex === 2) && <PLLineChart data={chartData[chartIndex]}/>}
           
         </div>

@@ -5,8 +5,7 @@ export type PLAreaChartProps = {
   data: Array<{name: string, taskCount: number}>,
   xKey: string,
   yKey: string,
-  fill?: string,
-  stroke?: string,
+  fill: string,
   opacity?: number,
   tooltip?: React.ReactNode,
   darkMode?: boolean
@@ -19,10 +18,12 @@ export type PLBarChartProps = {
 };
 
 export function PLAreaChart<T=any>(props: PLAreaChartProps) {
-  const { data, xKey, yKey, fill='#F28C28', stroke='#F28C28', opacity=0.2, tooltip=false, darkMode} = props;
+  const { data, xKey, yKey, fill, opacity=0.2, tooltip=false, darkMode} = props;
   if (data.length < 2) {
     return <div className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>Insufficient data. {!data.length ? 'Turn on a sprint generation to see analytics' : 'Chart will be available next sprint'}.</div>
   }
+
+  const stroke = fill
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart
