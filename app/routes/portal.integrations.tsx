@@ -1,6 +1,7 @@
 import { ApplicationIntegration, PrismaClient } from "@prisma/client"
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
-import { useLoaderData } from "@remix-run/react"
+import { Form, useLoaderData } from "@remix-run/react"
+import React from "react"
 import { useState } from "react"
 import { account } from "~/backend/cookies/account"
 import { IntegrationClient } from "~/backend/database/integrations/ client"
@@ -29,7 +30,7 @@ export const action: ActionFunction = async ({ request }) => {
   console.log('integration page action called')
   const cookies = request.headers.get('Cookie')
   const form = await request.formData()
-  const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData | GithubIntegrationSetupFormData | GitlabIntegrationSetupFormData
+  const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData | GithubIntegrationSetupFormData | GitlabIntegrationSetupFormData | { action: string, integration_id: string}
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
   // console.log({formData, applicationId})
@@ -65,8 +66,15 @@ export const action: ActionFunction = async ({ request }) => {
     
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
     return json({updatedIntegrations: integrations || [null]})
+  } else if ('action' in formData && formData.action === 'disconnect') {
+    console.log('disconnecting integration')
+    await integrationClient.deleteIntegration(Number(formData.integration_id))
+    const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
+    return json({updatedIntegrations: integrations || [null]})
+  } else {
+    return json({updatedIntegrations: null})
   }
-  return json({updatedIntegrations: null})
+  // return json({updatedIntegrations: null})
 }
 
 
@@ -74,29 +82,44 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
-  console.log('integrations loader', {applicationId})
   const dbClient = new PrismaClient().applicationIntegration
   const integrationClient = IntegrationClient(dbClient) 
   const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId) 
-  console.log({integrations})
   return json({ integrations: integrations || []})
 }
 
 export default function IntegrationsPage() {
   const {updatedIntegrations} = useLoaderData<typeof action>() || {updatedIntegrations: null }
   const { integrations: configuredIntegrations } = useLoaderData<typeof loader>() || { integrations: [] }
-  const [integrations, setIntegrations] = useState(updatedIntegrations || configuredIntegrations)
+  const [integrations, setIntegrations] = useState<ApplicationIntegration[]>(updatedIntegrations || configuredIntegrations)
   const [integrationsSetup, setIntegrationsSetup] = useState(getIntegrationsByname(integrations, availableIntegrations))
   const [optionsModalOpen, setOptionsModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationOptions|null>(null)
 
+  const formRef = React.createRef<HTMLFormElement>()
+  const actionRef = React.createRef<HTMLInputElement>()
+  const integrationIdRef = React.createRef<HTMLInputElement>()
   const getIntegrationById = (name: string) => availableIntegrations.find(i => i.name === name)!
 
   const openEditModal = (integration_name: string) => {
     const integration = getIntegrationById(integration_name)
     setSelectedIntegration(integration)
     setEditModalOpen(true)
+  }
+  const getConfiguredIntegrations = () => {
+    return getIntegrationsByname(integrations, availableIntegrations).map(i => i.id)
+  }
+
+  const getIntegrationByAvailableName = (currentIntegration: IntegrationOptions) => {
+    return integrations.find(option => option.name.toLowerCase() === currentIntegration.name.toLowerCase())
+  }
+
+  const deleteIntegration = (integration_id: number) => {
+    console.log('deleting integration', integration_id)
+    integrationIdRef.current!.value = `${integration_id}`
+    actionRef.current!.value = 'disconnect'
+    formRef.current!.submit()
   }
 
   return (
@@ -105,10 +128,15 @@ export default function IntegrationsPage() {
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Connect your favorite apps to ProductLamb</p>
         <PLIconButton icon="ri-add-line" onClick={() => setOptionsModalOpen(true)}/>
       </div>
+      <Form method="post" ref={formRef}>
+        <input type="hidden" name="action" ref={actionRef}/>
+        <input type="hidden" name="integration_id" ref={integrationIdRef}/>
+      </Form>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-5">
-        { integrationsSetup.map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={false} onEditButtonClick={() => openEditModal(integration.name)}/>) }
+        { integrationsSetup.map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={false} onEditButtonClick={() => openEditModal(integration.name)} onDelete={() => deleteIntegration(getIntegrationByAvailableName(integration)!.id)}/>) }
       </div>
-      <PLIntegrationOptionsModal open={optionsModalOpen} setOpen={setOptionsModalOpen} configuredIntegrations={[]}/>
+
+      <PLIntegrationOptionsModal open={optionsModalOpen} setOpen={setOptionsModalOpen} configuredIntegrations={getConfiguredIntegrations()}/>
       <PLIntegrationEditModal open={editModalOpen} setOpen={setEditModalOpen} integration={selectedIntegration}/>
     </div>
   )

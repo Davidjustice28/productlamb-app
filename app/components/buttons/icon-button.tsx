@@ -8,7 +8,7 @@ export function PLIconButton({ icon, onClick, colorClasses='bg-gray-300 hover:bg
     }
   }
   return (
-    <button onClick={(handleClick)} className={`flex flex-row justify-center items-center gap-2 rounded-full p-4 w-5 h-5 ${colorClasses}`}>
+    <button onClick={(handleClick)} className={`flex flex-row justify-center items-center gap-2 rounded-full p-4 w-5 h-5 ` + colorClasses}>
       <i className={icon + ' inline-block'}></i>
     </button>
   )

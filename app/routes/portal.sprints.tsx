@@ -129,9 +129,6 @@ export default function SprintPage() {
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
         <p className="font-sm italic text-red-400  mt-5 mb-5">No sprints have been generated yet. Click button to start your first sprint planning session.</p>
         <div>
-        <Form method="post" ref={formRef}>
-          <input type="hidden" name="_navbarState" value={location.pathname} />
-        </Form>
           <PLBasicButton 
             onClick={generateFirstSprint}
             text="Begin Sprint" 

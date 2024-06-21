@@ -21,6 +21,7 @@ import { AccountsClient } from './backend/database/accounts/client';
 import { PrismaClient } from '@prisma/client';
 import { useEffect, useState } from 'react';
 import React from 'react';
+import { ApplicationsClient } from './backend/database/applications/client';
 
 export const links: LinksFunction = () => {
   return [
@@ -30,16 +31,19 @@ export const links: LinksFunction = () => {
 }
 
 export const action: ActionFunction = async ({ request }) => {
-  const formData = await request.formData()
-  const { _navbarState: previousPath  } = Object.fromEntries(formData)
-  const headers = new Headers();
   const cookieHeader = request.headers.get("Cookie");
-  const preferencesCookie = (await preferences.parse(cookieHeader) || {});
-  if (previousPath) { 
-    preferencesCookie.navBarMode = preferencesCookie.navBarMode === undefined ? true : !preferencesCookie.navBarMode;
-    headers.append('Set-Cookie', await preferences.serialize(preferencesCookie));
-    let redirectPath = previousPath.toString()
-    return redirect(redirectPath, { headers })
+  const accountCookie = (await account.parse(cookieHeader) || {});
+  const dbClient = new PrismaClient()
+  const formData  = await request.formData()
+  const data = Object.fromEntries(formData) as { [key: string]: string }
+  if ('add_note' in data) {
+    await dbClient.applicationNote.create({ data: { applicationId: accountCookie.selectedApplicationId, text: data.note, dateCreated: new Date().toISOString() }})
+    const notes = await dbClient.applicationNote.findMany({ where: { applicationId: accountCookie.selectedApplicationId}})
+    return json({notes})
+  } else if ('delete_note' in data) {
+    await dbClient.applicationNote.delete({ where: { id: parseInt(data.id) }})
+    const notes = await dbClient.applicationNote.findMany({ where: { applicationId: accountCookie.selectedApplicationId}})
+    return json({notes})
   } else {
     return json({})
   }
@@ -80,12 +84,24 @@ export const loader: LoaderFunction = (args) => {
         return redirect(accountCookie.setupIsComplete ? '/portal/dashboard' : '/portal/setup' , { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
       }
     }
-    return { darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null};
+    if (!accountCookie?.selectedApplicationId) {
+      const client = new PrismaClient()
+      const appClient = ApplicationsClient(client.accountApplication)
+      const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId)
+      if (apps && apps.length) {
+        accountCookie.selectedApplicationId = apps[0].id
+        accountCookie.selectedApplicationName = apps[0].name
+        return redirect(`/portal/applications/${apps[0].id}`, { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+      }
+    }
+    return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId},
+      { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
+    )
   });
 };
  
 export function App() {
-  const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, account_id} = useLoaderData<typeof loader>()
+  const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, account_id, selectedApplicationId} = useLoaderData<typeof loader>()
   const {darkMode: actionDarkMode} = useLoaderData<typeof action>() || {darkMode: null}
   const [ darkModeState, setDarkMode ] = useState<boolean>(actionDarkMode !== null ? actionDarkMode : loadedDarkMode)
   
@@ -126,7 +142,7 @@ export function App() {
         <form ref={darkmodeFormRef}>
           <input type="hidden" name="_darkMode" ref={inputRef}/>
         </form>
-        <RootLayout appName={selectedApplicationName} setupIsComplete={setupIsComplete} toggleDarkMode={toggleDarkMode} darkMode={darkModeState}/>
+        <RootLayout appData={{selectedApplicationName, selectedApplicationId}} setupIsComplete={setupIsComplete} toggleDarkMode={toggleDarkMode} darkMode={darkModeState} />
         <ScrollRestoration />
         <Scripts />
 

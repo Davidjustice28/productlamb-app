@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PLIconButton } from "../buttons/icon-button";
 import { PLConfirmModal } from "../modals/confirm";
 
-export function PLIntegrationOption({ integration, addMode=false, onAddButtonClick = () => null, onEditButtonClick = () => null}: { integration: any, addMode?: boolean, onAddButtonClick?: (...args: any[]) => void, onEditButtonClick?: (...args: any[]) => void}) {
+export function PLIntegrationOption({ integration, onDelete, addMode=false, onAddButtonClick = () => null, onEditButtonClick = () => null}: { integration: any, addMode?: boolean, onAddButtonClick?: (...args: any[]) => void, onEditButtonClick?: (...args: any[]) => void, onDelete?: (...args: any[]) => void}) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const openDisconnectModal = () => {
@@ -42,7 +42,7 @@ export function PLIntegrationOption({ integration, addMode=false, onAddButtonCli
       <div className="p-4">
         <p className="text-sm text-gray-700 dark:text-neutral-300">{integration.description}</p>
       </div>
-      <PLConfirmModal open={modalOpen} setOpen={setModalOpen} message="Are you sure you would like to disconnect this integration?"/>
+      <PLConfirmModal open={modalOpen} setOpen={setModalOpen} message="Are you sure you would like to disconnect this integration?" onConfirm={onDelete}/>
     </div>
   )
 }

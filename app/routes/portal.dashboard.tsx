@@ -1,7 +1,7 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import { ApplicationNote, ApplicationSprint, PrismaClient } from "@prisma/client";
-import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
-import { useActionData, useLoaderData } from "@remix-run/react";
+import { LoaderFunction, json, redirect } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { AccountsClient } from "~/backend/database/accounts/client";
@@ -9,8 +9,6 @@ import { ApplicationsClient } from "~/backend/database/applications/client";
 import { createCurrentSprintChartsData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts";
 import { PLAreaChart } from "~/components/charts/area-chart";
 import { PLBarChart } from "~/components/charts/bar-chart";
-import { PLNotesDropBox } from "~/components/notes/notes-dropbox";
-import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLCreateNoteModal } from "~/components/modals/notes/create-note";
 import { PLLineChart } from "~/components/charts/line-chart";
 
@@ -77,11 +75,11 @@ export const loader: LoaderFunction = args => {
       const completedStatuses = ['done', 'complete', 'completed', 'finished']
 
       const taskTotalsChartData = createSprintTaskTotalsChartData(
-        sprints.map(s => ({name: s.id.toString(), taskCount: tasks.filter(t => t.sprintId === s.id).length}))
+        sprints.sort((a,b) => a.id - b.id).map(s => ({name: s.id.toString(), taskCount: tasks.filter(t => t.sprintId === s.id).length}))
       )
 
       const taskPercentagesChartData = createSprintTaskCompletionPercentageChartData(
-        sprints.map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).length, total: tasks.filter(t => t.sprintId === s.id).length}))
+        sprints.sort((a,b) => a.id - b.id).map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).length, total: tasks.filter(t => t.sprintId === s.id).length}))
       )
 
       const currentSprint = sprints.find(s => s.status === 'In Progress')
@@ -95,34 +93,14 @@ export const loader: LoaderFunction = args => {
   });
 };
 
-export const action: ActionFunction = async ({ request }) => {
-  const cookieHeader = request.headers.get("Cookie");
-  const accountCookie = (await account.parse(cookieHeader) || {});
-  const dbClient = new PrismaClient()
-  const formData  = await request.formData()
-  const data = Object.fromEntries(formData) as { [key: string]: string }
-  if ('add_note' in data) {
-    await dbClient.applicationNote.create({ data: { applicationId: accountCookie.selectedApplicationId, text: data.note, dateCreated: new Date().toISOString() }})
-    const notes = await dbClient.applicationNote.findMany({ where: { applicationId: accountCookie.selectedApplicationId}})
-    return json({notes})
-  } else if ('delete_note' in data) {
-    await dbClient.applicationNote.delete({ where: { id: parseInt(data.id) }})
-    const notes = await dbClient.applicationNote.findMany({ where: { applicationId: accountCookie.selectedApplicationId}})
-    return json({notes})
-  } else {
-    return json({})
-  }
-}
 
 export default function DashboardPage() {
-  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes: loadedNotes, currentSprint: loadedCurrentSprint, taskTypesData } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, days_left: number|null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null, taskTypesData: any[]}>();
-  const {notes: notesAfterAction } = useActionData<{notes: ApplicationNote[]|null}>() || {notes: null}
+  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, days_left: number|null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null, taskTypesData: any[]}>();
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
   const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || []), (taskTypesData || [])])
   const [chartIndex, setChartIndex] = useState<number>(0)
   const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(loadedCurrentSprint)
   const yKey = chartIndex == 0 ? "taskCount" : "completed"
-  const [notes, setNotes] = useState<Array<{text: string, id: number}>>(notesAfterAction || loadedNotes);
   const [addNotemodalOpen, setAddNoteModalOpen] = useState<boolean>(false)
 
   const handleChartChange = (goingForward: boolean) => {
@@ -195,16 +173,9 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
-          <div className="flex flex-row justify-between w-full items-center">
-            <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Digital CorkBoard - <span className="italic text-black dark:text-neutral-500">{notes.length} Notes</span></h2>
-            <PLIconButton icon="ri-add-line" onClick={() => setAddNoteModalOpen(true)}/>
-          </div>
-          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full overflow-y-scroll flex flex-col p-2  gap-2 items-start">
-            {!notes.length ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <p className="text-gray-500 dark:text-gray-400">No sticky notes added</p>
-              </div>
-            ) : <PLNotesDropBox notes={notes} />}
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Suggested Actions</h2>
+          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full flex flex-col p-2  gap-2 items-start">
+            
           </div>
         </div>
       </div>

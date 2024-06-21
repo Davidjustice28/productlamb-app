@@ -1,17 +1,18 @@
-import { useLocation, useLoaderData, Form, Outlet } from "@remix-run/react"
-import { MouseEventHandler, useEffect, useRef, useState } from "react"
+import { Outlet } from "@remix-run/react"
+import { useEffect, useState } from "react"
 import { ToggleSwitch } from "../forms/toggle-switch"
 import { PLSpinner } from "../common/spinner"
 import { LoggedInNavbar } from "../navigation/logged-in-navbar"
 import { useUser } from "@clerk/remix"
+import { useNotesModal } from "~/backend/providers/notes"
+import { PLIconButton } from "../buttons/icon-button"
+import { PLNotesModal } from "../modals/notes/notes"
 
-export function AuthenticatedLayout({appName, setupIsComplete, toggleDarkMode, darkMode}: {setupIsComplete: boolean, appName?: string, toggleDarkMode: () => void, darkMode: boolean}) {
+export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, darkMode}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number }, toggleDarkMode: () => void, darkMode: boolean}) {
   const {user} = useUser()
-  const location = useLocation()
-  const navBarStateFormRef = useRef<HTMLFormElement>(null)
   const [darkModeState, setDarkModeState] = useState(darkMode)
   const contentBg = darkMode ? 'bg-neutral-950' : 'bg-neutral-200'
-
+  const { toggleNotesModal } = useNotesModal()
   const switchDarkModeSetting = () => {
     setDarkModeState(!darkModeState)
     toggleDarkMode()
@@ -23,20 +24,17 @@ export function AuthenticatedLayout({appName, setupIsComplete, toggleDarkMode, d
 
   return (
     <div className="flex">
-      <LoggedInNavbar darkMode={darkModeState} setupComplete={setupIsComplete} applicationSelected={!!(appName && appName.length)}/>
+      <LoggedInNavbar darkMode={darkModeState} setupComplete={setupIsComplete} applicationSelected={!!(appData?.selectedApplicationName && appData?.selectedApplicationName.length)}/>
       <div className={"h-screen w-full py-3 px-6 overflow-scroll " + contentBg}>
         <div className="flex justify-between items-center w-full mb-2">
           <h1 className="text-gray-700 font-semibold uppercase text-md dark:text-gray-500">
             {setupIsComplete ? 
-              <>Application: <span className="font-bold italic dark:text-white text-gray-950">{appName ?? 'None Selected'}</span></> :
+              <>Application: <span className="font-bold italic dark:text-white text-gray-950">{appData?.selectedApplicationName ?? 'None Selected'}</span></> :
               <>Account Status: <span className="font-bold italic dark:text-white text-gray-950">Not Setup</span></>
             }
           </h1>
           <div className="flex items-center justify-center gap-3 mr-3">
             <label className="inline-flex items-center cursor-pointer">
-              <Form method="post" ref={navBarStateFormRef}>
-                <input type="hidden" name="_navbarState" value={location.pathname} />
-              </Form>
               <PLSpinner />
               <ToggleSwitch onChangeHandler={switchDarkModeSetting} darkMode={darkModeState}/>
             </label>
@@ -51,6 +49,8 @@ export function AuthenticatedLayout({appName, setupIsComplete, toggleDarkMode, d
           </div>
         </div>
         <Outlet />
+        <PLIconButton icon="ri-sticky-note-line" onClick={() => toggleNotesModal(appData?.selectedApplicationId)} colorClasses=" absolute bottom-10 right-20 text-3xl w-14 h-14 text-black bg-[#FFF9C4] shadow-md dark:bg-[#FF9D48] dark:text-black"/>
+        <PLNotesModal />
       </div>
     </div>      
   );

@@ -28,7 +28,7 @@ export function PLBaseModal({onClose, titleCenter, title="Title", children, open
 }
 
 
-export function PLModalFooter({closeText = 'Close', submitText = 'Submit', onSubmit, onClose, submitDisabled}: {submitDisabled?: boolean, closeText?: string, submitText?: string, onSubmit?: (...args:Array<any>) => any, onClose?: (...args:Array<any>) => any}) {
+export function PLModalFooter({closeText = 'Close', submitText = 'Submit', onSubmit, onClose, submitDisabled, submitButtonIconClass}: {submitDisabled?: boolean, closeText?: string, submitText?: string, onSubmit?: (...args:Array<any>) => any, onClose?: (...args:Array<any>) => any, submitButtonIconClass?: string}) {
   const handleClick = () => {
     if (onSubmit && !submitDisabled) {
       onSubmit()
@@ -44,9 +44,11 @@ export function PLModalFooter({closeText = 'Close', submitText = 'Submit', onSub
         {closeText}
       </button>
       <button
+        type="button"
         className={"text-white bg-[#F28C28] active:bg-[#F28C28] font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 " + (submitDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer')}
         onClick={handleClick}
-      >
+      > 
+        {submitButtonIconClass && <i className={submitButtonIconClass +" mr-2"}></i>}
         {submitText}
       </button>
     </div>
