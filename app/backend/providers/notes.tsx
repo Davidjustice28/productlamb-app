@@ -8,6 +8,7 @@ const NotesModalContext = createContext<{
   toggleNotesModal: (application_id?: number) => void;
   setNotesModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   notes: ApplicationNote[]
+  setNotes: React.Dispatch<React.SetStateAction<ApplicationNote[]>>
 } | undefined>(undefined);
 
 export const NotesModalProvider: React.FC<{children: ReactNode}> = ({ children }) => {
@@ -27,7 +28,7 @@ export const NotesModalProvider: React.FC<{children: ReactNode}> = ({ children }
   };
 
   return (
-    <NotesModalContext.Provider value={{ notesModalOpen, toggleNotesModal, setNotesModalOpen, notes }}>
+    <NotesModalContext.Provider value={{ notesModalOpen, toggleNotesModal, setNotesModalOpen, notes, setNotes }}>
       {children}
     </NotesModalContext.Provider>
   );
@@ -38,6 +39,7 @@ export const useNotesModal = (): {
   toggleNotesModal: (application_id?: number) => void;
   setNotesModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   notes: ApplicationNote[]
+  setNotes: React.Dispatch<React.SetStateAction<ApplicationNote[]>>
 } => {
   const context = useContext(NotesModalContext);
   if (!context) {

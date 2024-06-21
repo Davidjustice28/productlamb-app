@@ -1,5 +1,5 @@
 import { AccountApplication, PrismaClient } from "@prisma/client"
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
 import { Form, Outlet, useActionData, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { useRef, useState } from "react"
 import { account } from "~/backend/cookies/account"
@@ -37,7 +37,7 @@ export let action: ActionFunction = async ({ request }) => {
     const accountCookie = (await account.parse(cookies))
     accountCookie.selectedApplicationId = parseInt(data.selectedAppId)
     accountCookie.selectedApplicationName = data.selectedAppName
-    return json({appId: accountCookie.selectedApplicationId}, {
+    return redirect('/portal/dashboard', {
       headers: {
         'Set-Cookie': await account.serialize(accountCookie)
       }

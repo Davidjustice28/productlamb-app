@@ -9,7 +9,6 @@ import { ApplicationsClient } from "~/backend/database/applications/client";
 import { createCurrentSprintChartsData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts";
 import { PLAreaChart } from "~/components/charts/area-chart";
 import { PLBarChart } from "~/components/charts/bar-chart";
-import { PLCreateNoteModal } from "~/components/modals/notes/create-note";
 import { PLLineChart } from "~/components/charts/line-chart";
 
 function calculateDaysLeft(start?: string, end?: string) {
@@ -87,7 +86,6 @@ export const loader: LoaderFunction = args => {
       const taskTypesData = createTaskTypeChartData(sprints, tasks)
       const daysLeftInSprint = currentSprint && currentSprint?.endDate ? calculateDaysLeft(new Date().toISOString(), currentSprint.endDate) : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, days_left: daysLeftInSprint}
-      console.log('currentSprintSummary', currentSprintSummary)
       return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint, taskTypesData})
     }
   });
@@ -101,7 +99,6 @@ export default function DashboardPage() {
   const [chartIndex, setChartIndex] = useState<number>(0)
   const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(loadedCurrentSprint)
   const yKey = chartIndex == 0 ? "taskCount" : "completed"
-  const [addNotemodalOpen, setAddNoteModalOpen] = useState<boolean>(false)
 
   const handleChartChange = (goingForward: boolean) => {
     if(chartData === null) return 
@@ -179,7 +176,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-      <PLCreateNoteModal open={addNotemodalOpen} setOpen={setAddNoteModalOpen} onClose={() => setAddNoteModalOpen(false)}/>
     </div>
   )
 }

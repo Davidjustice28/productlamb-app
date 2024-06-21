@@ -49,7 +49,7 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
           </div>
         </div>
         <Outlet />
-        <PLIconButton icon="ri-sticky-note-line" onClick={() => toggleNotesModal(appData?.selectedApplicationId)} colorClasses=" absolute bottom-10 right-20 text-3xl w-14 h-14 text-black bg-[#FFF9C4] shadow-md dark:bg-[#FF9D48] dark:text-black"/>
+        <PLIconButton icon="ri-sticky-note-line" onClick={() => toggleNotesModal(appData?.selectedApplicationId)} colorClasses=" absolute bottom-10 right-10 text-3xl text-neutral-700 bg-[#FF9D48] shadow-md dark:bg-[#FF9D48] dark:text-black w-12 h-12"/>
         <PLNotesModal />
       </div>
     </div>      
