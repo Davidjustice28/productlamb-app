@@ -69,7 +69,7 @@ export const loader: LoaderFunction = args => {
           selectedApplicationName = accountCookie.selectedApplicationName
         }
       }
-      const sprints = await dbClient.applicationSprint.findMany({ where: { applicationId: selectedApplicationId, status: { in: ['In Progress', 'Completed']}}})
+      const sprints = await dbClient.applicationSprint.findMany({ where: { applicationId: selectedApplicationId, status: { in: ['In Progress', 'Completed']}} })
       const tasks = await dbClient.generatedTask.findMany({ where: { sprintId: { in: sprints.map(s => s.id) } }})
       const completedStatuses = ['done', 'complete', 'completed', 'finished']
 
