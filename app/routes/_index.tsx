@@ -242,18 +242,20 @@ function ValidationSection() {
 
 function PricingSection() {
   const standardOfferings = [
-    "Manage up to 10 projects",
+    "Manage up to 5 projects",
     "2 sprints per month (bi-weekly)",
     "Connect to Github or Gitlab",
     "Integrate with several 3rd party tools",
     "Manually and bulk upload user feedback",
     "Dashboard access with analytics",
     "Dark mode",
-    "Email notifications",
+    "Email reminders",
   ]
 
   const startupOfferings = [
     "Everything in the Standard Plan",
+    "Manage up to 10 projects",
+    "Unlimited task suggestions",
     "Team access for up to 5 members",
     "Choose between weekly, bi-weekly, or monthly sprints",
     "Export your data any time to CSV",
@@ -344,7 +346,7 @@ function PricingSection() {
                 <div className="mx-auto max-w-s px-8">
                   <p className="text-base font-semibold text-gray-600">Affordable pricing for all</p>
                   <p className="mt-6 flex items-baseline justify-center gap-x-2 mb-6">
-                    <span className="text-5xl font-bold tracking-tight text-gray-900">${startupIsMonthly ? 30 : 250}</span>
+                    <span className="text-5xl font-bold tracking-tight text-gray-900">${startupIsMonthly ? 40 : 325}</span>
                     <span className="text-sm font-semibold leading-6 tracking-wide text-gray-600">USD</span>
                   </p>
                   <p className="mt-2 text-xs leading-5 text-gray-600">More features, flexibility, & support.</p>
