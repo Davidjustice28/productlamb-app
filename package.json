@@ -15,6 +15,7 @@
     "validate": "npm run lint && npm run typecheck && npm run test:e2e:run"
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^5.0.12",
     "@clerk/remix": "^4.0.1",
     "@gitbeaker/requester-utils": "^40.0.3",
     "@gitbeaker/rest": "^40.0.3",

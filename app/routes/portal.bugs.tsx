@@ -1,6 +1,6 @@
 import { ApplicationBug, PrismaClient } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import { useRef, useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { ApplicationBugsClient } from "~/backend/database/bugs/client";
@@ -82,7 +82,6 @@ export default function BugsPage() {
 
   function onCheck(ids:Array<number>) {
     const itemsChecked = ids.length > 0
-    if(itemsChecked === itemsSelected) return
     setItemsSelected(itemsChecked)
     setIdsChecked(ids)
   }

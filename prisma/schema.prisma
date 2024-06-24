@@ -45,6 +45,7 @@ model AccountApplication {
   initiatives        GeneratedInitiative[]
   tasks              GeneratedTask[]
   notes              ApplicationNote[]
+  suggestions        ApplicationSuggestion[]
 }
 
 model ApplicationGoal {
@@ -151,5 +152,12 @@ model ApplicationNote {
   applicationId Int
   text       String
   dateCreated String
+  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model ApplicationSuggestion {
+  id            Int                @id @default(autoincrement())
+  suggestion    String
+  applicationId Int
   application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }

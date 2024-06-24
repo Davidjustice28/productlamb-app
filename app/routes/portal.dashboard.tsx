@@ -1,5 +1,5 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import { ApplicationNote, ApplicationSprint, PrismaClient } from "@prisma/client";
+import { ApplicationNote, ApplicationSprint, ApplicationSuggestion, PrismaClient } from "@prisma/client";
 import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
@@ -69,6 +69,7 @@ export const loader: LoaderFunction = args => {
           selectedApplicationName = accountCookie.selectedApplicationName
         }
       }
+      const suggestions = await dbClient.applicationSuggestion.findMany({ where: { applicationId: selectedApplicationId }})
       const sprints = await dbClient.applicationSprint.findMany({ where: { applicationId: selectedApplicationId, status: { in: ['In Progress', 'Completed']}} })
       const tasks = await dbClient.generatedTask.findMany({ where: { sprintId: { in: sprints.map(s => s.id) } }})
       const completedStatuses = ['done', 'complete', 'completed', 'finished']
@@ -86,14 +87,14 @@ export const loader: LoaderFunction = args => {
       const taskTypesData = createTaskTypeChartData(sprints, tasks)
       const daysLeftInSprint = currentSprint && currentSprint?.endDate ? calculateDaysLeft(new Date().toISOString(), currentSprint.endDate) : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, days_left: daysLeftInSprint}
-      return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint, taskTypesData})
+      return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint, taskTypesData, suggestions})
     }
   });
 };
 
 
 export default function DashboardPage() {
-  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, days_left: number|null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null, taskTypesData: any[]}>();
+  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData, suggestions } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, days_left: number|null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null, taskTypesData: any[], suggestions: ApplicationSuggestion[]}>();
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
   const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || []), (taskTypesData || [])])
   const [chartIndex, setChartIndex] = useState<number>(0)
@@ -145,7 +146,7 @@ export default function DashboardPage() {
           
         </div>
       </div>
-      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "350px"}}>
+      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "330px"}}>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Current Sprint - <span className="italic text-black dark:text-neutral-500">{currentSprint ? '#' + currentSprint.id : 'No active sprint'}</span></h2>
           <div className="rounded-xl w-full md:h-1/2 flex flex-row items-center justify-evenly gap-4">
@@ -171,11 +172,23 @@ export default function DashboardPage() {
         </div>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Suggested Actions</h2>
-          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full flex flex-col p-2  gap-2 items-start">
-            
+          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full flex flex-col px-3 justify-evenly">
+            {!suggestions.length && <p className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>There are no suggestions at this time.</p>}
+            {suggestions.map(s => <PLSuggestion suggestion={s} key={s.id}/>)}
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function PLSuggestion({suggestion}: {suggestion: ApplicationSuggestion}) {
+  return (
+    <div className="bg-white dark:bg-neutral-800 rounded-xl w-full py-2 px-2 flex flex-row items-center justify-between border-2 border-neutral-300 dark:border-neutral-500 gap-2">
+      <div className="flex flex-row justify-between items-center border-2 dark:border-neutral-500 rounded-full px-2 py-1">
+        <i className="ri ri-lightbulb-line text-xl text-yellow-500"></i>
+      </div>
+      <p className="text-black dark:text-gray-400 italic text-xs">"{suggestion.suggestion}"</p>
     </div>
   )
 }

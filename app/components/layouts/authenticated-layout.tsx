@@ -28,7 +28,7 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
       <div className={"h-screen w-full py-3 px-6 overflow-scroll " + contentBg}>
         <div className="flex justify-between items-center w-full mb-2">
           <h1 className="text-gray-700 font-semibold uppercase text-md dark:text-gray-500">
-            {setupIsComplete ? 
+            { setupIsComplete ? 
               <>Application: <span className="font-bold italic dark:text-white text-gray-950">{appData?.selectedApplicationName ?? 'None Selected'}</span></> :
               <>Account Status: <span className="font-bold italic dark:text-white text-gray-950">Not Setup</span></>
             }
@@ -49,7 +49,11 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
           </div>
         </div>
         <Outlet />
-        <PLIconButton icon="ri-sticky-note-line" onClick={() => toggleNotesModal(appData?.selectedApplicationId)} colorClasses=" absolute bottom-10 right-10 text-3xl text-neutral-700 bg-[#FF9D48] shadow-md dark:bg-[#FF9D48] dark:text-black w-12 h-12"/>
+        <PLIconButton 
+          icon="ri-sticky-note-line" 
+          onClick={() => toggleNotesModal(appData?.selectedApplicationId)} 
+          colorClasses=" absolute bottom-10 right-12 text-3xl p-7 text-neutral-700 bg-[#FF9D48] shadow-md dark:bg-[#FF9D48] dark:text-black"
+        />
         <PLNotesModal />
       </div>
     </div>      

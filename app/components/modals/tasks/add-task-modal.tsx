@@ -3,7 +3,7 @@ import { PLBaseModal, PLModalFooter } from "../base"
 import { GeneratedTask } from "@prisma/client"
 import { ManualTaskData } from "~/types/component.types"
 
-export function PLAddTaskModal({open,onSubmit, setOpen}: {open: boolean, setOpen: (open: boolean) => void, onSubmit: (data: ManualTaskData) => void}) {
+export function PLAddTaskModal({open,onSubmit, setOpen}: {open: boolean, setOpen: (open: boolean) => void, onSubmit?: (data: ManualTaskData) => void}) {
   const formRef = useRef<HTMLFormElement>(null)
 
   const getFormData = () => {
@@ -21,7 +21,11 @@ export function PLAddTaskModal({open,onSubmit, setOpen}: {open: boolean, setOpen
   }
 
   const handleSubmit = () => {
-    onSubmit(getFormData())
+    if (onSubmit) {
+      onSubmit(getFormData())
+    } else {
+      formRef.current?.submit()
+    }
     onClose()
   }
   
@@ -43,6 +47,7 @@ export function PLAddTaskModal({open,onSubmit, setOpen}: {open: boolean, setOpen
           <option value="chore">Chore</option>
           <option value="other">Other</option>
         </select>
+        <input type="hidden" name="action" value="add"/>
       </form>
       <PLModalFooter closeText="Cancel" submitText="Add" onClose={onClose} onSubmit={handleSubmit}/>
     </PLBaseModal>

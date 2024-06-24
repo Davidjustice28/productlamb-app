@@ -1,4 +1,4 @@
-import { Form, Link, useLoaderData, useLocation, useNavigate } from '@remix-run/react'
+import { Form, Link, useLocation } from '@remix-run/react'
 import { NavLink } from '~/types/base.types'
 import { useRef, useState } from 'react'
 import { PLConfirmModal } from '../modals/confirm'
@@ -21,7 +21,7 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
     { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: false},
     { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: false},
     { iconClass: "ri-file-list-line", absoluteHref: '/portal/backlog', text: 'Backlog', adminOnly: false},
-    { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Settings', adminOnly: false},
+    // { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Settings', adminOnly: false},
     { iconClass: "ri-booklet-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]
   
