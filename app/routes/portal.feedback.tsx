@@ -7,6 +7,7 @@ import { account } from "~/backend/cookies/account";
 import { FeedbackClient } from "~/backend/database/feedback/client";
 import { IntegrationClient } from "~/backend/database/integrations/ client";
 import { PLIconButton } from "~/components/buttons/icon-button";
+import { PLContentLess } from "~/components/common/contentless";
 import { PLConfirmModal } from "~/components/modals/confirm";
 import { PLAddFeedbackModal } from "~/components/modals/feedback/add-feedback";
 import { PLBulkUploadFeedbackModal } from "~/components/modals/feedback/bulk-upload/bulk-upload";
@@ -183,6 +184,7 @@ export default function FeedbackPage() {
           <PLIconButton icon="ri-add-line" onClick={() => setAddModalOpen(true)}/>
         </div>
       </div>
+      { feedback.length === 0 && <PLContentLess itemType="feedback"/>}
       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {
           feedback.map((feedback, index) => {

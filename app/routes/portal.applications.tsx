@@ -7,6 +7,7 @@ import { ApplicationsClient } from "~/backend/database/applications/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client"
 import { PLIconButton } from "~/components/buttons/icon-button"
+import { PLContentLess } from "~/components/common/contentless"
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application"
 import { PLConfirmModal } from "~/components/modals/confirm"
 import { ClickUpData, NewApplicationData, NotionData } from "~/types/database.types"
@@ -162,6 +163,7 @@ if (individualAppPage) {
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Manage all of your personal projects being managed by ProductLamb</p>
         <PLIconButton icon="ri-add-line" onClick={openApplicationAddModal}/>
       </div>
+      {!apps.length ? <PLContentLess itemType='application'/> : null} 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-5">
         {apps.map((app, index) => {
           return (

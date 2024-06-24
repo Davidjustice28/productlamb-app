@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { GeneratedTasksClient } from "~/backend/database/tasks/client";
 import { PLIconButton } from "~/components/buttons/icon-button";
+import { PLContentLess } from "~/components/common/contentless";
 import { PLTable } from "~/components/common/table";
 import { PLConfirmModal } from "~/components/modals/confirm";
 import { PLAddTaskModal } from "~/components/modals/tasks/add-task-modal";
@@ -81,7 +82,7 @@ export default function BacklogPage() {
 
   const deleteInputRef = useRef<HTMLInputElement>(null)
   const deleteFormRef = useRef<HTMLFormElement>(null)
-  
+
   const submitDeleteRequest = async (e: React.FormEvent<HTMLFormElement>) => {
     deleteInputRef.current!.value = idsChecked.join(',')
     deleteFormRef.current?.submit()
@@ -97,7 +98,7 @@ export default function BacklogPage() {
         </div>
       </div>
       {
-        backlog.length === 0 && <p className="font-sm italic text-red-400  mt-5 mb-5">No tasks in the backlog</p>
+        backlog.length === 0 && <PLContentLess itemType="backlog"/>
       }
       {
         backlog.length > 0 && (

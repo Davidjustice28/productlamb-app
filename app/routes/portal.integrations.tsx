@@ -6,6 +6,7 @@ import { useState } from "react"
 import { account } from "~/backend/cookies/account"
 import { IntegrationClient } from "~/backend/database/integrations/ client"
 import { PLIconButton } from "~/components/buttons/icon-button"
+import { PLContentLess } from "~/components/common/contentless"
 import { PLIntegrationOption } from "~/components/integrations/integration"
 import { PLIntegrationEditModal } from "~/components/modals/integrations/edit-integration"
 import { PLIntegrationOptionsModal } from "~/components/modals/integrations/integration-options"
@@ -132,6 +133,7 @@ export default function IntegrationsPage() {
         <input type="hidden" name="action" ref={actionRef}/>
         <input type="hidden" name="integration_id" ref={integrationIdRef}/>
       </Form>
+      { integrationsSetup.length === 0 && <PLContentLess itemType="integration"/>}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-5">
         { integrationsSetup.map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={false} onEditButtonClick={() => openEditModal(integration.name)} onDelete={() => deleteIntegration(getIntegrationByAvailableName(integration)!.id)}/>) }
       </div>

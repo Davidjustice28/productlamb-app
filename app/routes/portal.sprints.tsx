@@ -10,6 +10,7 @@ import { ApplicationSprintsClient } from "~/backend/database/sprints/client"
 import { PLTable } from "~/components/common/table"
 import { ApplicationsClient } from "~/backend/database/applications/client"
 import React from "react"
+import { PLContentLess } from "~/components/common/contentless"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
@@ -127,7 +128,7 @@ export default function SprintPage() {
     return (
       <div className="w-full flex flex-col text-black">
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
-        <p className="font-sm italic text-red-400  mt-5 mb-5">No sprints have been generated yet. Click button to start your first sprint planning session.</p>
+        <PLContentLess itemType="sprint" additionMessage="Click button to start your first sprint planning session."/>
         <div>
           <PLBasicButton 
             onClick={generateFirstSprint}
