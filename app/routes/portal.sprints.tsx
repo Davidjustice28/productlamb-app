@@ -1,7 +1,7 @@
 import { PLStatusBadge } from "~/components/common/status-badge"
 import { Colors, TableColumn } from "~/types/base.types"
 import { useState } from "react"
-import { Form, Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
+import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
 import { account } from "~/backend/cookies/account"
@@ -128,8 +128,8 @@ export default function SprintPage() {
     return (
       <div className="w-full flex flex-col text-black">
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
-        <PLContentLess itemType="sprint" additionMessage="Click button to start your first sprint planning session."/>
-        <div>
+        <PLContentLess itemType="sprint" additionMessage="Click button to start your enable sprint generation and start your first planning session."/>
+        <div className="mt-5">
           <PLBasicButton 
             onClick={generateFirstSprint}
             text="Begin Sprint" 
@@ -140,6 +140,9 @@ export default function SprintPage() {
             iconColorClass="text-orange-400 group-hover:text-white dark:group-hover:text-orange-300"
           />
         </div>
+        <form ref={formRef} method="POST">
+          <input type="hidden" name="generate" value="true"/>
+        </form>
       </div>
     )
   }

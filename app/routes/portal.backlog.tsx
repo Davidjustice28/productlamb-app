@@ -31,8 +31,8 @@ export const action: ActionFunction = async ({request}) => {
   const dbClient = new PrismaClient()
 
   if (data.action === 'add') {
-    const {title, reason, description, category} = data
-    await dbClient.generatedTask.create({data: {title, description, reason, category, applicationId, backlog: true, status: 'to do'}})
+    const {title, reason, description, category, points} = data
+    await dbClient.generatedTask.create({data: {title, description, reason, category, applicationId, backlog: true, status: 'to do', points: parseInt(points)}})
     const taskDbClient = new PrismaClient().generatedTask
     const backlog = await taskDbClient.findMany({where: {applicationId: applicationId, backlog: true}})
     return json({updatedTasks: backlog})

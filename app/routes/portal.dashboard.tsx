@@ -188,7 +188,7 @@ function PLSuggestion({suggestion}: {suggestion: ApplicationSuggestion}) {
       <div className="flex flex-row justify-between items-center border-2 dark:border-neutral-500 rounded-full px-2 py-1">
         <i className="ri ri-lightbulb-line text-xl text-yellow-500"></i>
       </div>
-      <p className="text-black dark:text-gray-400 italic text-xs">"{suggestion.suggestion}"</p>
+      <p className="text-black dark:text-gray-300 italic text-xs w-full text-left">"{suggestion.suggestion}"</p>
     </div>
   )
 }

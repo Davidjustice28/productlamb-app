@@ -28,7 +28,6 @@ model AccountApplication {
   type               String
   accountId          Int
   logo_url           String?
-  pm_tool            String?
   sprint_generation_enabled Boolean
   sprint_interval String @default("weekly")
   clickup_integration ApplicationClickupIntegration? @relation(fields: [clickup_integration_id], references: [id], onDelete: Cascade)
