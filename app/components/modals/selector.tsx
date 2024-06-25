@@ -13,9 +13,13 @@ export const PLSelectorModal = ({ options, title, open, setOpen, message=default
       <div className="relative p-6 flex-auto rounded px-8 pt-6 pb-10 w-full">
         <p className="text-neutral-700 dark:text-neutral-300 mb-6">{message}</p>
         <div className="flex gap-5 items-center justify-center">
-          {options.map(o => {
+          {options.map((o, i) => {
             return (
-              <button className="border-black border-2 rounded-md dark:border-neutral-400 font-2 flex flex-col items-center w-40 gap-3 h-40 justify-center" onClick={() => onClick(o)}>
+              <button 
+                className="border-black border-2 rounded-md dark:border-neutral-400 font-2 flex flex-col items-center w-40 gap-3 h-40 justify-center" 
+                onClick={() => onClick(o)}
+                key={i}
+              >
                 {
                   o.logo_url ? 
                   <img src={o.logo_url} className="h-10"/> : 

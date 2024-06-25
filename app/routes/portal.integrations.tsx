@@ -49,18 +49,18 @@ export const action: ActionFunction = async ({ request }) => {
     const encryptedToken = encrypt(formData.api_token, key, iv)
     if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'typeform') {
       console.log('integrationOptionData', integrationOptionData)
-      await integrationClient.addIntegration<TypeformIntegrationMetaData>(applicationId, formData.integration_name as PLAvailableIntegrationNames, formData.api_token, {
+      await integrationClient.addIntegration<TypeformIntegrationMetaData>(applicationId, formData.integration_name as PLAvailableIntegrationNames, encryptedToken, {
         form_id: (formData as TypeformIntegrationSetupFormData).typeform_form_id,
         tag_name: 'productlamb-webhook',        
       })
     } else if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'github') {
-      await integrationClient.addIntegration(applicationId, formData.integration_name as PLAvailableIntegrationNames, formData.api_token, {
+      await integrationClient.addIntegration(applicationId, formData.integration_name as PLAvailableIntegrationNames, encryptedToken, {
         repository_name: (formData as GithubIntegrationSetupFormData).repository_name,
         repository_owner: (formData as GithubIntegrationSetupFormData).repository_owner,
       })
 
     } else if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'gitlab') {
-      await integrationClient.addIntegration(applicationId, formData.integration_name as PLAvailableIntegrationNames, formData.api_token, {
+      await integrationClient.addIntegration(applicationId, formData.integration_name as PLAvailableIntegrationNames, encryptedToken, {
         project_id: (formData as GitlabIntegrationSetupFormData).project_id,
       })
     }

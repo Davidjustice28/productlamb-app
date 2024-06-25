@@ -131,14 +131,14 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                     const roundingClass = index === (columns.length - 1) ? "rounded-r-lg" : ""
                     if(!index) {
                       return (
-                        <th scope="row" className={"px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"}key={index}>
-                          <TableDataCellContent type={column.type} data={itemContent} key={key}/>
+                        <th scope="row" className={"px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"} key={index}>
+                          <TableDataCellContent type={column.type} data={itemContent}/>
                         </th>
                       )
                     } else {
                       return (
                         <td className={"px-6 py-4 "} key={index}>
-                          <TableDataCellContent type={column.type} data={itemContent} key={key}/>
+                          <TableDataCellContent type={column.type} data={itemContent}/>
                         </td>
                       )
                     }
@@ -152,13 +152,13 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
   )
 }
 
-function TableDataCellContent({type, data, key}: {type: "text"| "status"|"image"| "date", data: any, key: string}) {
+function TableDataCellContent({type, data}: {type: "text"| "status"|"image"| "date", data: any}) {
   if(type === 'date') {
     const date_string = new Date(data).toDateString()
     return <span>{date_string === 'Invalid Date' ? 'N/A' : date_string}</span>
   }
   if(type === 'text') return <span>{data}</span>
-  if(type === 'image') return data ? <img src={data} alt={key} className="w-10 h-10 rounded-full"/> : <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-600 flex flex-row items-center justify-center"><i className="ri-user-line dark:text-gray-400 text-black text-2xl"></i></div>
+  if(type === 'image') return data ? <img src={data} className="w-10 h-10 rounded-full"/> : <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-600 flex flex-row items-center justify-center"><i className="ri-user-line dark:text-gray-400 text-black text-2xl"></i></div>
   let text = ''
 
   switch (typeof data) {

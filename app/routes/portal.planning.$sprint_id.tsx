@@ -247,7 +247,7 @@ function BacklogTable({tasks, setIdsChecked, listType}: {tasks: Array<GeneratedT
   }
 
   const columns: Array<TableColumn> = [
-    {key: "description", type: "text"},
+    {key: "title", type: "text"},
     {key: "reason", type: "text"},
   ]
   if (tasks.length === 0) return (
