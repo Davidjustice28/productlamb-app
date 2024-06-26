@@ -1,6 +1,6 @@
 import { PLSelectorModalOption } from "~/types/component.types"
 
-export function FeedbackToolSelector({onClick, availableIntegrations}: {availableIntegrations:Array<"Typeform"| "Jotform" | "Google Forms">, onClick: (item: PLSelectorModalOption) => void}) {
+export function FeedbackToolSelector({onClick, availableIntegrations}: {availableIntegrations:Array<"typeform"| "jotform" | "google forms">, onClick: (item: PLSelectorModalOption) => void}) {
   const modalOptions: Array<PLSelectorModalOption> = [
     {
       name: 'CSV',
@@ -12,21 +12,21 @@ export function FeedbackToolSelector({onClick, availableIntegrations}: {availabl
       name: 'Typeform',
       value: 'integration',
       logo_url: 'https://storage.googleapis.com/productlamb-platform-images/typeform.svg',
-      available: availableIntegrations.includes('Typeform')
+      available: availableIntegrations.includes('typeform')
     },
     {
       name: 'Jotform',
       value: 'integration',
       logo_url: 'https://storage.googleapis.com/productlamb-platform-images/jotform.svg',
-      available: availableIntegrations.includes('Jotform')
+      available: availableIntegrations.includes('jotform')
     },
     {
       name: 'Google Forms',
       value: 'integration',
       logo_url: 'https://storage.googleapis.com/productlamb-platform-images/google-forms.svg',
-      available: availableIntegrations.includes('Google Forms')
+      available: availableIntegrations.includes('google forms')
     }
-  ]
+  ].sort((a, b) => a.available && !b.available ? -1 : 1)
 
 
   return (

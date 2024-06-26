@@ -69,9 +69,9 @@ export type ManualTaskData = Pick<GeneratedTask, 'title'|'description'| 'reason'
 
 
 export enum FeedbackIntegrations {
-  TYPEFORM = 'Typeform',
-  JOTFORM = 'Jotform',
-  GOOGLE_FORMS = 'Google Forms'
+  TYPEFORM = 'typeform',
+  JOTFORM = 'jotform',
+  GOOGLE_FORMS = 'google forms'
 }
 
 export interface PLChartProps {

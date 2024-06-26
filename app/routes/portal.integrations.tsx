@@ -1,5 +1,5 @@
 import { ApplicationIntegration, PrismaClient } from "@prisma/client"
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
 import { Form, useLoaderData } from "@remix-run/react"
 import React from "react"
 import { useState } from "react"
@@ -28,17 +28,35 @@ function getIntegrationsByname(setupIntegrations: Array<ApplicationIntegration>,
 }
 
 export const action: ActionFunction = async ({ request }) => {
-  console.log('integration page action called')
   const cookies = request.headers.get('Cookie')
   const form = await request.formData()
-  const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData | GithubIntegrationSetupFormData | GitlabIntegrationSetupFormData | { action: string, integration_id: string}
+  const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData | GithubIntegrationSetupFormData | GitlabIntegrationSetupFormData | { action: string, integration_id: string } | { google_type: string, application_id: string}
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
-  // console.log({formData, applicationId})
+  const prisma = new PrismaClient()
   const dbClient = new PrismaClient().applicationIntegration
   const integrationClient = IntegrationClient(dbClient)
-  if ('integration_name' in formData) {
-    console.log('integration_name', formData.integration_name,)
+
+  if ('google_type' in formData) {
+    const type = formData.google_type.toLowerCase().includes('calendar') ? 'calendar' : 'forms'
+    // update create base url based on environment
+    const response = await fetch(`http://localhost:8000/integrations/google/${applicationId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({type}),
+    })
+    
+    if (response.status === 200) {
+      const body = await response.json()
+      if (body?.url) {
+        return redirect(body.url)
+      }
+    }
+    const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
+    return json({updatedIntegrations: integrations || [null]})
+  } else if ('integration_name' in formData) {
     const integrationOptionData = availableIntegrations.find(i => i.name.toLowerCase() === formData.integration_name.toLowerCase())
     const iv = process.env.ENCRYPTION_IV 
     const key = process.env.ENCRYPTION_KEY
@@ -48,7 +66,6 @@ export const action: ActionFunction = async ({ request }) => {
      
     const encryptedToken = encrypt(formData.api_token, key, iv)
     if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'typeform') {
-      console.log('integrationOptionData', integrationOptionData)
       await integrationClient.addIntegration<TypeformIntegrationMetaData>(applicationId, formData.integration_name as PLAvailableIntegrationNames, encryptedToken, {
         form_id: (formData as TypeformIntegrationSetupFormData).typeform_form_id,
         tag_name: 'productlamb-webhook',        
@@ -68,7 +85,11 @@ export const action: ActionFunction = async ({ request }) => {
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
     return json({updatedIntegrations: integrations || [null]})
   } else if ('action' in formData && formData.action === 'disconnect') {
-    console.log('disconnecting integration')
+    const {data: integration} = await integrationClient.getIntegration(Number(formData.integration_id))
+    const googleIntegrations = await dbClient.count({where: {name: { contains: 'google'}, applicationId}})
+    if (integration?.name.toLowerCase().includes('google') && googleIntegrations < 2) {
+      await prisma.applicationGoogleIntegration.deleteMany({where: {applicationId}})
+    }
     await integrationClient.deleteIntegration(Number(formData.integration_id))
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
     return json({updatedIntegrations: integrations || [null]})
@@ -83,14 +104,15 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
-  const dbClient = new PrismaClient().applicationIntegration
-  const integrationClient = IntegrationClient(dbClient) 
+  const dbClient = new PrismaClient()
+  const integrationClient = IntegrationClient(dbClient.applicationIntegration) 
   const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId) 
-  return json({ integrations: integrations || []})
+  const hasGoogleOAuth = !!(await dbClient.applicationGoogleIntegration.count({where: {applicationId}}))
+  return json({ integrations: integrations || [], applicationId, hasGoogleOAuth})
 }
 
 export default function IntegrationsPage() {
-  const {updatedIntegrations} = useLoaderData<typeof action>() || {updatedIntegrations: null }
+  const {updatedIntegrations, applicationId, hasGoogleOAuth} = useLoaderData<typeof action>() || {updatedIntegrations: null, applicationId: null, hasGoogleOAuth: null}
   const { integrations: configuredIntegrations } = useLoaderData<typeof loader>() || { integrations: [] }
   const [integrations, setIntegrations] = useState<ApplicationIntegration[]>(updatedIntegrations || configuredIntegrations)
   const [integrationsSetup, setIntegrationsSetup] = useState(getIntegrationsByname(integrations, availableIntegrations))
@@ -138,7 +160,8 @@ export default function IntegrationsPage() {
         { integrationsSetup.map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={false} onEditButtonClick={() => openEditModal(integration.name)} onDelete={() => deleteIntegration(getIntegrationByAvailableName(integration)!.id)}/>) }
       </div>
 
-      <PLIntegrationOptionsModal open={optionsModalOpen} setOpen={setOptionsModalOpen} configuredIntegrations={getConfiguredIntegrations()}/>
+      <PLIntegrationOptionsModal open={optionsModalOpen} setOpen={setOptionsModalOpen} configuredIntegrations={getConfiguredIntegrations()} applicationId={applicationId} hasGoogleOAuth={hasGoogleOAuth}/>
+      {/* TODO: Update to not allow editing google items */}
       <PLIntegrationEditModal open={editModalOpen} setOpen={setEditModalOpen} integration={selectedIntegration}/>
     </div>
   )

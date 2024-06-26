@@ -35,6 +35,8 @@ model AccountApplication {
   notion_integration  ApplicationNotionIntegration? @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
   notion_integration_id Int? @unique
   lastSprintCheck String?
+  google_integration ApplicationGoogleIntegration? @relation(fields: [google_integration_id], references: [id], onDelete: Cascade)
+  google_integration_id Int?  @unique
   account            Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
   bugs               ApplicationBug[]
   feedback           ApplicationFeedback[]
@@ -159,4 +161,12 @@ model ApplicationSuggestion {
   suggestion    String
   applicationId Int
   application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model ApplicationGoogleIntegration {
+  id            Int                @id @default(autoincrement())
+  access_token  String
+  refresh_token String
+  applicationId Int
+  application   AccountApplication?
 }

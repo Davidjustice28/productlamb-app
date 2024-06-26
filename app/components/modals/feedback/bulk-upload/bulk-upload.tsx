@@ -26,6 +26,8 @@ export function PLBulkUploadFeedbackModal({open, onClose, setOpen, availableInte
           !selectedTool ? <FeedbackToolSelector onClick={handleOptionClick} availableIntegrations={availableIntegrations}/> :
           selectedTool.name === 'CSV' ? <CsvUploadComponent/> :
           selectedTool.name === 'Typeform' ? <p>Typeform Integration</p> :
+          selectedTool.name === 'Jotform' ? <p>Jotform Integration</p> :
+          selectedTool.name === 'Google Forms' ? <p>Google Forms Integration</p> :
           <p>Not available</p>
         }
       </div>

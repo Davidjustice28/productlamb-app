@@ -4,7 +4,7 @@ import { PLIntegrationOption } from "~/components/integrations/integration"
 import { availableIntegrations } from "~/static/integration-options"
 import { IntegrationSetupComponent } from "~/components/integrations/setup-component"
 
-export function PLIntegrationOptionsModal({open, onClose, setOpen, configuredIntegrations, onSubmit }: {open: boolean, onClose?: () => void, setOpen: (open: boolean) => void, configuredIntegrations: Array<number>, onSubmit?: (data: any) => void}) {
+export function PLIntegrationOptionsModal({open, onClose, setOpen, configuredIntegrations, onSubmit, applicationId, hasGoogleOAuth }: {applicationId: number, open: boolean, onClose?: () => void, setOpen: (open: boolean) => void, configuredIntegrations: Array<number>, onSubmit?: (data: any) => void, hasGoogleOAuth?: boolean}) {
   const [integrationSelected, setIntegrationSelected] = useState<number|null>(null) 
   const onAddButtonClick = (id: number) => {
     setIntegrationSelected(id)
@@ -16,7 +16,7 @@ export function PLIntegrationOptionsModal({open, onClose, setOpen, configuredInt
         integrationSelected !== null &&
         (
           <div style={{height: "590px"}}>
-            <IntegrationSetupComponent integration={availableIntegrations.find(i => i.id === integrationSelected)!} onBackButtonClick={() => setIntegrationSelected(null)} onSubmit={onSubmit}/>
+            <IntegrationSetupComponent integration={availableIntegrations.find(i => i.id === integrationSelected)!} onBackButtonClick={() => setIntegrationSelected(null)} onSubmit={onSubmit} applicationId={applicationId} hasGoogleOAuth={hasGoogleOAuth}/>
           </div> 
         )
       }

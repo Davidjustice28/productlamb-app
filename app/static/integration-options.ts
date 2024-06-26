@@ -45,7 +45,7 @@ export const availableIntegrations: Array<IntegrationOptions>= [
     requiredFields: {
       
     },
-    available: false,
+    available: true,
   },
   {
     id: 4,
@@ -55,7 +55,7 @@ export const availableIntegrations: Array<IntegrationOptions>= [
     requiredFields: {
 
     },
-    available: false,
+    available: true,
   },
   {
     id: 5,
