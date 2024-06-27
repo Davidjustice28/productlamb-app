@@ -44,7 +44,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function LandingPage() {
   const actionData = useActionData<typeof action>()
   const { isLocalHost } = useLoaderData<typeof loader>()
-  const { isSignedIn } = useUser()
   const [showConfetti, setShowConfetti] = useState(actionData?.joined || false)
   const emailRef = React.createRef<HTMLInputElement>()
   const formRef = React.createRef<HTMLFormElement>()
@@ -91,7 +90,7 @@ export default function LandingPage() {
           </div>
           <h1 className="-mt-6 md:-mt-0 mb-6 md:mb-8 text-3xl font-extrabold leading-tight lg:text-6xl text-black">Product Management<br/>for the Little Guys</h1>
           <p className="mb-0 md:mb-6 text-base font-normal leading-7 lg:w-3/4 text-black">
-            Indiehacker or early startup? Enjoy many of the benefits that proper planning and organization bring through a dedicated AI powered product manager.
+            Indiehacker or early-stage startup? Enjoy many of the benefits that proper planning and organization bring through a dedicated AI powered product manager.
           </p>
           <div className="flex flex-col invisible md:visible items-center gap-4 lg:flex-row">
             <Form className="flex gap-2" ref={formRef} method="POST">
@@ -169,7 +168,7 @@ function FeaturesSection() {
     "https://storage.googleapis.com/productlamb_project_images/clickup_screenshot.png",
     "https://storage.googleapis.com/productlamb_project_images/apps_screenshot.png",
     "https://storage.googleapis.com/productlamb_project_images/dashboard_screenshot.png",
-    "https://storage.googleapis.com/productlamb_project_images/integrations_screenshot.png",
+    "https://storage.googleapis.com/productlamb_project_images/third_party_screenshot.png",
     "https://storage.googleapis.com/productlamb_project_images/notes_screenshot.png",
   ]
 
@@ -186,7 +185,7 @@ function FeaturesSection() {
     "ProductLamb auto generates sprints in your preferred management tool by analyzing your goals, code repository issues, user feedback, self reported bugs, and more.",
     "Working on multiple things? ProductLamb can help plan sprints and tasks across all of your projects. Easily switch between projects and see your progress.",
     "Understand key metrics about your projects' development, like how many bugs were tackled, how many features were added, and how many tasks do you complete per sprint.",
-    "Connect to your favorite tools to increase productivity. We support over 10+ integrations including Google Calendar, Slack, and Notion.",
+    "Connect to your favorite tools to enable ProductLamb to do more like track repository issues, schedule meetings, and much more.",
     "Jot down notes anywhere in the app. Notes are saved and can be accessed at any time. Never forget that great idea you had.",
     // "Never feel locked in. Export your data at any time to CSV. ProductLamb is here to help you, not make things harder when you need to pivot."
   ]
@@ -244,7 +243,7 @@ function ValidationSection() {
 
 function PricingSection() {
   const standardOfferings = [
-    "Manage up to 5 projects",
+    "Manage up to 3 projects",
     "2 sprints per month (bi-weekly)",
     "Connect to Github or Gitlab",
     "Integrate with several 3rd party tools",
