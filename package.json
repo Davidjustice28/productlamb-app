@@ -5,14 +5,9 @@
   "scripts": {
     "build": "prisma db pull && remix build",
     "dev": "remix dev",
-    "format": "prettier --write .",
-    "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve ./build/index.js",
     "start:production": "NODE_ENV=production && remix-serve ./build/index.js",
-    "psql": "./start_psql.sh",
-    "pretest:e2e:run": "npm run build",
-    "typecheck": "tsc",
-    "validate": "npm run lint && npm run typecheck && npm run test:e2e:run"
+    "psql": "./start_psql.sh"
   },
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.0.12",

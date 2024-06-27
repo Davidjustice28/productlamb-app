@@ -1,6 +1,3 @@
-import { PrismaClient } from "@prisma/client";
-import { IntegrationClient } from "~/backend/database/integrations/ client";
-import { TypeformClient } from "~/backend/integrations/feedback/typeform";
 import { IntegrationOptions } from "~/types/component.types";
 
 export const availableIntegrations: Array<IntegrationOptions>= [
