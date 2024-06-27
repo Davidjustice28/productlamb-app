@@ -36,7 +36,9 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const isLocalHost = process.env.SERVER_ENVIRONMENT !== 'production'
-  return json({ isLocalHost })
+  return json({ isLocalHost }, { headers: {
+    "Set-Cookie": 'account=; Max-Age=0; Path=/;'
+  }})
 }
 
 export default function LandingPage() {

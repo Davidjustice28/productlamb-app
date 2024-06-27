@@ -6,7 +6,7 @@ import { PLIconButton } from '~/components/buttons/icon-button';
 export const PLNotesModal = () => {
   const {notesModalOpen, setNotesModalOpen, notes, setNotes } = useNotesModal()
   const [newNoteView, setNewNoteView] = React.useState(false)
-
+  // const [items, setItems] = React.useState(notes)
   const toggleNewNoteView = () => {
     setNewNoteView(prev => !prev)
   }
@@ -26,7 +26,7 @@ export const PLNotesModal = () => {
       method: 'POST',
       body: JSON.stringify({action: 'delete', note_id: id}),
     })
-
+    // setItems(items.filter(item => item.id !== id))
     setNotesModalOpen(false)
   }
 
@@ -78,7 +78,7 @@ export const PLNotesModal = () => {
 const PLStickyNote = ({ text, deleteNote }: {text: string, deleteNote: () => void }) => {
   return (
     <div
-      className='p-3 bg-[#FFF9C4] text-black text-sm shadow-md dark:bg-[#b485bc] dark:text-black font-extrabold h-56 group'
+      className='p-3 bg-[#FFF9C4] text-black text-sm shadow-md dark:bg-[#FFC14A] dark:text-black font-extrabold h-56 group'
     >
       <div className='justify-between flex flex-col h-full'>
         <p>{text}</p>

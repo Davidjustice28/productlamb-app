@@ -1,15 +1,16 @@
-import { Form, Link, useLocation } from '@remix-run/react'
+import { Form, Link, useLocation, useNavigate } from '@remix-run/react'
 import { NavLink } from '~/types/base.types'
 import { useRef, useState } from 'react'
 import { PLConfirmModal } from '../modals/confirm'
 import { useClerk } from '@clerk/remix'
 import { useSidebar } from '~/backend/providers/siderbar'
 
-
 export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolean, darkMode: boolean, applicationSelected: boolean}) => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
   const { isExpanded, toggleSidebar} = useSidebar()
   const { signOut } = useClerk()
+  const navigate = useNavigate()
+
   const notSetupLinks: Array<NavLink> = [
     { iconClass: "ri-play-circle-line", absoluteHref: '/portal/setup', text: `Setup Account`, adminOnly: false},
   ]
@@ -25,13 +26,10 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
     // { iconClass: "ri-booklet-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]
   
-  const signoutFormRef = useRef<HTMLFormElement>(null)
-
   const handleSigningOut = async () => {
     await signOut(() => {
-      console.log('Signed out')
+      navigate('/')
     })
-    signoutFormRef.current?.submit()
   } 
 
   return (
@@ -56,7 +54,6 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
         className={'ri-arrow-right-s-line text-xl absolute bottom-5 cursor-pointer text-black dark:text-white ' + (isExpanded ? 'left-5 rotate-180' : 'mx-auto')}
         onClick={toggleSidebar}
       ></i>
-      <Form method='post' action='/api/signout' className='hidden' ref={signoutFormRef}></Form>
       <PLConfirmModal open={confirmModalOpen} setOpen={setConfirmModalOpen} message='Are you sure you would like to log out of your account?' onConfirm={handleSigningOut} size='xsm'/>
     </nav>
   )

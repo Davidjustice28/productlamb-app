@@ -38,7 +38,7 @@ export function PLModalFooter({closeText = 'Close', submitText = 'Submit', onSub
   return (
     <div className="flex items-center justify-end p-6">
       <button
-        className="text-red-500 dark:text-red-400 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1"
+        className="text-neutral-700 dark:text-neutral-400 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1"
         onClick={onClose}
       >
         {closeText}

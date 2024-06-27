@@ -1,6 +1,5 @@
 import type { ActionFunction, LinksFunction, LoaderFunction } from '@remix-run/node'
 import {
-  Form,
   Links,
   LiveReload,
   Meta,
@@ -15,11 +14,10 @@ import TailwindCSS from './root.css'
 import { RootLayout } from './components/layouts/root-layout'
 import { ClerkApp } from '@clerk/remix'
 import { getSharedEnvs } from './utils/envs';
-import { preferences } from './backend/cookies/preferences';
 import { account } from './backend/cookies/account';
 import { AccountsClient } from './backend/database/accounts/client';
 import { PrismaClient } from '@prisma/client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import React from 'react';
 import { ApplicationsClient } from './backend/database/applications/client';
 
