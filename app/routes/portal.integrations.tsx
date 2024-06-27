@@ -40,7 +40,9 @@ export const action: ActionFunction = async ({ request }) => {
   if ('google_type' in formData) {
     const type = formData.google_type.toLowerCase().includes('calendar') ? 'calendar' : 'forms'
     // update create base url based on environment
-    const response = await fetch(`http://localhost:8000/integrations/google/${applicationId}`, {
+    const baseUrl = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
+
+    const response = await fetch(`${baseUrl}/integrations/google/${applicationId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
