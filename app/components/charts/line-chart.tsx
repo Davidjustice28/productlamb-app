@@ -1,7 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { PLChartProps } from '~/types/component.types';
 
-export function PLLineChart({data, darkMode } : PLChartProps) {
+export function PLLineChart({data } : PLChartProps) {
   if (data.length < 2) {
     return <div className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>Insufficient data. {!data.length ? 'Turn on a sprint generation to see analytics' : 'Chart will be available next sprint'}.</div>
   }
