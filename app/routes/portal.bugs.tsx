@@ -13,7 +13,7 @@ import { TableColumn } from "~/types/base.types";
 import { BugGroup, BugPriority, BugSource, BugStatus } from "~/types/database.types";
 
 interface BaseFormData {
-  action: 'delete' | 'add' | 'edit',
+  action: 'delete' | 'add' | 'edit' | 'pull',
 }
 interface NewOrEditBugData extends BaseFormData {
   action: 'add' | 'edit'
@@ -28,12 +28,18 @@ interface DeleteBugData extends BaseFormData {
   ids: string
 }
 
+interface BugPullIntoSprintData extends BaseFormData {
+  action: 'pull',
+  ids: string,
+  sprint_id: string
+}
+
 export const action: ActionFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
   const form = await request.formData()
-  const data = Object.fromEntries(form) as unknown as NewOrEditBugData | DeleteBugData
+  const data = Object.fromEntries(form) as unknown as NewOrEditBugData | DeleteBugData | BugPullIntoSprintData
   const dbClient = new PrismaClient()
   const bugClient = ApplicationBugsClient(dbClient.applicationBug)
   if (data.action === 'add') {
@@ -49,6 +55,29 @@ export const action: ActionFunction = async ({request}) => {
     const {data: bugs} = await bugClient.getAllBugs(applicationId)
     return json({updateBugs: bugs ?? null})
   }
+
+  if (data.action === 'pull') {
+    const ids = data.ids.split(',').map(id => parseInt(id))
+    const sprintId = parseInt(data.sprint_id)
+    if (!sprintId) {
+      return json({updateBugs: null})
+    }
+    const sprint = await dbClient.applicationSprint.findFirst({where: {id: sprintId}})
+    if (!sprint) {
+      return json({updateBugs: null})
+    }
+    const baseUrl = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
+    
+    await fetch(`${baseUrl}/sprints/pull-in/${sprintId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ids, type: 'bugs'})
+    })
+    const {data: bugs} = await bugClient.getAllBugs(applicationId)
+    return json({updateBugs: bugs ?? null})
+  }
   return json({updateBugs: null})
 }
 
@@ -57,15 +86,16 @@ export const loader: LoaderFunction = async ({request}) => {
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
   const dbClient = new PrismaClient()
+  const activeSprint = await dbClient.applicationSprint.findFirst({ where: { applicationId, status: 'In Progress'}})
   const bugClient = ApplicationBugsClient(dbClient.applicationBug)
   const {data: bugs} = await bugClient.getAllBugs(applicationId)
   const data: Array<ApplicationBug> = bugs ? bugs : []
-  return json({bugs: bugs ?? null})
+  return json({bugs: bugs ?? null, activeSprint: activeSprint})
 
 }
 
 export default function BugsPage() {
-  const {bugs: loadedBugs} = useLoaderData<typeof loader>() ?? {loadedBugs: []}
+  const {bugs: loadedBugs, activeSprint} = useLoaderData<typeof loader>() ?? {loadedBugs: [], activeSprint: null}
   const {updateBugs} = useActionData<typeof action>() ?? {updateBugs: null}
   const groups: Array<BugGroup> = Object.values(BugGroup)
   const [bugGroup, setBugGroup] = useState<BugGroup>(BugGroup.ALL)
@@ -75,6 +105,7 @@ export default function BugsPage() {
   const [itemsSelected, setItemsSelected] = useState<boolean>(false)
   const [idsChecked, setIdsChecked] = useState<Array<number>>([])
   const [addModalOpen, setAddModalOpen] = useState<boolean>(false)
+  const [pullModalOpen, setPullModalOpen] = useState<boolean>(false)
 
   function handleDelete() {
     setDeleteModalOpen(true)
@@ -106,11 +137,21 @@ export default function BugsPage() {
       }
     }
   }
-  const deleteInputRef = useRef<HTMLInputElement>(null)
-  const deleteFormRef = useRef<HTMLFormElement>(null)
+  const idsInputRef = useRef<HTMLInputElement>(null)
+  const actionInputRef = useRef<HTMLInputElement>(null)
+  const sprintIdInputRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
   const submitDeleteRequest = async (e: React.FormEvent<HTMLFormElement>) => {
-    deleteInputRef.current!.value = idsChecked.join(',')
-    deleteFormRef.current?.submit()
+    idsInputRef.current!.value = idsChecked.join(',')
+    actionInputRef.current!.value = 'delete'
+    formRef.current?.submit()
+  }
+
+  const pullBugsIntoSprint = async (e: React.FormEvent<HTMLFormElement>) => {
+    idsInputRef.current!.value = idsChecked.join(',')
+    actionInputRef.current!.value = 'pull'
+    sprintIdInputRef.current!.value = activeSprint?.id.toString() || ''
+    formRef.current?.submit()
   }
 
   return (
@@ -118,16 +159,23 @@ export default function BugsPage() {
       <div className="w-full flex justify-between items-center">
         <PLOptionsButtonGroup groups={groups} current={bugGroup} handleGroupChange={(group) => handleGroupChange(group as BugGroup)} />
         <div className="flex gap-2">
-          {itemsSelected && <PLIconButton icon="ri-delete-bin-line" onClick={handleDelete}/>}
+          {itemsSelected && (
+            <>
+              <PLIconButton icon="ri-delete-bin-line" onClick={handleDelete}/>
+              {activeSprint && <PLIconButton icon="ri-check-line" onClick={() => setPullModalOpen(true)}/>}
+            </>
+          )}
           <PLIconButton icon="ri-add-line" onClick={() => setAddModalOpen(true)} />
         </div>
       </div>
-      <form method="post" ref={deleteFormRef}>
-        <input type="hidden" name="ids" ref={deleteInputRef}/>
-        <input type="hidden" name="action" value="delete"/>
+      <form method="post" ref={formRef}>
+        <input type="hidden" name="ids" ref={idsInputRef}/>
+        <input type="hidden" name="action" ref={actionInputRef}/>
+        <input type="hidden" name="sprint_id" ref={sprintIdInputRef}/>
       </form>
       <PLTable data={filterBugs} checked={[]} actionsAvailable={true} columns={columns} tableModalName="bugs" onCheck={onCheck}/>
       <PLConfirmModal open={deleteModalOpen} setOpen={setDeleteModalOpen} message="Are you sure you want to delete the selected bugs?" onConfirm={submitDeleteRequest}/>
+      <PLConfirmModal open={pullModalOpen} setOpen={setPullModalOpen} message="Are you sure you want to pull the selected bugs into the current sprint?" onConfirm={pullBugsIntoSprint} />
       <PLAddBugModal open={addModalOpen} onClose={() => setAddModalOpen(false)} setOpen={setAddModalOpen}/>
     </div>
   )

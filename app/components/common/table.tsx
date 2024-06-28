@@ -195,6 +195,7 @@ function getStatusColor(status: string) {
     case 'low':
     case 'in progress':
       return Colors.BLUE
+    case 'complete':
     case 'completed':
     case 'done':
     case 'yes':
