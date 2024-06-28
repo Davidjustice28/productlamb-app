@@ -11,6 +11,7 @@ import { PLTable } from "~/components/common/table"
 import { ApplicationsClient } from "~/backend/database/applications/client"
 import React from "react"
 import { PLContentLess } from "~/components/common/contentless"
+import { calculateTimeLeft } from "~/utils/date"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
@@ -173,16 +174,6 @@ function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tas
     navigate(`/portal/planning/${data.id}`)
   }
 
-  function calculateDaysLeft() {
-    if (!data.startDate || !data.endDate) {
-      return 'N/A'
-    }
-    const startDate = new Date(data.startDate!)
-    const endDate = new Date(data.endDate!)
-    const today = new Date()
-    const daysLeft = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 3600 * 24))
-    return `${daysLeft}`
-  }
   
   const columns: Array<TableColumn> = [
     {key: "category", type: "text"},
@@ -191,6 +182,10 @@ function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tas
     {key: "status", type: "status", sortable: true},
     {key: "points", type: "text", sortable: true},
   ]
+
+  const timeData = calculateTimeLeft(data.startDate!, data.endDate!, 'Past Due')
+  const timeTitle = timeData.type.charAt(0).toUpperCase() + timeData.type.slice(1)
+  const timeLeft = `${timeTitle} left: ${timeData.count}`
 
   return (
     <div className="w-full p-5 rounded-lg bg-white dark:bg-neutral-800 divide-y-2 flex flex-col gap-5">
@@ -207,7 +202,7 @@ function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tas
           <p className="italic text-gray-500 dark:text-white"><i className="ri-task-line"></i> {tasks?.length ?? 0} tasks</p>
           <PLStatusBadge color={data.status === 'Completed' ? Colors.GREEN : data.status === 'In Progress' ? Colors.BLUE : data.status === 'Under Construction' ? Colors.YELLOW : Colors.RED} text={data.status}/>
           {data.status === 'Under Construction' && <PLBasicButton text="Start Planning" onClick={startPlanning} colorClasses="py-[3px] px-[8px] text-xs bg-green-200 dark:bg-green-300 hover:bg-green-300 hover:dark:bg-green-400" icon="ri-tools-line" noDefaultDarkModeStyles/>}
-          {data.status === 'In Progress' && <p className="text-black dark:text-white">Days left: {calculateDaysLeft()}</p>}
+          {data.status === 'In Progress' && <p className="text-black dark:text-white">{timeLeft}</p>}
         </div>
       </div>
       <div className={"w-full pt-5 flex flex-col gap-5 " + (showDetails ? '' : 'hidden')}>

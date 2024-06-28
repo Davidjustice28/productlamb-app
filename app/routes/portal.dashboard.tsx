@@ -10,17 +10,8 @@ import { createCurrentSprintChartsData, createSprintTaskCompletionPercentageChar
 import { PLAreaChart } from "~/components/charts/area-chart";
 import { PLBarChart } from "~/components/charts/bar-chart";
 import { PLLineChart } from "~/components/charts/line-chart";
+import { calculateTimeLeft } from "~/utils/date";
 
-function calculateDaysLeft(start?: string, end?: string) {
-  if (!start || !end) {
-    return 'N/A'
-  }
-  const startDate = new Date(start!)
-  const endDate = new Date(end!)
-  const today = new Date()
-  const daysLeft = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 3600 * 24))
-  return `${daysLeft}`
-}
 
 export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {    
@@ -85,8 +76,8 @@ export const loader: LoaderFunction = args => {
       const currentSprint = sprints.find(s => s.status === 'In Progress')
       const currentSprintTasksData = currentSprint ? createCurrentSprintChartsData(tasks.filter(t => t.sprintId === currentSprint.id)) : []
       const taskTypesData = createTaskTypeChartData(sprints, tasks)
-      const daysLeftInSprint = currentSprint && currentSprint?.endDate ? calculateDaysLeft(new Date().toISOString(), currentSprint.endDate) : null
-      const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, days_left: daysLeftInSprint}
+      const timeLeftInSprint = currentSprint && currentSprint?.endDate ? calculateTimeLeft(new Date().toISOString(), currentSprint.endDate, 'Expired') : null
+      const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, time_left: timeLeftInSprint}
       return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint, taskTypesData, suggestions})
     }
   });
@@ -94,7 +85,7 @@ export const loader: LoaderFunction = args => {
 
 
 export default function DashboardPage() {
-  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData, suggestions } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, days_left: number|null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null, taskTypesData: any[], suggestions: ApplicationSuggestion[]}>();
+  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData, suggestions } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null, taskTypesData: any[], suggestions: ApplicationSuggestion[]}>();
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
   const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || []), (taskTypesData || [])])
   const [chartIndex, setChartIndex] = useState<number>(0)
@@ -117,6 +108,7 @@ export default function DashboardPage() {
       }
     }
   }
+  const timeLeftTitle = (currentSprintSummary && currentSprintSummary.time_left ? currentSprintSummary.time_left.type : 'time')
 
   return (
     <div className="flex flex-col items-center gap-5 justify-start">
@@ -161,8 +153,8 @@ export default function DashboardPage() {
               <p className="text-black text-xs dark:text-gray-500">Incomplete</p>
             </div>
             <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
-              <p className="text-black text-xs dark:text-gray-500">Days</p>
-              <h3 className="text-black font-bold text-2xl dark:text-neutral-400">{currentSprintSummary && currentSprintSummary.days_left ? currentSprintSummary.days_left : 'N/A'}</h3>
+              <p className="text-black text-xs dark:text-gray-500">{timeLeftTitle.charAt(0).toUpperCase() + timeLeftTitle.slice(1)}</p>
+              <h3 className="text-black font-bold text-2xl dark:text-neutral-400">{currentSprintSummary && currentSprintSummary.time_left ? currentSprintSummary.time_left.count : 'N/A'}</h3>
               <p className="text-black text-xs dark:text-gray-500">Left</p>
             </div>
           </div>

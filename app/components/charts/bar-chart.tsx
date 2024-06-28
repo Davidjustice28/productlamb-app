@@ -16,7 +16,7 @@ export function calculateChartCellColor() {
 }
 export function PLBarChart({data, darkMode } : PLChartProps) {
   const incompleteColor =  darkMode ? 'black' : 'rgb(212 212 212)';
-  const colors = ['#ff0000', '#82ca9d', '#ffc658', '#0000ff']; // Add as many colors as you need
+  const colors = ['#ff0000', '#82ca9d', '#ffc658', '#6F8FAF']; // Add as many colors as you need
 
   if (!data.length) {
     return <div className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>Insufficient data. Turn on a sprint generation to see analytics.</div>
