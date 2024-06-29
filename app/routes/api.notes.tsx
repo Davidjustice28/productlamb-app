@@ -9,8 +9,6 @@ export const action: ActionFunction = async ({ request }) => {
   const accountCookie = await account.parse(cookie);
   const action = body?.action;
   
-  
-  console.log(body)
   if (!action.length) {
     return new Response(JSON.stringify({ error: "No action found" }), {
       status: 400,
@@ -56,11 +54,4 @@ export const action: ActionFunction = async ({ request }) => {
   }  else {
     return new Response(JSON.stringify({ error: "Invalid request" }), { status: 401 });
   }
-
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 }

@@ -83,7 +83,9 @@ const PLStickyNote = ({ text, deleteNote }: {text: string, deleteNote: () => voi
       <div className='justify-between flex flex-col h-full'>
         <p>{text}</p>
         <div className='justify-end gap-2 group-hover:visible invisible'>
-          <PLIconButton icon='ri-delete-bin-6-line' onClick={deleteNote} colorClasses='bg-transparent' />
+          <div className='delay-150'>
+            <PLIconButton icon='ri-delete-bin-6-line' onClick={deleteNote} colorClasses='bg-transparent' />
+          </div>
         </div>
       </div>
     </div>
