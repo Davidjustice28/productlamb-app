@@ -179,7 +179,6 @@ function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tas
     const totalTasks = tasks?.length || 0
     const completedTasks = tasks?.filter(task => ['completed', 'done', 'complete'].includes(task.status.toLowerCase())).length || 0
     const percentage =  Math.round((completedTasks / totalTasks) * 100)
-    console.log('Percentage complete:', {totalTasks, completedTasks, percentage})
     if (!percentage) return {percentage, percentageWidthClass:'w-0'}
     // if (percentage === 100) return {percentage, percentageWidthClass:'w-full'}
     if (percentage < 10) return {percentage, percentageWidthClass: 'w-1/12 bg-red-400 dark:bg-red-300'}

@@ -8,9 +8,9 @@ export function IntegrationSetupComponent({integration, onBackButtonClick, showB
   const [formIsValid, setFormIsValid] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
   const onFormSubmit = async () => {
+    const formData = new FormData(formRef.current!)
+    const data = Object.fromEntries(formData.entries())
     if (onSubmit) { 
-      const formData = new FormData(formRef.current!)
-      const data = Object.fromEntries(formData.entries())
       onSubmit(data)
     } else { 
       formRef.current?.submit()

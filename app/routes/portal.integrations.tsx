@@ -36,7 +36,6 @@ export const action: ActionFunction = async ({ request }) => {
   const prisma = new PrismaClient()
   const dbClient = new PrismaClient().applicationIntegration
   const integrationClient = IntegrationClient(dbClient)
-
   if ('google_type' in formData) {
     const type = formData.google_type.toLowerCase().includes('calendar') ? 'calendar' : 'forms'
     // update create base url based on environment
@@ -74,8 +73,8 @@ export const action: ActionFunction = async ({ request }) => {
       })
     } else if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'github') {
       await integrationClient.addIntegration(applicationId, formData.integration_name as PLAvailableIntegrationNames, encryptedToken, {
-        repository_name: (formData as GithubIntegrationSetupFormData).repository_name,
-        repository_owner: (formData as GithubIntegrationSetupFormData).repository_owner,
+        repository_name: (formData as GithubIntegrationSetupFormData).repo_name,
+        repository_owner: (formData as GithubIntegrationSetupFormData).repo_owner,
       })
 
     } else if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'gitlab') {

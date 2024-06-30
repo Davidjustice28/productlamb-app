@@ -116,8 +116,8 @@ export interface TypeformIntegrationSetupFormData extends BaseIntegrationSetupFo
 export interface GithubIntegrationSetupFormData extends BaseIntegrationSetupFormData {
   integration_name: 'Github'
   api_token: string
-  repository_name: string
-  repository_owner: string
+  repo_name: string
+  repo_owner: string
 }
 
 export interface GitlabIntegrationSetupFormData extends BaseIntegrationSetupFormData {
