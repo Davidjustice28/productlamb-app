@@ -6,7 +6,7 @@ import { useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { AccountsClient } from "~/backend/database/accounts/client";
 import { ApplicationsClient } from "~/backend/database/applications/client";
-import { createCurrentSprintChartsData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts";
+import { createCurrentSprintChartsData, createSprintPointsChartData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts";
 import { PLAreaChart } from "~/components/charts/area-chart";
 import { PLBarChart } from "~/components/charts/bar-chart";
 import { PLLineChart } from "~/components/charts/line-chart";
@@ -69,6 +69,10 @@ export const loader: LoaderFunction = args => {
         sprints.sort((a,b) => a.id - b.id).map(s => ({name: s.id.toString(), taskCount: tasks.filter(t => t.sprintId === s.id).length}))
       )
 
+      const sprintPointsChartData = createSprintPointsChartData(
+        sprints.sort((a,b) => a.id - b.id).map(s => ({name: s.id.toString(), points: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).reduce((acc, t) => acc + (t.points || 0), 0)}))
+      )
+
       const taskPercentagesChartData = createSprintTaskCompletionPercentageChartData(
         sprints.sort((a,b) => a.id - b.id).map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).length, total: tasks.filter(t => t.sprintId === s.id).length}))
       )
@@ -78,21 +82,22 @@ export const loader: LoaderFunction = args => {
       const taskTypesData = createTaskTypeChartData(sprints, tasks)
       const timeLeftInSprint = currentSprint && currentSprint?.endDate ? calculateTimeLeft(new Date().toISOString(), currentSprint.endDate, 'Expired') : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, time_left: timeLeftInSprint}
-      return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint, taskTypesData, suggestions})
+      return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint, taskTypesData, suggestions, sprintPointsChartData})
     }
   });
 };
 
 
 export default function DashboardPage() {
-  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData, suggestions } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null, taskTypesData: any[], suggestions: ApplicationSuggestion[]}>();
+  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData, suggestions, sprintPointsChartData } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], sprintPointsChartData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null, taskTypesData: any[], suggestions: ApplicationSuggestion[]}>();
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
-  const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || []), (taskTypesData || [])])
+  const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || []), (taskTypesData || []), (sprintPointsChartData || [])])
   const [chartIndex, setChartIndex] = useState<number>(0)
   const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(loadedCurrentSprint)
   const yKey = chartIndex == 0 ? "taskCount" : "completed"
 
   const handleChartChange = (goingForward: boolean) => {
+    
     if(chartData === null) return 
     if (goingForward) {
       if (chartIndex == chartData.length - 1) {
@@ -114,7 +119,7 @@ export default function DashboardPage() {
     <div className="flex flex-col items-center gap-5 justify-start">
       <div className="w-full flex flex-col">
         <div className="flex flex-row justify-between w-full items-center">
-          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Task Completed' : (chartIndex === 0) ? 'Tasks Assigned' : 'Task Types'}</span></h2>
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Task Completed' : (chartIndex === 0) ? 'Tasks Assigned' : chartIndex === 2 ? 'Task Types' : 'Points Completed'}</span></h2>
           <div className="inline-flex">
             <button 
               className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 2 || chartIndex == 0 ? "cursor-not-allowed" : "hover:text-gray-400")} 
@@ -133,7 +138,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="rounded-xl w-full h-full bg-white dark:bg-neutral-800 pt-5 pb-3 px-2" style={{height: "325px"}}>
-          {(chartIndex < 2 ) && <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} fill={chartIndex === 1 ? "#82ca9d" : "#F28C28"}/>}
+          {(chartIndex < 2 || chartIndex > 2 ) && <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} fill={chartIndex === 1 ? "#82ca9d" : "#F28C28"}/>}
           {(chartIndex === 2) && <PLLineChart data={chartData[chartIndex]}/>}
           
         </div>

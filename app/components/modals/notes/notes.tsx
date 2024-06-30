@@ -6,7 +6,6 @@ import { PLIconButton } from '~/components/buttons/icon-button';
 export const PLNotesModal = () => {
   const {notesModalOpen, setNotesModalOpen, notes, setNotes } = useNotesModal()
   const [newNoteView, setNewNoteView] = React.useState(false)
-  // const [items, setItems] = React.useState(notes)
   const toggleNewNoteView = () => {
     setNewNoteView(prev => !prev)
   }
@@ -26,7 +25,6 @@ export const PLNotesModal = () => {
       method: 'POST',
       body: JSON.stringify({action: 'delete', note_id: id}),
     })
-    // setItems(items.filter(item => item.id !== id))
     setNotesModalOpen(false)
   }
 

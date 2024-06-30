@@ -85,6 +85,7 @@ model ApplicationIntegration {
   secretExpirationDate String?
   metadata             String?
   application          AccountApplication @relation(fields: [applicationId], references: [id])
+  enabled              Boolean            @default(true)
 }
 
 model GeneratedTask {

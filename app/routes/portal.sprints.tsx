@@ -165,6 +165,7 @@ export default function SprintPage() {
 
 function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tasks?: GeneratedTask[], initiative?: string}) {
   const [showDetails, setShowDetails] = useState<boolean>(false)
+  const {percentage, percentageWidthClass} = calculatePercentage()
   const navigate = useNavigate()
   function toggleDetails() {
     setShowDetails(!showDetails)
@@ -172,6 +173,25 @@ function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tas
 
   function startPlanning() {
     navigate(`/portal/planning/${data.id}`)
+  }
+
+  function calculatePercentage() {
+    const totalTasks = tasks?.length || 0
+    const completedTasks = tasks?.filter(task => ['completed', 'done', 'complete'].includes(task.status.toLowerCase())).length || 0
+    const percentage =  Math.round((completedTasks / totalTasks) * 100)
+    console.log('Percentage complete:', {totalTasks, completedTasks, percentage})
+    if (!percentage) return {percentage, percentageWidthClass:'w-0'}
+    // if (percentage === 100) return {percentage, percentageWidthClass:'w-full'}
+    if (percentage < 10) return {percentage, percentageWidthClass: 'w-1/12 bg-red-400 dark:bg-red-300'}
+    if (percentage < 20) return {percentage, percentageWidthClass:'w-2/12 bg-red-400 dark:bg-red-300'}
+    if (percentage < 30) return {percentage, percentageWidthClass:'w-3/12 bg-yellow-400 dark:bg-yellow-300'}
+    if (percentage < 40) return {percentage, percentageWidthClass:'w-1/3 bg-yellow-400 dark:bg-yellow-300'}
+    if (percentage < 50) return {percentage, percentageWidthClass:'w-1/2 bg-yellow-400 dark:bg-yellow-300'}
+    if (percentage < 60) return {percentage, percentageWidthClass:'w-7/12 bg-yellow-400 dark:bg-yellow-300'}
+    if (percentage < 70) return {percentage, percentageWidthClass:'w-2/3 bg-green-500 dark:bg-green-400'}
+    if (percentage < 80) return {percentage, percentageWidthClass:'w-3/4 bg-green-500 dark:bg-green-400'}
+    if (percentage < 90) return {percentage, percentageWidthClass:'w-9/10 bg-green-500 dark:bg-green-400'}
+    return {percentage, percentageWidthClass:'w-full'}
   }
 
   
@@ -203,6 +223,12 @@ function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tas
           <PLStatusBadge color={data.status === 'Completed' ? Colors.GREEN : data.status === 'In Progress' ? Colors.BLUE : data.status === 'Under Construction' ? Colors.YELLOW : Colors.RED} text={data.status}/>
           {data.status === 'Under Construction' && <PLBasicButton text="Start Planning" onClick={startPlanning} colorClasses="py-[3px] px-[8px] text-xs bg-green-200 dark:bg-green-300 hover:bg-green-300 hover:dark:bg-green-400" icon="ri-tools-line" noDefaultDarkModeStyles/>}
           {data.status === 'In Progress' && <p className="text-black dark:text-white">{timeLeft}</p>}
+          {data.status !== 'Under Construction' && (
+              <div className="bg-gray-300 rounded-lg w-1/3 h-6 relative">
+                <div className={`rounded-lg h-6  ${percentageWidthClass}`}></div>
+              </div>
+            )
+          }
         </div>
       </div>
       <div className={"w-full pt-5 flex flex-col gap-5 " + (showDetails ? '' : 'hidden')}>
