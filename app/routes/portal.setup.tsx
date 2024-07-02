@@ -1,5 +1,5 @@
-import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import { PrismaClient } from "@prisma/client";
+import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
+import { ApplicationIntegration, PrismaClient } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import React from "react";
@@ -10,12 +10,14 @@ import { ApplicationsClient } from "~/backend/database/applications/client";
 import { ApplicationGoalsClient } from "~/backend/database/goals/client";
 import { IntegrationClient } from "~/backend/database/integrations/ client";
 import { PLBasicButton } from "~/components/buttons/basic-button";
-import { PLOnboardingFeedbackModal } from "~/components/modals/account/onboarding-feedback";
+import { PLOrganizationDetailsModal } from "~/components/modals/account/organization-details";
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application";
 import { PLIntegrationOptionsModal } from "~/components/modals/integrations/integration-options";
 import { availableIntegrations } from "~/static/integration-options";
 import { NewApplicationData, PLAvailableIntegrationNames, SupportedTimezone } from "~/types/database.types";
 import { TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types";
+import { createClerkClient } from '@clerk/remix/api.server';
+
 
 interface SetupFieldProps {
   id: number, 
@@ -29,7 +31,7 @@ interface SetupFieldProps {
 
 export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {
-    const { sessionId, userId, getToken } = request.auth;
+    const { userId } = request.auth;
     const dbClient = new PrismaClient()
     const appClient = ApplicationsClient(dbClient.accountApplication)
     const integrationClient = IntegrationClient(dbClient.applicationIntegration)
@@ -37,17 +39,15 @@ export const loader: LoaderFunction = args => {
     const cookieHeader = request.headers.get("Cookie");
     const accountCookie = (await account.parse(cookieHeader) || {});
     let accountId: number| undefined = accountCookie.accountId
-    console.log('set page loader called', {accountId, userId})
     if (!userId) {
       return redirect('/')
     }
     if (accountId === undefined) {
-      console.log('account id is undefined on setup page loader')
       const {data: accountData} = await accountClient.getAccountByUserId(userId)
       if(!accountData) {
-        console.log('account data is undefined. creating account')
         const result = await accountClient.createAccount(userId, "free", SupportedTimezone.MST)
-        // error handling maybe a boundary page
+        if (result.errors.length > 0 || !result.data) return json({})
+        await dbClient.accountUser.create({data: {accountId: result.data.id, userId: userId}})
         if (result.errors.length > 0 || !result.data) return json({});
         accountId = result.data.id
         accountCookie.accountId = accountId
@@ -58,7 +58,6 @@ export const loader: LoaderFunction = args => {
           }
         })
       } 
-      console.log('account data', accountData)
       const {data: apps} = await appClient.getAccountApplications(accountData.id)
       const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
       const isSetup = (accountData.isSetup)
@@ -77,18 +76,23 @@ export const loader: LoaderFunction = args => {
     } else {
       const {data: accountData} = await accountClient.getAccountById(accountId)
       const {data: apps} = await appClient.getAccountApplications(accountId)
-      const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
+      let integrations: ApplicationIntegration[] = []
+      if (apps && apps.length > 0) {
+        integrations = (await integrationClient.getAllApplicationIntegrations(apps[0].id)).data ?? []
+      }
 
-      if (accountData && !accountData.isSetup) return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: integrations ? integrations.length : false, providedFeedback: false})
+      if (accountData && !accountData.isSetup) return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps?.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id})
       if (accountData && accountData.isSetup) return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie)}})
-      return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: integrations ? integrations.length : false, providedFeedback: false})
+      return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps?.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id})
     }
   })
 }
 
-export let action: ActionFunction = async ({ request }) => {
+export let action: ActionFunction = async (args) => {
+  const { userId } = await getAuth(args);
+  const request = args.request
   const form = await request.formData()
-  const data = Object.fromEntries(form) as unknown as {new_application?: string, feedback?: string, integration?: string} 
+  const data = Object.fromEntries(form) as unknown as {new_application?: string, integration?: string, setup_complete?: string, organization_details?: string} 
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const accountId = accountCookie.accountId
@@ -99,7 +103,7 @@ export let action: ActionFunction = async ({ request }) => {
   const integrationClient = IntegrationClient(dbClient.applicationIntegration)
   if ('setup_complete' in data) {
     await accountClient.updateAccount(accountId, {isSetup: true})
-    const {data: accountData} = await appDbClient.getAccountApplications(accountId)
+    await appDbClient.getAccountApplications(accountId)
     accountCookie.setupIsComplete = true
 
     return redirect('/portal/dashboard', {
@@ -114,7 +118,7 @@ export let action: ActionFunction = async ({ request }) => {
       const goals = newAppData.goals.length < 0 ? [] : JSON.parse(newAppData.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)      
     }
-    return json({hasApplication: true})
+    return json({hasApplication: true, applicationId: createAppResult?.id})
   }  else if ('integration' in data) {
     const {data: apps} = await appDbClient.getAccountApplications(accountId)
     const integrationData = JSON.parse(data.integration as string) as TypeformIntegrationSetupFormData
@@ -129,41 +133,54 @@ export let action: ActionFunction = async ({ request }) => {
     
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
     return json({hasIntegration: integrations ? integrations.length > 0 : false})
+  } else if('organization_details' in data) {
+    const name = data.organization_details as string
+    const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
+    const org = await clerkClient.organizations.createOrganization({
+      name: name,
+      createdBy: userId!,
+    })
+    if (org) {
+      await accountClient.updateAccount(accountId, {organization_id: org.id})
+      return json({organizationCreated: true})
+    }
+    return json({organizationCreated: true})
+
   } else {
     return json({})
   }
 }
 
 export default function SetupPage() {
-  const { hasApplication: loaderHasApplication, isSetup: loaderIsSetup, providedFeedback, hasIntegration: loaderHasIntegration } = useLoaderData<{hasApplication: boolean, isSetup: boolean, hasIntegration: boolean, providedFeedback: boolean}>()
-  const { hasApplication: actionHasApplication, isSetup: actionIsSetup, hasIntegration: actionHasIntegration } = useActionData<{hasApplication?: boolean|null, isSetup?: boolean|null, hasIntegration?: boolean|null, providedFeedback?: boolean|null}>() || {hasApplication: null, isSetup: null, hasIntegration: null, hasFeedback: null}
+  const { hasApplication: loaderHasApplication, isSetup: loaderIsSetup, hasIntegration: loaderHasIntegration, applicationId: loadedApplicationId, organizationCreated: loadedOrganizationCreated } = useLoaderData<{hasApplication: boolean, isSetup: boolean, hasIntegration: boolean, organizationCreated: boolean, applicationId?: number }>()
+  const { hasApplication: actionHasApplication, isSetup: actionIsSetup, hasIntegration: actionHasIntegration, applicationId: actionApplicationId, organizationCreated: actionOrganizationCreated } = useActionData<{hasApplication?: boolean|null, isSetup?: boolean|null, hasIntegration?: boolean|null, organizationCreated?: boolean|null, applicationId?: number}>() || {hasApplication: null, isSetup: null, hasIntegration: null, organizationCreated: null, applicationId: null}
   const hasApplication = loaderHasApplication ?? actionHasApplication
   const hasIntegration = loaderHasIntegration ?? actionHasIntegration
   const [addApplicationModalOpen, setAddApplicationModalOpen] = useState(false);
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [organizationDetailsModalOpen, setOrganizationDetailsModalOpen] = useState(false)
+  const [applicationId, setApplicationId] = useState(loadedApplicationId ?? actionApplicationId)
+  const [organizationCreated, setOrganizationCreated] = useState(loadedOrganizationCreated ?? actionOrganizationCreated)
   const isSetup = hasApplication
   const [stepsMap, setStepsMap] = useState<{[key: number]: {completed: boolean, enabled: boolean}}>({
-    0: {completed: hasApplication, enabled: true},
-    1: {completed: hasIntegration, enabled: hasApplication},
-    2: {completed: providedFeedback, enabled: hasApplication},
+    0: {completed: !!organizationCreated, enabled: true},
+    1: {completed: !!hasApplication, enabled: organizationCreated},
+    2: {completed: !!hasIntegration, enabled: hasApplication},
   })
 
   const newAppFormRef = React.createRef<HTMLFormElement>()
   const newAppInputRef = React.createRef<HTMLInputElement>()
-
-  const feedbackFormRef = React.createRef<HTMLFormElement>()
-  const feedbackInputRef = React.createRef<HTMLInputElement>()
 
   const integrationFormRef = React.createRef<HTMLFormElement>()
   const integrationInputRef = React.createRef<HTMLInputElement>()
 
   const setupCompleteFormRef = React.createRef<HTMLFormElement>()
   const setupCompleteInputRef = React.createRef<HTMLInputElement>()
-  
+  const organizationDetailsFormRef = React.createRef<HTMLFormElement>()
+  const organizationDetailsInputRef = React.createRef<HTMLInputElement>()
   const fields: SetupFieldProps[] = [
     // {
-    //   id: 1,
+    //   id: 0,
     //   title: "Choose a Subscription Plan",
     //   description: "Add your payment information and pick a subscription plan.",
     //   onClick: () => console.log("Adding payment info"),
@@ -172,14 +189,22 @@ export default function SetupPage() {
     // },
     {
       id: 0,
-      title: "Setup a Personal Project",
-      description: "Add your first application to get started with your account.",
+      title: "Add Organization Details",
+      description: "Add your organization details to get started with your account.",
+      onClick: () => setOrganizationDetailsModalOpen(true),
+      icon: "ri-organization-chart",
+      buttonText: "Add Details"
+    },
+    {
+      id: 1,
+      title: "Setup First Application",
+      description: "Add your first application that will be managed by ProductLamb.",
       onClick: () => setAddApplicationModalOpen(true),
       icon: "ri-terminal-window-line",
       buttonText: "Add Application",
     },
     {
-      id: 1,
+      id: 2,
       title: "Configure an Integration",
       description: "Configure an integration to get started with your account.",
       onClick: () => setIntegrationModalOpen(true),
@@ -187,31 +212,11 @@ export default function SetupPage() {
       buttonText: "Add Integration",
       isOptional: true
     },
-    {
-      id: 2,
-      title: "Provide Feedback",
-      description: "Let us know how we can improve your onboarding experience.",
-      onClick: () => setFeedbackModalOpen(true),
-      icon: "ri-feedback-line",
-      buttonText: "Fill Survey",
-      isOptional: true
-    }
   ]
   const onAddApplication = (data: any) => {
     newAppInputRef.current!.value = JSON.stringify(data)
     newAppFormRef.current!.submit()
     setAddApplicationModalOpen(false)
-  }
-
-  const onFeedbackSubmit = (data: any) => {
-    feedbackInputRef.current!.value = JSON.stringify(data)
-    feedbackFormRef.current!.submit()
-  }
-
-  const onIntegrationSubmit = (data: any) => {
-    integrationInputRef.current!.value = JSON.stringify(data)
-    integrationFormRef.current!.submit()
-    setIntegrationModalOpen(false)
   }
 
   const seeIfEnabled = (id: number) => {
@@ -230,9 +235,22 @@ export default function SetupPage() {
     })
   }
 
+  const onIntegrationSubmit = (data: any) => {
+    integrationInputRef.current!.value = JSON.stringify(data)
+    integrationFormRef.current!.submit()
+    setIntegrationModalOpen(false)
+  }
+
+
   const finishOnboarding = () => {
     setupCompleteInputRef.current!.value = 'true'
     setupCompleteFormRef.current!.submit()
+  }
+
+  const onOrganizationDetailsSubmit = (name: string) => {
+    organizationDetailsInputRef.current!.value = name
+    organizationDetailsFormRef.current!.submit()
+    setOrganizationDetailsModalOpen(false)
   }
 
   return (
@@ -254,9 +272,6 @@ export default function SetupPage() {
       <form method="POST" ref={newAppFormRef}>
         <input type="hidden" name="new_application" ref={newAppInputRef}/>
       </form>
-      <form method="POST" ref={feedbackFormRef}>
-        <input type="hidden" name="feedback" ref={feedbackInputRef}/>
-      </form>
       <form method="POST" ref={integrationFormRef}>
         <input type="hidden" name="integration" ref={integrationInputRef}/>
       </form>
@@ -264,9 +279,12 @@ export default function SetupPage() {
         <input type="hidden" name="setup_complete" ref={setupCompleteInputRef}/>
       </form>
 
+      <form method="POST" ref={organizationDetailsFormRef}>
+        <input type="hidden" name="organization_details" ref={organizationDetailsInputRef}/>
+      </form>
+      <PLIntegrationOptionsModal configuredIntegrations={[]} open={integrationModalOpen} setOpen={setIntegrationModalOpen} onSubmit={onIntegrationSubmit} applicationId={applicationId ?? 0}/>
       <PLAddApplicationModal open={addApplicationModalOpen} setOpen={setAddApplicationModalOpen} onSubmit={onAddApplication}/>
-      <PLIntegrationOptionsModal configuredIntegrations={[]} open={integrationModalOpen} setOpen={setIntegrationModalOpen} onSubmit={onIntegrationSubmit}/>
-      <PLOnboardingFeedbackModal isOpen={feedbackModalOpen} onSubmit={() => setFeedbackModalOpen(false)} setIsOpen={setFeedbackModalOpen}/>
+      <PLOrganizationDetailsModal isOpen={organizationDetailsModalOpen} setIsOpen={setOrganizationDetailsModalOpen} onSubmit={onOrganizationDetailsSubmit}/>
     </div>
   )
 }

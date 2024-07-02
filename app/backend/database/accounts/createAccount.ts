@@ -3,9 +3,9 @@ import { BaseResponse } from '../../../types/base.types'
 import { PrismaClient, Account } from '@prisma/client'
 
 export function wrapCreateAccount(accountsClient: PrismaClient['account']) {
-  return createUser
+  return createAccount
 
-  async function createUser(id: string, subscriptionType: string, timezone: SupportedTimezone): Promise<BaseResponse<Account>> {
+  async function createAccount(id: string, subscriptionType: string, timezone: SupportedTimezone): Promise<BaseResponse<Account>> {
     try {
       const account = await accountsClient.create({data: {
         user_prisma_id: id,

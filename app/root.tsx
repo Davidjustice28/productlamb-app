@@ -54,6 +54,7 @@ export const loader: LoaderFunction = (args) => {
     const { userId } = request.auth
     const isPortalRoute = request.url.includes('/portal')
     let darkMode: boolean = false
+
     if ((!userId )) {
       if (isPortalRoute) return redirect('/')
     } else {
