@@ -23,9 +23,15 @@ export const loader: LoaderFunction = args => {
     let selectedApplicationId: number| undefined = accountCookie.selectedApplicationId
     let selectedApplicationName: string| undefined = accountCookie.selectedApplicationName
     const dbClient = new PrismaClient()
+    if (!userId) {
+      return redirect("/")
+    }
     if (!accountId || !setupIsComplete) {
       const accountClient = AccountsClient(dbClient.account)
-      const {data: accountData} = await accountClient.getAccountByUserId(userId || "")
+      const user = await dbClient.accountUser.findFirst({ where: { userId: userId }})
+      if (!user) return redirect("/portal/setup")
+      const accountData = await dbClient.account.findUnique({ where: { id: user.accountId }})
+      
       if (!accountData || !accountData.isSetup) {
         return redirect("/portal/setup")
       } 

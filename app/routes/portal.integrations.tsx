@@ -97,7 +97,6 @@ export const action: ActionFunction = async ({ request }) => {
   } else {
     return json({updatedIntegrations: null})
   }
-  // return json({updatedIntegrations: null})
 }
 
 

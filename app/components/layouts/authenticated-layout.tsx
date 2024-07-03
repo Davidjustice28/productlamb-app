@@ -4,15 +4,11 @@ import { ToggleSwitch } from "../forms/toggle-switch"
 import { PLSpinner } from "../common/spinner"
 import { LoggedInNavbar } from "../navigation/logged-in-navbar"
 import { useUser } from "@clerk/remix"
-import { useNotesModal } from "~/backend/providers/notes"
-import { PLIconButton } from "../buttons/icon-button"
-import { PLNotesModal } from "../modals/notes/notes"
 
 export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, darkMode}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number }, toggleDarkMode: () => void, darkMode: boolean}) {
   const {user} = useUser()
   const [darkModeState, setDarkModeState] = useState(darkMode)
   const contentBg = darkMode ? 'bg-neutral-950' : 'bg-neutral-200'
-  const { toggleNotesModal } = useNotesModal()
   const switchDarkModeSetting = () => {
     setDarkModeState(!darkModeState)
     toggleDarkMode()
@@ -49,12 +45,6 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
           </div>
         </div>
         <Outlet />
-        <PLIconButton 
-          icon="ri-sticky-note-line" 
-          onClick={() => toggleNotesModal(appData?.selectedApplicationId)} 
-          colorClasses=" absolute bottom-10 right-12 text-3xl p-7 text-neutral-700 bg-[#FF9D48] shadow-md dark:bg-[#FF9D48] dark:text-black"
-        />
-        <PLNotesModal />
       </div>
     </div>      
   );

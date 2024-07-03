@@ -1,5 +1,5 @@
 import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
-import { ApplicationIntegration, PrismaClient } from "@prisma/client";
+import { Account, ApplicationIntegration, PrismaClient } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import React from "react";
@@ -31,7 +31,7 @@ interface SetupFieldProps {
 
 export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {
-    const { userId } = request.auth;
+    const { userId, orgId } = request.auth;
     const dbClient = new PrismaClient()
     const appClient = ApplicationsClient(dbClient.accountApplication)
     const integrationClient = IntegrationClient(dbClient.applicationIntegration)
@@ -43,11 +43,11 @@ export const loader: LoaderFunction = args => {
       return redirect('/')
     }
     if (accountId === undefined) {
-      const {data: accountData} = await accountClient.getAccountByUserId(userId)
+      const accountData = await dbClient.account.findFirst({ where: { organization_id: orgId! }})
+      
       if(!accountData) {
         const result = await accountClient.createAccount(userId, "free", SupportedTimezone.MST)
         if (result.errors.length > 0 || !result.data) return json({})
-        await dbClient.accountUser.create({data: {accountId: result.data.id, userId: userId}})
         if (result.errors.length > 0 || !result.data) return json({});
         accountId = result.data.id
         accountCookie.accountId = accountId
@@ -59,7 +59,10 @@ export const loader: LoaderFunction = args => {
         })
       } 
       const {data: apps} = await appClient.getAccountApplications(accountData.id)
-      const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
+      let integrations: ApplicationIntegration[] = []
+      if (apps && apps.length > 0) {
+        integrations = (await integrationClient.getAllApplicationIntegrations(apps[0].id)).data ?? []
+      }
       const isSetup = (accountData.isSetup)
       accountCookie.accountId = accountData.id
       accountCookie.setupIsComplete = isSetup
@@ -69,9 +72,7 @@ export const loader: LoaderFunction = args => {
           "Set-Cookie": await account.serialize(accountCookie)
         }})
       } else {
-        return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: integrations ? integrations.length : false, providedFeedback: false}, {headers: {
-          "Set-Cookie": await account.serialize(accountCookie)
-        }})
+        return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie)}})
       }
     } else {
       const {data: accountData} = await accountClient.getAccountById(accountId)
