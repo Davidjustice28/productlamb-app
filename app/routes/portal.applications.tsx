@@ -6,6 +6,7 @@ import { account } from "~/backend/cookies/account"
 import { ApplicationsClient } from "~/backend/database/applications/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client"
+import { useAdmin } from "~/backend/providers/admin"
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { PLContentLess } from "~/components/common/contentless"
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application"
@@ -118,7 +119,7 @@ export default function ApplicationsPage() {
   const [selectedAppId, setSelectedAppId] = useState<number | null>(null)
   const navigate = useNavigate()
   const formRef = useRef<HTMLFormElement>(null)
-
+  const {isAdmin} = useAdmin()
   function openDeleteModal(e: React.FormEvent<HTMLButtonElement>, applicationId: number) {
     e.preventDefault()
     setSelectedAppId(applicationId)
@@ -160,7 +161,7 @@ if (individualAppPage) {
   return (
     <div>
       <div className="flex items-center justify-between w-full">
-        <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Manage all of your personal projects being managed by ProductLamb</p>
+        <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Manage all of your organizations applications being managed by ProductLamb</p>
         <PLIconButton icon="ri-add-line" onClick={openApplicationAddModal}/>
       </div>
       {!apps.length ? <PLContentLess itemType='application'/> : null} 
@@ -192,12 +193,12 @@ if (individualAppPage) {
                     }
                     { activeAppId !== app.id &&
                       <>
-                        <PLIconButton icon="ri-close-line" colorClasses="invisible group-hover:visible text-red-500 hover:bg-gray-100 dark:hover:bg-neutral-700" onClick={(e) => openDeleteModal(e, app.id)}/> 
+                        {isAdmin && <PLIconButton icon="ri-close-line" colorClasses="invisible group-hover:visible text-red-500 hover:bg-gray-100 dark:hover:bg-neutral-700" onClick={(e) => openDeleteModal(e, app.id)}/> }
                         <PLIconButton icon="ri-star-line" colorClasses="text-gray-600 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:text-yellow-500" onClick={(_) => switchToApplication(app.id)}/>
                       </>
                     }
                   </Form>
-                  <PLIconButton icon="ri-equalizer-line" colorClasses="text-gray-600 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700" onClick={(_) => editApplication(app.id)}/>
+                  {isAdmin && <PLIconButton icon="ri-equalizer-line" colorClasses="text-gray-600 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700" onClick={(_) => editApplication(app.id)}/>}
                 </div>
               </div>
               <div className="p-4">

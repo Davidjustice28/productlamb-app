@@ -4,6 +4,7 @@ import { ToggleSwitch } from "../forms/toggle-switch"
 import { PLSpinner } from "../common/spinner"
 import { LoggedInNavbar } from "../navigation/logged-in-navbar"
 import { useUser } from "@clerk/remix"
+import { useAdmin } from "~/backend/providers/admin"
 
 export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, darkMode}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number }, toggleDarkMode: () => void, darkMode: boolean}) {
   const {user} = useUser()
@@ -17,6 +18,13 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
   useEffect(() => {
     setDarkModeState(darkMode)
   }, [darkMode])
+
+  const { setIsAdmin } = useAdmin()
+
+  useEffect(() => {
+    const isAdmin = user?.organizationMemberships[0].role.split(':')[1] === 'admin'
+    setIsAdmin(isAdmin)
+  }, [user])
 
   return (
     <div className="flex">

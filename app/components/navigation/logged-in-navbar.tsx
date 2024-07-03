@@ -2,17 +2,16 @@ import { Link, useLocation, useNavigate } from '@remix-run/react'
 import { NavLink } from '~/types/base.types'
 import { useEffect, useState } from 'react'
 import { PLConfirmModal } from '../modals/confirm'
-import { useClerk, useOrganizationList, useUser } from '@clerk/remix'
+import { useClerk, useOrganizationList } from '@clerk/remix'
 import { useSidebar } from '~/backend/providers/siderbar'
+import { useAdmin } from '~/backend/providers/admin'
 
 export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolean, darkMode: boolean, applicationSelected: boolean}) => {
   const { isLoaded, setActive, userMemberships } = useOrganizationList({
     userMemberships: {infinite: true},
   })
-  const { user } = useUser();
 
-  const [isAdmin, setIsAdmin] = useState<boolean>()
-
+  const { isAdmin } = useAdmin()
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
   const { isExpanded, toggleSidebar} = useSidebar()
   const { signOut } = useClerk()
@@ -29,9 +28,9 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
     { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: false},
     { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: false},
     { iconClass: "ri-file-list-line", absoluteHref: '/portal/backlog', text: 'Backlog', adminOnly: false},
-    { iconClass: "ri-organization-chart", absoluteHref: '/portal/team', text: 'Admin', adminOnly: true},
+    { iconClass: "ri-organization-chart", absoluteHref: '/portal/team', text: 'Team', adminOnly: true},
+    { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Account', adminOnly: true},
     { iconClass: "ri-booklet-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
-    // { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Settings', adminOnly: true},
   ]
   
   const handleSigningOut = async () => {
@@ -46,11 +45,6 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
       setActive({organization: membership.organization.id})
     }
   }, [])
-
-  useEffect(() => {
-    const isAdmin = user?.organizationMemberships[0].role.split(':')[1] === 'admin'
-    setIsAdmin(isAdmin)
-  }, [user])
 
   return (
     <nav className={'h-screen px-5 bg-neutral-50 dark:bg-neutral-900 flex flex-col py-6 items-start' + (isExpanded ? ' w-80' : ' w-20')}>
