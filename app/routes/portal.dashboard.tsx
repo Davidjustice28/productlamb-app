@@ -30,7 +30,7 @@ export const loader: LoaderFunction = args => {
       const accountClient = AccountsClient(dbClient.account)
       const user = await dbClient.accountUser.findFirst({ where: { userId: userId }})
       if (!user) return redirect("/portal/setup")
-      const accountData = await dbClient.account.findUnique({ where: { id: user.accountId }})
+      const accountData = user.accountId ? await dbClient.account.findUnique({ where: { id: user.accountId }}) : null
       
       if (!accountData || !accountData.isSetup) {
         return redirect("/portal/setup")

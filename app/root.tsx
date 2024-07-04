@@ -9,10 +9,10 @@ import {
   redirect,
   useLoaderData,
 } from '@remix-run/react'
-import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
+import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import TailwindCSS from './root.css'
 import { RootLayout } from './components/layouts/root-layout'
-import { ClerkApp, useAuth, useUser } from '@clerk/remix'
+import { ClerkApp, useAuth } from '@clerk/remix'
 import { getSharedEnvs } from './utils/envs';
 import { account } from './backend/cookies/account';
 import { AccountsClient } from './backend/database/accounts/client';

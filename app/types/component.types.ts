@@ -28,6 +28,7 @@ export interface PLIconButtonProps {
   icon: PLButtonIcons
   onClick?: (...args:any[]) => void
   colorClasses?: string
+  disabled?: boolean
 }
 
 export interface PLTableProps<T> {

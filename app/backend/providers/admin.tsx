@@ -8,10 +8,6 @@ interface AdminContextType {
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-interface SidebarProviderProps {
-  children: ReactNode;
-}
-
 export const AdminProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
 
