@@ -28,11 +28,12 @@ export interface PLIconButtonProps {
   icon: PLButtonIcons
   onClick?: (...args:any[]) => void
   colorClasses?: string
+  disabled?: boolean
 }
 
 export interface PLTableProps<T> {
   data: Array<T>
-  columns?: Array<{key: string, type: "text" | "status" | "image"| "date", sortable?: boolean}>
+  columns?: Array<{key: string, type: "text" | "status" | "image"| "date", sortable?: boolean, label?: string}>
   actionsAvailable?: boolean
   checked: Array<number>
   columnsVisible?: boolean

@@ -53,7 +53,8 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                 </th>
 
                 {
-                  columnsVisible && columns.map(({key}, index) => {
+                  columnsVisible && columns.map((columnData, index) => {
+                    const {key} = columnData
                     const [sort, setSort] = React.useState<"asc" | "desc" | "none">("none")
                     const [sortIcon, setSortIcon] = React.useState<string>("ri-arrow-up-down-line")
                     function sortColumn() {
@@ -78,7 +79,7 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                     
                     return (
                       <th scope="col" className="px-6 py-3" key={index} onClick={sortColumn}>
-                        {key}
+                        {columnData?.label || key}
                         {columns[index].sortable && <i className={"ml-2 " + sortIcon}></i>}
                       </th>
                     )
@@ -154,6 +155,7 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
 
 function TableDataCellContent({type, data}: {type: "text"| "status"|"image"| "date", data: any}) {
   if(type === 'date') {
+    if (!data) return <span>N/A</span>
     const date_string = new Date(data).toDateString()
     return <span>{date_string === 'Invalid Date' ? 'N/A' : date_string}</span>
   }
@@ -193,6 +195,7 @@ function getStatusColor(status: string) {
     case 'not-started':
       return Colors.GRAY
     case 'low':
+    case 'user':
     case 'in progress':
       return Colors.BLUE
     case 'complete':
@@ -207,6 +210,8 @@ function getStatusColor(status: string) {
     case 'high':
     case 'no':
       return Colors.RED
+    case 'admin': 
+      return Colors.PURPLE
     default:
       return Colors.GRAY
   }

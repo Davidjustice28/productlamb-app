@@ -26,6 +26,7 @@ export enum Colors {
 
 export interface TableColumn {
   key: string,
+  label?: string,
   type: "text" | "status" | "image" | "date",
   sortable?: boolean
 }

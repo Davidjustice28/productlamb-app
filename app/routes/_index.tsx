@@ -1,4 +1,4 @@
-import { SignInButton, useUser } from "@clerk/remix";
+import { SignInButton, SignUpButton, useUser } from "@clerk/remix";
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import React from "react";
@@ -77,10 +77,10 @@ export default function LandingPage() {
             </SignInButton>)
           }
           
-          {/* <SignUpButton mode="modal" forceRedirectUrl={'/portal/setup'}>
+          <SignUpButton mode="modal" forceRedirectUrl={'/portal/setup'}>
             <PLBasicButton text="Sign Up" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true}/>
-          </SignUpButton> */}
-          <PLBasicButton text="Coming July 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 dark:hover:bg-orange-200 hover:text-orange-600 cursor-default" noDefaultDarkModeStyles/>
+          </SignUpButton>
+          {/* <PLBasicButton text="Coming July 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 dark:hover:bg-orange-200 hover:text-orange-600 cursor-default" noDefaultDarkModeStyles/> */}
         </div>
       </div>
       <div className="flex w-full flex-col my-auto mb-8 md:flex-row xl:gap-14 md:gap-5">

@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { ActionFunction } from "@remix-run/node";
-import { act } from "react";
 import { account } from "~/backend/cookies/account";
 
 export const action: ActionFunction = async ({ request }) => {

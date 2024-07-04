@@ -1,5 +1,4 @@
 import { PLBaseModal, PLModalFooter } from "./base";
-import { useState } from "react";
 
 const defaultMessage = "Are you sure you want to delete this item?"
 

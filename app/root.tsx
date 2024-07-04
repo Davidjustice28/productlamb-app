@@ -12,14 +12,16 @@ import {
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import TailwindCSS from './root.css'
 import { RootLayout } from './components/layouts/root-layout'
-import { ClerkApp } from '@clerk/remix'
+import { ClerkApp, useAuth } from '@clerk/remix'
 import { getSharedEnvs } from './utils/envs';
 import { account } from './backend/cookies/account';
 import { AccountsClient } from './backend/database/accounts/client';
-import { PrismaClient } from '@prisma/client';
+import { Account, PrismaClient } from '@prisma/client';
 import { useState } from 'react';
 import React from 'react';
 import { ApplicationsClient } from './backend/database/applications/client';
+import { createClerkClient } from '@clerk/remix/api.server';
+
 
 export const links: LinksFunction = () => {
   return [
@@ -51,50 +53,92 @@ export const loader: LoaderFunction = (args) => {
   return rootAuthLoader(args, async ({ request }) => {
     const cookieHeader = request.headers.get("Cookie");
     const accountCookie = (await account.parse(cookieHeader) || {});
-    const { userId } = request.auth
+    const { userId, orgId } = request.auth
     const isPortalRoute = request.url.includes('/portal')
     let darkMode: boolean = false
-    if ((!userId )) {
+
+    if (!userId ) {
       if (isPortalRoute) return redirect('/')
-    } else {
-      if (accountCookie.accountId) {
-        const client = new PrismaClient()
-        const accountClient = AccountsClient(client.account)
-        const { data: accountData } = await accountClient.getAccountById(accountCookie.accountId)
-        if (accountData) {
-          darkMode = accountData.darkMode
-        }
+      return json({})
+    } 
+    const dbClient = new PrismaClient()
+    let user = await dbClient.accountUser.findFirst({ where: { userId: userId }})
+    const accountClient = AccountsClient(dbClient.account)
+    if (!user) {
+      user = await dbClient.accountUser.create({ data: { userId: userId!}})
+    }
+  
+    darkMode = user.darkMode
+    let organizationAccount: Account| null = null
+    if (accountCookie.accountId) {
+      if (!user?.accountId) {
+        user = await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: accountCookie.accountId}})
       }
-      if((!accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) && accountCookie.accountId) {
-        const dbClient = new PrismaClient()
-        const accountClient = AccountsClient(dbClient.account)
+      if (!accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) {
         const {data: accountData} = await accountClient.getAccountById(accountCookie.accountId)
-        if (accountData) {
-          accountCookie.setupIsComplete = accountData.isSetup
-        } 
-      
-        if (!accountData || !accountData.isSetup) {
-          return redirect("/portal/setup", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
-        } 
+        if (accountData) accountCookie.setupIsComplete = accountData.isSetup
       }
 
-      if( !isPortalRoute ) {
-        return redirect(accountCookie.setupIsComplete ? '/portal/dashboard' : '/portal/setup' , { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+      if (!accountCookie.setupIsComplete) return redirect("/portal/setup", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+      // user is logged in and account is setup
+      if (!isPortalRoute ) {
+        return redirect('/portal/dashboard' , { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+      } else {
+        if (!accountCookie.selectedApplicationId) {
+          const appClient = ApplicationsClient(dbClient.accountApplication)
+          const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId)
+          if (apps && apps.length) {
+            accountCookie.selectedApplicationId = apps[0].id
+            accountCookie.selectedApplicationName = apps[0].name
+          } else {
+            return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+          }
+        }
+  
+        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId},
+          { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
+        )
+      }
+    } 
+    else {
+      const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
+      const organizations = (await clerkClient.users.getOrganizationMembershipList({userId: userId!})).data
+      if (!organizations.length) {
+        return redirect('/portal/setup')
+      }
+      organizationAccount = await dbClient.account.findFirst({ where: { organization_id: organizations[0].organization.id}})
+      if (!user?.accountId && organizationAccount) {
+        user = await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: organizationAccount.id}})
+        accountCookie.accountId = organizationAccount.id
+      } else if (!user?.accountId && !organizationAccount) {
+        return redirect('/portal/setup')
+      } else {
+        accountCookie.accountId = user?.accountId!
+      }
+      if ((!accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) && organizationAccount) {
+        accountCookie.setupIsComplete = organizationAccount.isSetup
+      }
+
+      if (!accountCookie.setupIsComplete) return redirect("/portal/setup", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+      // user is logged in and account is setup
+      if (!isPortalRoute ) {
+        return redirect('/portal/dashboard' , { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+      } else {
+        if (!accountCookie.selectedApplicationId) {
+          const appClient = ApplicationsClient(dbClient.accountApplication)
+          const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId)
+          if (apps && apps.length) {
+            accountCookie.selectedApplicationId = apps[0].id
+            accountCookie.selectedApplicationName = apps[0].name
+          } else {
+            return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+          }
+        }
+        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId},
+          { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
+        )
       }
     }
-    if (!accountCookie?.selectedApplicationId) {
-      const client = new PrismaClient()
-      const appClient = ApplicationsClient(client.accountApplication)
-      const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId)
-      if (apps && apps.length) {
-        accountCookie.selectedApplicationId = apps[0].id
-        accountCookie.selectedApplicationName = apps[0].name
-        return redirect(`/portal/applications/${apps[0].id}`, { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
-      }
-    }
-    return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId},
-      { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
-    )
   });
 };
  
@@ -102,7 +146,7 @@ export function App() {
   const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, account_id, selectedApplicationId} = useLoaderData<typeof loader>()
   const {darkMode: actionDarkMode} = useLoaderData<typeof action>() || {darkMode: null}
   const [ darkModeState, setDarkMode ] = useState<boolean>(actionDarkMode !== null ? actionDarkMode : loadedDarkMode)
-  
+  const {userId} = useAuth()
   const darkmodeFormRef = React.useRef<HTMLFormElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const toggleDarkMode = () => {
@@ -115,14 +159,13 @@ export function App() {
   const handleFormSubmit = async () => {
     const darkMode = inputRef.current?.value === 'true' ? true : false
     try {
-      const response = await fetch(`/api/preferences/${account_id}`, {
+      const response = await fetch(`/api/preferences/${userId!}`, {
         body: JSON.stringify({ darkMode: darkMode }),
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         }
       })
-      const data = await response.json()
     } catch (error) {
       console.error('Error caught updating account dark mode: ', error)
     }

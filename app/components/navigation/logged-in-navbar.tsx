@@ -1,11 +1,17 @@
-import { Form, Link, useLocation, useNavigate } from '@remix-run/react'
+import { Link, useLocation, useNavigate } from '@remix-run/react'
 import { NavLink } from '~/types/base.types'
-import { useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PLConfirmModal } from '../modals/confirm'
-import { useClerk } from '@clerk/remix'
+import { useClerk, useOrganizationList } from '@clerk/remix'
 import { useSidebar } from '~/backend/providers/siderbar'
+import { useAdmin } from '~/backend/providers/admin'
 
 export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolean, darkMode: boolean, applicationSelected: boolean}) => {
+  const { isLoaded, setActive, userMemberships } = useOrganizationList({
+    userMemberships: {infinite: true},
+  })
+
+  const { isAdmin } = useAdmin()
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
   const { isExpanded, toggleSidebar} = useSidebar()
   const { signOut } = useClerk()
@@ -22,8 +28,9 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
     { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: false},
     { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: false},
     { iconClass: "ri-file-list-line", absoluteHref: '/portal/backlog', text: 'Backlog', adminOnly: false},
-    // { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Settings', adminOnly: false},
-    // { iconClass: "ri-booklet-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
+    { iconClass: "ri-organization-chart", absoluteHref: '/portal/team', text: 'Team', adminOnly: true},
+    { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Account', adminOnly: true},
+    { iconClass: "ri-booklet-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]
   
   const handleSigningOut = async () => {
@@ -31,6 +38,13 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
       navigate('/')
     })
   } 
+
+  useEffect(() => {
+    if (isLoaded && userMemberships.data.length > 0) {
+      const membership = userMemberships.data[0]
+      setActive({organization: membership.organization.id})
+    }
+  }, [])
 
   return (
     <nav className={'h-screen px-5 bg-neutral-50 dark:bg-neutral-900 flex flex-col py-6 items-start' + (isExpanded ? ' w-80' : ' w-20')}>
@@ -41,7 +55,7 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
           className={'h-auto object-contain object-center ml-3' + (!isExpanded ? ' max-w-5' : ' max-w-40')}
         />
       </div>
-      <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={isExpanded} darkMode={darkMode}/>
+      <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={isExpanded} darkMode={darkMode} isAdmin={isAdmin}/>
       
       <button 
         className='w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 text-black dark:text-gray-500 dark:hover:text-white dark:hover:bg-neutral-800 hover:bg-[#f0f0f0]'
@@ -59,13 +73,14 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
   )
 }
 
-const NavOptionsComponent = ({ links, menuExpanded, darkMode}: { links: Array<NavLink>, menuExpanded: boolean, darkMode: boolean}) => {
+const NavOptionsComponent = ({ links, menuExpanded, darkMode,isAdmin}: { links: Array<NavLink>, menuExpanded: boolean, darkMode: boolean, isAdmin?: boolean}) => {
   const location = useLocation()
   const lightModeStyle = (url: string, linkLabel: string) => (location.pathname.includes(url) || (location.pathname.toLowerCase().includes('planning') &&  linkLabel.toLowerCase().includes('sprints')) ? 'text-white bg-[#F28C28]' : 'hover:bg-[#f0f0f0]') 
   const darkModeStyle = (url: string, linkLabel: string) => (location.pathname.includes(url) || (location.pathname.toLowerCase().includes('planning') &&  linkLabel.toLowerCase().includes('sprints')) ? 'text-white bg-neutral-800' : 'hover:bg-neutral-800 hover:text-white')
+  const enabledLinks = isAdmin ? links : links.filter(link => !link.adminOnly)
   return(
     <ul className='p-0 m-0 list-none flex-col justify-evenly w-full'>
-      {links.map((link, index) => {
+      {enabledLinks.map((link, index) => {
         return (
           <li key={index} className='p-0 m-0 list-none'>
             <Link to={link.absoluteHref} className={'no-underline ' + (darkMode ? 'text-gray-500' : 'text-black')}>

@@ -13,10 +13,12 @@ model Account {
   subscriptionType String
   status           String
   user_prisma_id   String
+  organization_id  String @default("1")
   applications     AccountApplication[]
   isSetup Boolean
   darkMode Boolean @default(false)
   timezone String @default("America/Denver")
+  user AccountUser[]
 }
 
 model AccountApplication {
@@ -170,4 +172,12 @@ model ApplicationGoogleIntegration {
   refresh_token String
   applicationId Int
   application   AccountApplication?
+}
+
+model AccountUser {
+  id        Int      @id @default(autoincrement())
+  accountId Int?
+  userId    String
+  account   Account?  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  darkMode Boolean @default(false)
 }
