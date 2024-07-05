@@ -37,12 +37,20 @@ export const action: ActionFunction = async ({ request }) => {
       firstName,
       lastName,
     })
+    const account = await dbClient.account.findUnique({ where: { id: Number(accountId) }})!
     await dbClient.accountUser.create({ data: { userId: user.id, accountId: Number(accountId)} })
     await clerkClient.organizations.createOrganizationMembership({organizationId, userId: user.id, role: 'org:member'}).then(async () => {
-      const emailClient = wrapEmailSdk(process.env.RESEND_API_KEY!, process.env.PRODUCTLAMB_NOTIFICATIONS_EMAIL!)
-      const deepLink = `${process.env.SERVER_ENVIRONMENT === 'production'?  process.env.PROD_HOST_URL : process.env.DEV_HOST_URL}/portal/team`
-      const html = emailClient.getHTMLTemplate('new-team-member', deepLink, 'ProductLamb', `${firstName} ${lastName}`)
-      await emailClient.sendEmail([email], 'Team Member Accepted ProductLamb Invitiation', html)
+      const admin = (await clerkClient.organizations.getOrganizationMembershipList({organizationId: organizationId})).data.filter((member) => member.role === 'org:admin')
+      if(admin.length) {
+        const adminUserId = admin[0].publicUserData?.userId
+        if (adminUserId) {
+          const adminUserData = await clerkClient.users.getUser(adminUserId)
+          const emailClient = wrapEmailSdk(process.env.RESEND_API_KEY!, process.env.PRODUCTLAMB_NOTIFICATIONS_EMAIL!)
+          const deepLink = `${process.env.SERVER_ENVIRONMENT === 'production'?  process.env.PROD_HOST_URL : process.env.DEV_HOST_URL}/portal/team`
+          const html = emailClient.getHTMLTemplate('new-team-member', deepLink, 'ProductLamb', `${firstName} ${lastName}`)
+          await emailClient.sendEmail([adminUserData.emailAddresses[0].emailAddress], 'Team Member Accepted ProductLamb Invitiation', html)
+        }
+      }
     })
   } catch (error) {
     console.error(error);
