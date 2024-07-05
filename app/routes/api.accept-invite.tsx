@@ -42,9 +42,9 @@ export const action: ActionFunction = async ({ request }) => {
     await clerkClient.organizations.createOrganizationMembership({organizationId, userId: user.id, role: 'org:member'}).then(async () => {
       const admin = (await clerkClient.organizations.getOrganizationMembershipList({organizationId: organizationId})).data.filter((member) => member.role === 'org:admin')
       if(admin.length) {
-        const adminUserId = admin[0].publicUserData?.userId
-        if (adminUserId) {
-          const adminUserData = await clerkClient.users.getUser(adminUserId)
+        const adminUserId = admin[0].publicUserData?.userId || ''
+        const adminUserData = await clerkClient.users.getUser(adminUserId)
+        if (adminUserId && adminUserData.emailAddresses.length) {
           const emailClient = wrapEmailSdk(process.env.RESEND_API_KEY!, process.env.PRODUCTLAMB_NOTIFICATIONS_EMAIL!)
           const deepLink = `${process.env.SERVER_ENVIRONMENT === 'production'?  process.env.PROD_HOST_URL : process.env.DEV_HOST_URL}/portal/team`
           const html = emailClient.getHTMLTemplate('new-team-member', deepLink, 'ProductLamb', `${firstName} ${lastName}`)
