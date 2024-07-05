@@ -1,4 +1,3 @@
-import { SignUp } from '@clerk/clerk-react';
 import { Form, useActionData, useLoaderData } from '@remix-run/react';
 import { ActionFunction, LoaderFunction, json, redirect } from '@remix-run/node';
 import { verifyInviteToken } from '~/utils/jwt';
@@ -7,6 +6,7 @@ import React, { useEffect } from 'react';
 import { PLErrorModal } from '~/components/modals/error';
 import { PrismaClient } from '@prisma/client';
 import { PLLoadingModal } from '~/components/modals/loading';
+import { wrapEmailSdk } from '~/services/resend/email';
 
 export let loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -38,7 +38,12 @@ export const action: ActionFunction = async ({ request }) => {
       lastName,
     })
     await dbClient.accountUser.create({ data: { userId: user.id, accountId: Number(accountId)} })
-    await clerkClient.organizations.createOrganizationMembership({organizationId, userId: user.id, role: 'org:member'})
+    await clerkClient.organizations.createOrganizationMembership({organizationId, userId: user.id, role: 'org:member'}).then(async () => {
+      const emailClient = wrapEmailSdk(process.env.RESEND_API_KEY!, process.env.PRODUCTLAMB_NOTIFICATIONS_EMAIL!)
+      const deepLink = `${process.env.SERVER_ENVIRONMENT === 'production'?  process.env.PROD_HOST_URL : process.env.DEV_HOST_URL}/portal/team`
+      const html = emailClient.getHTMLTemplate('new-team-member', deepLink, 'ProductLamb', `${firstName} ${lastName}`)
+      await emailClient.sendEmail([email], 'Team Member Accepted ProductLamb Invitiation', html)
+    })
   } catch (error) {
     console.error(error);
     return json({ error: 'Internal error occurred. Try again later.' }, { status: 500 });

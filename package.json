@@ -40,6 +40,7 @@
     "remix-auth": "^3.6.0",
     "remix-auth-socials": "^2.0.5",
     "remix-utils": "^7.1.0",
+    "resend": "^3.4.0",
     "stripe": "^11.18.0"
   },
   "devDependencies": {
