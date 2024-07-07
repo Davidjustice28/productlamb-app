@@ -47,7 +47,6 @@ model AccountApplication {
   sprints            ApplicationSprint[]
   initiatives        GeneratedInitiative[]
   tasks              GeneratedTask[]
-  notes              ApplicationNote[]
   suggestions        ApplicationSuggestion[]
 }
 
@@ -149,14 +148,6 @@ model ApplicationNotionIntegration {
   parent_page_id String
   sprints_page_id String?
   application   AccountApplication?
-}
-
-model ApplicationNote {
-  id            Int                @id @default(autoincrement())
-  applicationId Int
-  text       String
-  dateCreated String
-  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model ApplicationSuggestion {

@@ -189,7 +189,7 @@ export default function OrganizationProfilePage() {
       <div className="flex items-center justify-between w-full mb-5">
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Manage your team. Invite up 4 team members</p>
         <div className="flex flex-row  gap-2">
-          { (checked.length && !checked.includes(adminId)) && <PLIconButton icon='ri-close-line' onClick={() => setRemoveMemberModalOpen(true)}/> }
+          { (checked.length && !checked.includes(adminId)) ? <PLIconButton icon='ri-close-line' onClick={() => setRemoveMemberModalOpen(true)}/> : null}
             {/* TODO: Add editing user feature in future sprints */}
           {/* { checked.length === 1 && <PLIconButton icon="ri-equalizer-line" onClick={() => console.log('editing user')}/> } */}
           <PLIconButton icon='ri-mail-send-line' onClick={() => setInviteModalOpen(true)} disabled={members.length === 5}/>

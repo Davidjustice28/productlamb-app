@@ -169,7 +169,6 @@ function FeaturesSection() {
     "https://storage.googleapis.com/productlamb_project_images/apps_screenshot.png",
     "https://storage.googleapis.com/productlamb_project_images/dashboard_screenshot.png",
     "https://storage.googleapis.com/productlamb_project_images/third_party_screenshot.png",
-    "https://storage.googleapis.com/productlamb_project_images/notes_screenshot.png",
   ]
 
   const featureHeaders = [
@@ -177,7 +176,6 @@ function FeaturesSection() {
     "Manage Multiple Projects",
     "Dashboard Analytics",
     "Third Party Integrations",
-    "Proper Note Taking",
     // "Export Your Data At Any Time",
   ]
 
@@ -186,7 +184,6 @@ function FeaturesSection() {
     "Working on multiple things? ProductLamb can help plan sprints and tasks across all of your projects. Easily switch between projects and see your progress.",
     "Understand key metrics about your projects' development, like how many bugs were tackled, how many features were added, and how many tasks do you complete per sprint.",
     "Connect to your favorite tools to enable ProductLamb to do more like track repository issues, schedule meetings, and much more.",
-    "Jot down notes anywhere in the app. Notes are saved and can be accessed at any time. Never forget that great idea you had.",
     // "Never feel locked in. Export your data at any time to CSV. ProductLamb is here to help you, not make things harder when you need to pivot."
   ]
 

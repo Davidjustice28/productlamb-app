@@ -1,5 +1,5 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import { ApplicationNote, ApplicationSprint, ApplicationSuggestion, PrismaClient } from "@prisma/client";
+import { ApplicationSprint, ApplicationSuggestion, PrismaClient } from "@prisma/client";
 import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
@@ -15,7 +15,7 @@ import { calculateTimeLeft } from "~/utils/date";
 
 export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {    
-    const { sessionId, userId, getToken } = request.auth;
+    const { userId } = request.auth;
     const cookieHeader = request.headers.get("Cookie");
     const accountCookie = (await account.parse(cookieHeader) || {});
     let setupIsComplete: boolean|undefined = accountCookie.setupIsComplete
@@ -52,9 +52,6 @@ export const loader: LoaderFunction = args => {
     } else {
       setupIsComplete = true
       accountId = accountCookie.accountId
-
-
-      const notes = await dbClient.applicationNote.findMany({ where: { applicationId: accountCookie.selectedApplicationId}})
       
       if (selectedApplicationId === undefined) {
         const applicationClient = ApplicationsClient(dbClient.accountApplication)
@@ -88,14 +85,14 @@ export const loader: LoaderFunction = args => {
       const taskTypesData = createTaskTypeChartData(sprints, tasks)
       const timeLeftInSprint = currentSprint && currentSprint?.endDate ? calculateTimeLeft(new Date().toISOString(), currentSprint.endDate, 'Expired') : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, time_left: timeLeftInSprint}
-      return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, notes, currentSprint, taskTypesData, suggestions, sprintPointsChartData})
+      return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint, taskTypesData, suggestions, sprintPointsChartData})
     }
   });
 };
 
 
 export default function DashboardPage() {
-  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData, suggestions, sprintPointsChartData } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], sprintPointsChartData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, notes: ApplicationNote[], currentSprint: ApplicationSprint|null, taskTypesData: any[], suggestions: ApplicationSuggestion[]}>();
+  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData, suggestions, sprintPointsChartData } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], sprintPointsChartData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, currentSprint: ApplicationSprint|null, taskTypesData: any[], suggestions: ApplicationSuggestion[]}>();
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
   const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || []), (taskTypesData || []), (sprintPointsChartData || [])])
   const [chartIndex, setChartIndex] = useState<number>(0)

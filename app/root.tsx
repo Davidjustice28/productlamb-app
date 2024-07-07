@@ -30,25 +30,6 @@ export const links: LinksFunction = () => {
   ]
 }
 
-export const action: ActionFunction = async ({ request }) => {
-  const cookieHeader = request.headers.get("Cookie");
-  const accountCookie = (await account.parse(cookieHeader) || {});
-  const dbClient = new PrismaClient()
-  const formData  = await request.formData()
-  const data = Object.fromEntries(formData) as { [key: string]: string }
-  if ('add_note' in data) {
-    await dbClient.applicationNote.create({ data: { applicationId: accountCookie.selectedApplicationId, text: data.note, dateCreated: new Date().toISOString() }})
-    const notes = await dbClient.applicationNote.findMany({ where: { applicationId: accountCookie.selectedApplicationId}})
-    return json({notes})
-  } else if ('delete_note' in data) {
-    await dbClient.applicationNote.delete({ where: { id: parseInt(data.id) }})
-    const notes = await dbClient.applicationNote.findMany({ where: { applicationId: accountCookie.selectedApplicationId}})
-    return json({notes})
-  } else {
-    return json({})
-  }
-}
-
 export const loader: LoaderFunction = (args) => {
   return rootAuthLoader(args, async ({ request }) => {
     const cookieHeader = request.headers.get("Cookie");
@@ -145,9 +126,8 @@ export const loader: LoaderFunction = (args) => {
 
  
 export function App() {
-  const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, account_id, selectedApplicationId} = useLoaderData<typeof loader>()
-  const {darkMode: actionDarkMode} = useLoaderData<typeof action>() || {darkMode: null}
-  const [ darkModeState, setDarkMode ] = useState<boolean>(actionDarkMode !== null ? actionDarkMode : loadedDarkMode)
+  const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, selectedApplicationId} = useLoaderData<typeof loader>()
+  const [ darkModeState, setDarkMode ] = useState<boolean>(loadedDarkMode)
   const {userId} = useAuth()
   const darkmodeFormRef = React.useRef<HTMLFormElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
