@@ -53,94 +53,96 @@ export const loader: LoaderFunction = (args) => {
   return rootAuthLoader(args, async ({ request }) => {
     const cookieHeader = request.headers.get("Cookie");
     const accountCookie = (await account.parse(cookieHeader) || {});
-    const { userId, orgId } = request.auth
-    const isPortalRoute = request.url.includes('/portal')
-    let darkMode: boolean = false
-
-    if (!userId ) {
-      if (isPortalRoute) return redirect('/')
-      return json({})
-    } 
-    const dbClient = new PrismaClient()
-    let user = await dbClient.accountUser.findFirst({ where: { userId: userId }})
-    const accountClient = AccountsClient(dbClient.account)
-    if (!user) {
-      user = await dbClient.accountUser.create({ data: { userId: userId!}})
+    const { userId, orgId } = request.auth;
+    const isPortalRoute = request.url.includes('/portal');
+    let darkMode: boolean = false;
+    if (!userId) {
+      if (isPortalRoute) {
+        return redirect('/')
+      };
+      return json({});
     }
-  
-    darkMode = user.darkMode
-    let organizationAccount: Account| null = null
+
+    const dbClient = new PrismaClient();
+    let user = await dbClient.accountUser.findFirst({ where: { userId: userId }});
+    const accountClient = AccountsClient(dbClient.account);
+    if (!user) {
+      return redirect('/portal/setup');
+    }
+
+    darkMode = user.darkMode;
+    let organizationAccount: Account | null = null;
     if (accountCookie.accountId) {
       if (!user?.accountId) {
-        user = await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: accountCookie.accountId}})
+        user = await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: accountCookie.accountId }});
       }
-      if (!accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) {
-        const {data: accountData} = await accountClient.getAccountById(accountCookie.accountId)
-        if (accountData) accountCookie.setupIsComplete = accountData.isSetup
+      if (accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) {
+        const { data: accountData } = await accountClient.getAccountById(accountCookie.accountId);
+        if (accountData) accountCookie.setupIsComplete = accountData.isSetup;
       }
 
-      if (!accountCookie.setupIsComplete) return redirect("/portal/setup", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
-      // user is logged in and account is setup
-      if (!isPortalRoute ) {
-        return redirect('/portal/dashboard' , { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+      if (!accountCookie.setupIsComplete && (!request.url.includes('/portal/setup') || !request.url.includes('/portal'))) {
+        return redirect("/portal/setup", { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
+      }
+      if (!isPortalRoute) {
+        return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
       } else {
         if (!accountCookie.selectedApplicationId) {
-          const appClient = ApplicationsClient(dbClient.accountApplication)
-          const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId)
+          const appClient = ApplicationsClient(dbClient.accountApplication);
+          const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId);
           if (apps && apps.length) {
-            accountCookie.selectedApplicationId = apps[0].id
-            accountCookie.selectedApplicationName = apps[0].name
-          } else {
-            return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+            accountCookie.selectedApplicationId = apps[0].id;
+            accountCookie.selectedApplicationName = apps[0].name;
+          }  
+          
+          if ((!apps || !apps.length) && !request.url.includes('/portal/setup')){
+            return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
           }
         }
-  
-        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId},
+        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId },
           { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
-        )
+        );
       }
-    } 
-    else {
-      const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
-      const organizations = (await clerkClient.users.getOrganizationMembershipList({userId: userId!})).data
-      if (!organizations.length) {
-        return redirect('/portal/setup')
-      }
-      organizationAccount = await dbClient.account.findFirst({ where: { organization_id: organizations[0].organization.id}})
+    } else {
+      const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
+      const organizations = (await clerkClient.users.getOrganizationMembershipList({ userId: userId! })).data;
+      organizationAccount = await dbClient.account.findFirst({ where: { organization_id: organizations[0].organization.id }});
       if (!user?.accountId && organizationAccount) {
-        user = await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: organizationAccount.id}})
-        accountCookie.accountId = organizationAccount.id
+        user = await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: organizationAccount.id }});
+        accountCookie.accountId = organizationAccount.id;
       } else if (!user?.accountId && !organizationAccount) {
-        return redirect('/portal/setup')
+        return redirect('/portal/setup');
       } else {
-        accountCookie.accountId = user?.accountId!
+        accountCookie.accountId = user?.accountId!;
       }
       if ((!accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) && organizationAccount) {
-        accountCookie.setupIsComplete = organizationAccount.isSetup
+        accountCookie.setupIsComplete = organizationAccount.isSetup;
       }
 
-      if (!accountCookie.setupIsComplete) return redirect("/portal/setup", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
-      // user is logged in and account is setup
-      if (!isPortalRoute ) {
-        return redirect('/portal/dashboard' , { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+      if (!accountCookie.setupIsComplete) {
+        return redirect("/portal/setup", { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
+      }
+      if (!isPortalRoute) {
+        return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
       } else {
         if (!accountCookie.selectedApplicationId) {
-          const appClient = ApplicationsClient(dbClient.accountApplication)
-          const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId)
+          const appClient = ApplicationsClient(dbClient.accountApplication);
+          const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId);
           if (apps && apps.length) {
-            accountCookie.selectedApplicationId = apps[0].id
-            accountCookie.selectedApplicationName = apps[0].name
+            accountCookie.selectedApplicationId = apps[0].id;
+            accountCookie.selectedApplicationName = apps[0].name;
           } else {
-            return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
+            return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
           }
         }
-        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId},
+        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId },
           { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
-        )
+        );
       }
     }
   });
 };
+
  
 export function App() {
   const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, account_id, selectedApplicationId} = useLoaderData<typeof loader>()

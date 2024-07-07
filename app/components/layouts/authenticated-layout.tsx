@@ -24,7 +24,8 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
   const { setIsAdmin, isAdmin } = useAdmin()
 
   useEffect(() => {
-    const isAdmin = user?.organizationMemberships[0].role.split(':')[1] === 'admin'
+    console.log('User', user)
+    const isAdmin = user?.organizationMemberships[0]?.role.split(':')[1] === 'admin' || false
     setIsAdmin(isAdmin)
   }, [user])
 

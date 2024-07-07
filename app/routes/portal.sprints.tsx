@@ -195,9 +195,10 @@ function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tas
 
   
   const columns: Array<TableColumn> = [
-    {key: "category", type: "text"},
+    {key: "id", type: "text", sortable: true},
     {key: "title", type: "text"},
     {key: "description", type: "text"},
+    {key: "category", type: "text"},
     {key: "status", type: "status", sortable: true},
     {key: "points", type: "text", sortable: true},
   ]

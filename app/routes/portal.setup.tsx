@@ -2,7 +2,7 @@ import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
 import { Account, ApplicationIntegration, PrismaClient } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
 import { AccountsClient } from "~/backend/database/accounts/client";
@@ -17,6 +17,7 @@ import { availableIntegrations } from "~/static/integration-options";
 import { NewApplicationData, PLAvailableIntegrationNames, SupportedTimezone } from "~/types/database.types";
 import { TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types";
 import { createClerkClient } from '@clerk/remix/api.server';
+import { useOrganizationList } from "@clerk/remix";
 
 
 interface SetupFieldProps {
@@ -32,62 +33,76 @@ interface SetupFieldProps {
 export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {
     const { userId, orgId } = request.auth;
-    const dbClient = new PrismaClient()
-    const appClient = ApplicationsClient(dbClient.accountApplication)
-    const integrationClient = IntegrationClient(dbClient.applicationIntegration)
-    const accountClient = AccountsClient(dbClient.account)
+    const dbClient = new PrismaClient();
+    const appClient = ApplicationsClient(dbClient.accountApplication);
+    const integrationClient = IntegrationClient(dbClient.applicationIntegration);
+    const accountClient = AccountsClient(dbClient.account);
     const cookieHeader = request.headers.get("Cookie");
-    const accountCookie = (await account.parse(cookieHeader) || {});
-    let accountId: number| undefined = accountCookie.accountId
+    const accountCookie = (await account.parse(cookieHeader)) || {};
+    let accountId: number | undefined = accountCookie.accountId;
+
     if (!userId) {
-      return redirect('/')
+      return redirect('/');
     }
+
+    let user = await dbClient.accountUser.findFirst({ where: { userId: userId } });
+    if (!user) {
+      user = await dbClient.accountUser.create({ data: { userId: userId! } });
+    }
+
     if (accountId === undefined) {
-      const accountData = await dbClient.account.findFirst({ where: { organization_id: orgId! }})
-      
-      if(!accountData) {
-        const result = await accountClient.createAccount(userId, "free", SupportedTimezone.MST)
-        if (result.errors.length > 0 || !result.data) return json({})
+      const accountData = await dbClient.account.findFirst({ where: { user_prisma_id: userId! } });
+      if (!accountData) {
+        const result = await accountClient.createAccount(userId, "free", SupportedTimezone.MST);
         if (result.errors.length > 0 || !result.data) return json({});
-        accountId = result.data.id
-        accountCookie.accountId = accountId
-        accountCookie.setupIsComplete = false
-        return json({hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false}, {
+
+        accountId = result.data.id;
+        accountCookie.accountId = accountId;
+        accountCookie.setupIsComplete = false;
+        return json({ hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false }, {
           headers: {
             "Set-Cookie": await account.serialize(accountCookie)
           }
-        })
+        });
       } 
-      const {data: apps} = await appClient.getAccountApplications(accountData.id)
-      let integrations: ApplicationIntegration[] = []
+
+      const { data: apps } = await appClient.getAccountApplications(accountData.id);
+      let integrations: ApplicationIntegration[] = [];
       if (apps && apps.length > 0) {
-        integrations = (await integrationClient.getAllApplicationIntegrations(apps[0].id)).data ?? []
+        integrations = (await integrationClient.getAllApplicationIntegrations(apps[0].id)).data ?? [];
       }
-      const isSetup = (accountData.isSetup)
-      accountCookie.accountId = accountData.id
-      accountCookie.setupIsComplete = isSetup
+      const isSetup = accountData.isSetup;
+      accountCookie.accountId = accountData.id;
+      accountCookie.setupIsComplete = isSetup;
 
       if (!isSetup) {
-        return json({hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false}, {headers: {
-          "Set-Cookie": await account.serialize(accountCookie)
-        }})
+        return json({ hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false }, {
+          headers: {
+            "Set-Cookie": await account.serialize(accountCookie)
+          }
+        });
       } else {
-        return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie)}})
+        return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
       }
     } else {
-      const {data: accountData} = await accountClient.getAccountById(accountId)
-      const {data: apps} = await appClient.getAccountApplications(accountId)
-      let integrations: ApplicationIntegration[] = []
+      const { data: accountData } = await accountClient.getAccountById(accountId);
+      const { data: apps } = await appClient.getAccountApplications(accountId);
+      let integrations: ApplicationIntegration[] = [];
       if (apps && apps.length > 0) {
-        integrations = (await integrationClient.getAllApplicationIntegrations(apps[0].id)).data ?? []
+        integrations = (await integrationClient.getAllApplicationIntegrations(apps[0].id)).data ?? [];
       }
-
-      if (accountData && !accountData.isSetup) return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps?.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id})
-      if (accountData && accountData.isSetup) return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie)}})
-      return json({hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps?.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id})
+      if (accountData && !accountData.isSetup) {
+        return json({ hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id });
+      }
+      if (accountData && accountData.isSetup) {
+        return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
+      }
+      return json({ hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id });
     }
-  })
-}
+  });
+};
+
+
 
 export let action: ActionFunction = async (args) => {
   const { userId } = await getAuth(args);
@@ -135,12 +150,14 @@ export let action: ActionFunction = async (args) => {
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
     return json({hasIntegration: integrations ? integrations.length > 0 : false})
   } else if('organization_details' in data) {
+    console.log('### organization details', data.organization_details)
     const name = data.organization_details as string
     const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
     const org = await clerkClient.organizations.createOrganization({
       name: name,
       createdBy: userId!,
     })
+    console.log('### organization created', {org})
     if (org) {
       await accountClient.updateAccount(accountId, {organization_id: org.id})
       return json({organizationCreated: true})
@@ -153,6 +170,10 @@ export let action: ActionFunction = async (args) => {
 }
 
 export default function SetupPage() {
+  const { isLoaded, setActive, userMemberships } = useOrganizationList({
+    userMemberships: {infinite: true},
+  })
+
   const { hasApplication: loaderHasApplication, isSetup: loaderIsSetup, hasIntegration: loaderHasIntegration, applicationId: loadedApplicationId, organizationCreated: loadedOrganizationCreated } = useLoaderData<{hasApplication: boolean, isSetup: boolean, hasIntegration: boolean, organizationCreated: boolean, applicationId?: number }>()
   const { hasApplication: actionHasApplication, isSetup: actionIsSetup, hasIntegration: actionHasIntegration, applicationId: actionApplicationId, organizationCreated: actionOrganizationCreated } = useActionData<{hasApplication?: boolean|null, isSetup?: boolean|null, hasIntegration?: boolean|null, organizationCreated?: boolean|null, applicationId?: number}>() || {hasApplication: null, isSetup: null, hasIntegration: null, organizationCreated: null, applicationId: null}
   const hasApplication = loaderHasApplication ?? actionHasApplication
@@ -253,6 +274,13 @@ export default function SetupPage() {
     organizationDetailsFormRef.current!.submit()
     setOrganizationDetailsModalOpen(false)
   }
+  useEffect(() => {
+    if (isLoaded && userMemberships.data.length > 0) {
+      const membership = userMemberships.data[0]
+      setActive({organization: membership.organization.id})
+      console.log('### organization details', membership.organization)
+    }
+  }, [])
 
   return (
     <div className="flex flex-col h-full items-center text-black">

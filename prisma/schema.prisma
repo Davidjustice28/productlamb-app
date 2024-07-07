@@ -16,8 +16,8 @@ model Account {
   organization_id  String @default("1")
   applications     AccountApplication[]
   isSetup Boolean
-  darkMode Boolean @default(false)
   timezone String @default("America/Denver")
+  move_incomplete_to_backlog Boolean @default(true)
   user AccountUser[]
 }
 

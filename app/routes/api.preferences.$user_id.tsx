@@ -1,11 +1,9 @@
-import { Account, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { ActionFunction, json } from "@remix-run/node";
-import { AccountsClient } from "~/backend/database/accounts/client";
-import { TypeformFeedbackPayload } from "~/types/integrations.types";
 
 export const action: ActionFunction = async ({ request, params, response }) => {
   const { user_id } = params
-  const body = await request.json() as Partial<Account>
+  const body = await request.json() as {darkMode: boolean}
   if (!user_id) return json({ errors: [10], data: false })
   const keys = Object.keys(body)
   const validKeys = ['darkMode']
