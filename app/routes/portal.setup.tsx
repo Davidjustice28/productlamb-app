@@ -18,6 +18,8 @@ import { NewApplicationData, PLAvailableIntegrationNames, SupportedTimezone } fr
 import { TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types";
 import { createClerkClient } from '@clerk/remix/api.server';
 import { useOrganizationList } from "@clerk/remix";
+import { PLInviteMemberModal } from "~/components/modals/account/invite-member";
+import { generateInviteToken } from "~/utils/jwt";
 
 
 interface SetupFieldProps {
@@ -108,7 +110,7 @@ export let action: ActionFunction = async (args) => {
   const { userId } = await getAuth(args);
   const request = args.request
   const form = await request.formData()
-  const data = Object.fromEntries(form) as unknown as {new_application?: string, integration?: string, setup_complete?: string, organization_details?: string} 
+  const data = Object.fromEntries(form) as unknown as {new_application?: string, integration?: string, setup_complete?: string, organization_details?: string, invited_email?: string} 
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const accountId = accountCookie.accountId
@@ -127,6 +129,31 @@ export let action: ActionFunction = async (args) => {
         "Set-Cookie": await account.serialize(accountCookie)
       }
     })
+  } else if ('invited_email' in data) {
+    if (!data?.invited_email ) return json({ success: false });
+    const url = process.env.SERVER_ENVIRONMENT === 'production' ? 'https://productlamb.com' : 'http://localhost:3000'
+    try {
+      const { orgId, userId } = await getAuth(args)
+      if (!userId || !orgId) {
+        console.log('No orgId or userId', {orgId, userId})
+        return json({success: false})
+      }
+      const token = generateInviteToken(data.invited_email, orgId, accountId)
+      const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
+      const invitations = await clerkClient.organizations.getOrganizationInvitationList({organizationId: orgId})
+      await clerkClient.organizations.createOrganizationInvitation({ 
+        organizationId: orgId, 
+        emailAddress: data.invited_email, 
+        inviterUserId: userId, 
+        role: 'org:member', 
+        redirectUrl: `${url}/api/accept-invite?token=${token}` ,
+      })
+      
+      return json({ success: true });
+    } catch (error) {
+      console.error(error);
+      return json({ success: false });
+    }
   } else if ('new_application' in data) {
     const newAppData = JSON.parse(data.new_application as string) as NewApplicationData 
     const {data: createAppResult } = await appDbClient.addApplication(accountId, newAppData)
@@ -150,14 +177,12 @@ export let action: ActionFunction = async (args) => {
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
     return json({hasIntegration: integrations ? integrations.length > 0 : false})
   } else if('organization_details' in data) {
-    console.log('### organization details', data.organization_details)
     const name = data.organization_details as string
     const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
     const org = await clerkClient.organizations.createOrganization({
       name: name,
       createdBy: userId!,
     })
-    console.log('### organization created', {org})
     if (org) {
       await accountClient.updateAccount(accountId, {organization_id: org.id})
       return json({organizationCreated: true})
@@ -179,16 +204,20 @@ export default function SetupPage() {
   const hasApplication = loaderHasApplication ?? actionHasApplication
   const hasIntegration = loaderHasIntegration ?? actionHasIntegration
   const [addApplicationModalOpen, setAddApplicationModalOpen] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
   const [organizationDetailsModalOpen, setOrganizationDetailsModalOpen] = useState(false)
   const [applicationId, setApplicationId] = useState(loadedApplicationId ?? actionApplicationId)
   const [organizationCreated, setOrganizationCreated] = useState(loadedOrganizationCreated ?? actionOrganizationCreated)
   const isSetup = hasApplication
-  const [stepsMap, setStepsMap] = useState<{[key: number]: {completed: boolean, enabled: boolean}}>({
-    0: {completed: !!organizationCreated, enabled: true},
-    1: {completed: !!hasApplication, enabled: organizationCreated},
-    2: {completed: !!hasIntegration, enabled: hasApplication},
+  const [stepsMap, setStepsMap] = useState<{[key: number]: {completed: boolean, enabled: boolean, required: boolean}}>({
+    0: {completed: !!organizationCreated, enabled: true, required: true},
+    1: {completed: !!hasApplication, enabled: organizationCreated, required: true},
+    2: {completed: !!hasIntegration, enabled: hasApplication, required: false},
+    3: {completed: false, enabled: organizationCreated && hasApplication, required: false}
   })
+
+  const incompleteSteps = Object.values(stepsMap).filter(s => !s.completed && s.required).length
 
   const newAppFormRef = React.createRef<HTMLFormElement>()
   const newAppInputRef = React.createRef<HTMLInputElement>()
@@ -200,6 +229,10 @@ export default function SetupPage() {
   const setupCompleteInputRef = React.createRef<HTMLInputElement>()
   const organizationDetailsFormRef = React.createRef<HTMLFormElement>()
   const organizationDetailsInputRef = React.createRef<HTMLInputElement>()
+
+  const inviteFormRef  = React.createRef<HTMLFormElement>()
+  const inviteDataRef = React.createRef<HTMLInputElement>()
+
   const fields: SetupFieldProps[] = [
     // {
     //   id: 0,
@@ -233,6 +266,14 @@ export default function SetupPage() {
       icon: "ri-git-merge-line",
       buttonText: "Add Integration",
       isOptional: true
+    },
+    {
+      id: 3,
+      title: "Invite Team Members",
+      description: "Invite team members to collaborate on your applications.",
+      onClick: () => setInviteModalOpen(true),
+      icon: "ri-team-line",
+      buttonText: "Send Invite",
     },
   ]
   const onAddApplication = (data: any) => {
@@ -274,11 +315,17 @@ export default function SetupPage() {
     organizationDetailsFormRef.current!.submit()
     setOrganizationDetailsModalOpen(false)
   }
+
+  async function handleInviteMember(email: string) {
+    inviteDataRef.current!.value = email
+    inviteFormRef.current?.submit()
+    setInviteModalOpen(false)
+  }
+  
   useEffect(() => {
     if (isLoaded && userMemberships.data.length > 0) {
       const membership = userMemberships.data[0]
       setActive({organization: membership.organization.id})
-      console.log('### organization details', membership.organization)
     }
   }, [])
 
@@ -289,7 +336,7 @@ export default function SetupPage() {
       <div className="w-4/5 bg-white rounded-xl shadow-sm mt-5 flex flex-col divide-y-2">
         <div className="w-full flex flex-row justify-between items-center px-10 py-5 ">
           <h2 className="text-black text-lg font-bold">Getting Started</h2>
-          <p className="text-black text-sm">{Object.values(stepsMap).filter(s => !s.completed).length} steps left</p>
+          <p className="text-black text-sm">Required Steps Left: <span className="font-bold">{incompleteSteps}</span></p>
         </div>
         <div className="w-full flex flex-col gap-5 px-10 py-5">
           {fields.map((field, index) => <SetupFieldComponent key={index} fieldInfo={field} enabled={seeIfEnabled(field.id)} completed={stepsMap[field.id].completed}/>)}
@@ -311,9 +358,16 @@ export default function SetupPage() {
       <form method="POST" ref={organizationDetailsFormRef}>
         <input type="hidden" name="organization_details" ref={organizationDetailsInputRef}/>
       </form>
+
+      <form method="POST" ref={inviteFormRef}>
+        <input type="hidden" name="invited_email" ref={inviteDataRef}/>
+      </form>
+
       <PLIntegrationOptionsModal configuredIntegrations={[]} open={integrationModalOpen} setOpen={setIntegrationModalOpen} onSubmit={onIntegrationSubmit} applicationId={applicationId ?? 0}/>
       <PLAddApplicationModal open={addApplicationModalOpen} setOpen={setAddApplicationModalOpen} onSubmit={onAddApplication}/>
       <PLOrganizationDetailsModal isOpen={organizationDetailsModalOpen} setIsOpen={setOrganizationDetailsModalOpen} onSubmit={onOrganizationDetailsSubmit}/>
+      <PLInviteMemberModal isOpen={inviteModalOpen} onSubmit={handleInviteMember} setIsOpen={setInviteModalOpen}/>
+
     </div>
   )
 }

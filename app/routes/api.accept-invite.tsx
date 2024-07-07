@@ -127,15 +127,6 @@ export default function AcceptInvite() {
           />  
 
           <input 
-            type="text"
-            className="block border border-grey-light w-full p-3 rounded mb-4 text-gray-400"
-            value={email}
-            defaultValue={email}
-            disabled
-            placeholder="Email" 
-          />
-
-          <input 
             type="password"
             ref={passwordRef}
             className="block border border-grey-light w-full p-3 rounded mb-4"
@@ -166,13 +157,11 @@ export default function AcceptInvite() {
           <input 
             type="hidden"
             name="email"
-            value={email}
             defaultValue={email}
           />
           <input 
             type="hidden"
             name="accountId"
-            value={account_id}
             defaultValue={account_id}
           />
 

@@ -31,7 +31,6 @@ function wrapSendEmail(client: Resend, from_email: string) {
         subject,
         html,
       });
-      console.log('Email sent successfully:', data);
       return data
     } catch (error) {
       console.error(error)
