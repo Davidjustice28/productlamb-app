@@ -44,7 +44,6 @@ export const action: ActionFunction = async (args) => {
     const url = process.env.SERVER_ENVIRONMENT === 'production' ? 'https://productlamb.com' : 'http://localhost:3000'
     try {
       const token = generateInviteToken(actionData, orgId, account_id)
-      const invitations = await clerkClient.organizations.getOrganizationInvitationList({organizationId: orgId})
       await clerkClient.organizations.createOrganizationInvitation({ 
         organizationId: orgId, 
         emailAddress: actionData, 
@@ -77,7 +76,6 @@ export const action: ActionFunction = async (args) => {
         const dbUser = users.find(user => user.userId === member.publicUserData?.userId)
         const clerkUserData = clerkUsers.find(user => user.id === member.publicUserData?.userId)
         if (dbUser && clerkUserData) {
-          const { publicMetadata } = member
           const {fullName, imageUrl} = clerkUserData
           const role = member.role.split(':')[1]
           const data: TeamMember = {

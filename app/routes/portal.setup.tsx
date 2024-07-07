@@ -140,7 +140,6 @@ export let action: ActionFunction = async (args) => {
       }
       const token = generateInviteToken(data.invited_email, orgId, accountId)
       const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
-      const invitations = await clerkClient.organizations.getOrganizationInvitationList({organizationId: orgId})
       await clerkClient.organizations.createOrganizationInvitation({ 
         organizationId: orgId, 
         emailAddress: data.invited_email, 
