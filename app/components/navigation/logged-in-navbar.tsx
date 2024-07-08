@@ -28,8 +28,8 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
     { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: false},
     { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: false},
     { iconClass: "ri-file-list-line", absoluteHref: '/portal/backlog', text: 'Backlog', adminOnly: false},
-    { iconClass: "ri-organization-chart", absoluteHref: '/portal/team', text: 'Team', adminOnly: true},
-    { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Account', adminOnly: true},
+    { iconClass: "ri-organization-chart", absoluteHref: '/portal/team', text: 'Organization', adminOnly: true},
+    // { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Account', adminOnly: true},
     { iconClass: "ri-booklet-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]
   

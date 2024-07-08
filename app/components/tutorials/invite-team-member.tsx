@@ -10,7 +10,7 @@ export function InviteTeamMemberTutorial() {
           <li className='list-none'><span className="font-semibold">Step 1:</span> Log in with your admin account.</li>
           <code>Currently only the account creator has admin access. Admin access is required to invite users.</code>
           
-          <li className='list-none'><span className="font-semibold">Step 2:</span> Click on team tab in sidebar.</li>
+          <li className='list-none'><span className="font-semibold">Step 2:</span> Click on Organization tab in sidebar.</li>
 
           <li className='list-none'><span className="font-semibold">Step 3:</span> Click on mail icon in top right corner.</li>
 
