@@ -64,7 +64,16 @@ export const loader: LoaderFunction = args => {
         }
       }
       const suggestions = await dbClient.applicationSuggestion.findMany({ where: { applicationId: selectedApplicationId }})
-      const sprints = await dbClient.applicationSprint.findMany({ where: { applicationId: selectedApplicationId, status: { in: ['In Progress', 'Completed']}} })
+      const sprints = await dbClient.applicationSprint.findMany({
+        where: {
+          applicationId: selectedApplicationId,
+          status: { in: ['In Progress', 'Completed'] }
+        },
+        orderBy: {
+          startDate: 'desc'
+        },
+        take: 8
+      });
       const tasks = await dbClient.generatedTask.findMany({ where: { sprintId: { in: sprints.map(s => s.id) } }})
       const completedStatuses = ['done', 'complete', 'completed', 'finished']
 

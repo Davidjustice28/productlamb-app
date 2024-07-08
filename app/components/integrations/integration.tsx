@@ -34,7 +34,7 @@ export function PLIntegrationOption({ integration, onDelete, addMode=false, onAd
             </> :
             <div className="flex flex-row">
               <PLIconButton icon="ri-close-line" colorClasses="invisible group-hover:visible text-red-500 hover:bg-gray-100 dark:hover:bg-neutral-700" onClick={openDisconnectModal}/>
-              <PLIconButton icon="ri-equalizer-line" colorClasses="text-gray-600 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700" onClick={onEditButtonClick}/>
+              {/* <PLIconButton icon="ri-equalizer-line" colorClasses="text-gray-600 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700" onClick={onEditButtonClick}/> */}
             </div>
           }
         </div>
