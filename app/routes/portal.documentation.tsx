@@ -1,13 +1,11 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLOptionsButtonGroup } from "~/components/buttons/options-button-group";
 import { PLAccordian } from "~/components/common/accordian";
-import { BrainStormIdeasTutorial } from "~/components/tutorials/brainstorm-ideas";
 import { InviteTeamMemberTutorial } from "~/components/tutorials/invite-team-member";
 import { NewApplicationTutorial } from "~/components/tutorials/new-application";
 import { SetupIntegrationTutorial } from "~/components/tutorials/setup-integrations";
 import { SprintBasicsTutorial } from "~/components/tutorials/sprint-basics";
-import { SwitchApplicationsTutorial } from "~/components/tutorials/switch-applications";
 import { UploadFeedbackTutorial } from "~/components/tutorials/upload-feedback";
 import { generalQuestions, troubleshootingQuestions, featuresQuestions } from "~/static/faq-questions";
 import { FAQQuestion } from "~/types/base.types";
@@ -15,8 +13,8 @@ import { FAQQuestion } from "~/types/base.types";
 
 export default function DocumentationPage() {
   const faqOptions = ["general", "troubleshoot", "features"]
-  const tutorialOptions = ["New Application", "Connect GitHub", "Upload Feedback", "Sprint Basics"]
-  const tutorials = [NewApplicationTutorial, SetupIntegrationTutorial, UploadFeedbackTutorial, SprintBasicsTutorial]
+  const tutorialOptions = ["New Application", "Connect GitHub", "Invite Team", "Upload Feedback", "Sprint Basics"]
+  const tutorials = [NewApplicationTutorial, SetupIntegrationTutorial, InviteTeamMemberTutorial, UploadFeedbackTutorial, SprintBasicsTutorial]
   const [faqTab, setFaqTab] = useState<string>(faqOptions[0])
   const [tutorialTab, setTutorialTab] = useState<string>(tutorialOptions[0])
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<FAQQuestion[]>(generalQuestions)
@@ -48,11 +46,14 @@ export default function DocumentationPage() {
         case "Connect GitHub":
           setTutorialIndex(1)
           break
-        case "Upload Feedback":
+        case "Invite Team":
           setTutorialIndex(2)
           break
-        case "Sprint Basics":
+        case "Upload Feedback":
           setTutorialIndex(3)
+          break
+        case "Sprint Basics":
+          setTutorialIndex(4)
           break
         default:
           break
