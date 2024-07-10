@@ -21,6 +21,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.cl-internal-1rpdi70 {
+  display: none !important;
+}
 textarea:focus,
 input:focus {
   outline: none;
