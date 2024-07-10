@@ -58,14 +58,14 @@ export default function LandingPage() {
         </div>
         <div className="items-center justify-between hidden gap-12 text-black md:flex">
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#features">Features</a>
-          <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#values">Values</a>
+          <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#values">Value Proposition</a>
           <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#contact-us">Contact Us</a>
         </div>
         <div className="items-center hidden gap-8 md:flex">
           
-          (<SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'} signUpForceRedirectUrl={null} signUpFallbackRedirectUrl={null}>
+          <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'} signUpForceRedirectUrl={null} signUpFallbackRedirectUrl={null}>
             <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
-          </SignInButton>)
+          </SignInButton>
           
           {/* <SignUpButton mode="modal" forceRedirectUrl={'/portal/setup'}> */}
             <PLBasicButton text="Book Demo" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true} onClick={() => window.open('https://cal.com/productlamb/15min', '_blank')}/>
