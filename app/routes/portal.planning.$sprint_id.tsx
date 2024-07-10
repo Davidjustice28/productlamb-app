@@ -6,6 +6,7 @@ import { account } from "~/backend/cookies/account"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLTable } from "~/components/common/table"
 import { PLConfirmModal } from "~/components/modals/confirm"
+import { PLLoadingModal } from "~/components/modals/loading"
 import { PLAddTaskModal } from "~/components/modals/tasks/add-task-modal"
 import { TableColumn } from "~/types/base.types"
 import { ManualTaskData } from "~/types/component.types"
@@ -96,9 +97,9 @@ export const action: ActionFunction  = async ({request, params}) => {
     await dbClient.generatedTask.deleteMany({where: {id: {in: sprintData.deleted_task_ids}}})
   }
 
-  await dbClient.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: sprintData.initiative_id}})
+  await dbClient.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: sprintData.initiative_id, is_generating: true}})
   const url = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
-  await fetch(`${url}/sprints/${sprint_id}/generate`, { method: 'POST', headers: { 'Authorization': `${process.env.SPRINT_GENERATION_SECRET}` } })
+  fetch(`${url}/sprints/${sprint_id}/generate`, { method: 'POST', headers: { 'Authorization': `${process.env.SPRINT_GENERATION_SECRET}` } })
   return redirect(`/portal/sprints`)
 }
 
@@ -118,6 +119,7 @@ export default function SprintGenerationPage() {
   const [idsChecked, setIdsChecked] = useState<Array<number>>([])
   const formRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [loading, setLoading] = useState(false)
   const confirmationMessage = "Are you sure you want to close out planning and start the next sprint with the selected tasks?"
 
   function onConfirm() {
@@ -130,6 +132,7 @@ export default function SprintGenerationPage() {
       deleted_task_ids: getDeletedTasks().map(task => task.id)
     })
     formRef.current?.submit()
+    setLoading(true)
   }
 
   function getUnchosenTasks() {
@@ -217,6 +220,7 @@ export default function SprintGenerationPage() {
       </div>
       <PLConfirmModal message={confirmationMessage} open={confirmModalOpen} setOpen={setConfirmModalOpen} onConfirm={onConfirm}/>
       <PLAddTaskModal open={manualTaskModalOpen} setOpen={setManualTaskModalOpen} onSubmit={onAddTask}/>
+      <PLLoadingModal open={loading} setOpen={setLoading} title="Generating Sprint in PM Tool..."/>
     </div>
   )
 }

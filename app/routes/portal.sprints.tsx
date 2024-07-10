@@ -220,8 +220,8 @@ function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tas
           {/* Make start date not optional */}
           <p className="italic text-gray-500 dark:text-white"><i className="ri ri-calendar-line"></i> {convertToDateString(data.startDate!)}</p>
           <p className="italic text-gray-500 dark:text-white"><i className="ri-task-line"></i> {tasks?.length ?? 0} tasks</p>
-          <PLStatusBadge color={data.status === 'Completed' ? Colors.GREEN : data.status === 'In Progress' ? Colors.BLUE : data.status === 'Under Construction' ? Colors.YELLOW : Colors.RED} text={data.status}/>
-          {data.status === 'Under Construction' && <PLBasicButton text="Start Planning" onClick={startPlanning} colorClasses="py-[3px] px-[8px] text-xs bg-green-200 dark:bg-green-300 hover:bg-green-300 hover:dark:bg-green-400" icon="ri-tools-line" noDefaultDarkModeStyles/>}
+          <PLStatusBadge color={data.is_generating ? Colors.ORANGE : data.status === 'Completed' ? Colors.GREEN : data.status === 'In Progress' ? Colors.BLUE : data.status === 'Under Construction' ? Colors.YELLOW : Colors.RED} text={data.is_generating ? 'Generating' : data.status}/>
+          {data.status === 'Under Construction' && !data.is_generating && <PLBasicButton text="Start Planning" onClick={startPlanning} colorClasses="py-[3px] px-[8px] text-xs bg-green-200 dark:bg-green-300 hover:bg-green-300 hover:dark:bg-green-400" icon="ri-tools-line" noDefaultDarkModeStyles/>}
           {data.status === 'In Progress' && <p className="text-black dark:text-white">{timeLeft}</p>}
           {data.status !== 'Under Construction' && (
               <div className="bg-gray-300 rounded-lg w-1/3 h-6 relative">

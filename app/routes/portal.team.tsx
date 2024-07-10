@@ -11,6 +11,7 @@ import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLTable } from "~/components/common/table";
 import { PLInviteMemberModal } from "~/components/modals/account/invite-member";
 import { PLConfirmModal } from "~/components/modals/confirm";
+import { PLLoadingModal } from "~/components/modals/loading";
 import { TableColumn } from "~/types/base.types";
 import { generateInviteToken } from "~/utils/jwt";
 
@@ -154,12 +155,19 @@ export default function OrganizationProfilePage() {
   const dataRef = React.createRef<HTMLInputElement>()
   const [checked, setChecked] = React.useState([] as number[])
   const [adminId, setAdminId] = React.useState(members.filter(m => m.role === 'admin')[0].id)
+  const [loading, setLoading] = React.useState(false)
+  const [loadingModalText, setLoadingModalText] = React.useState<'Sending Invite...' | 'Removing Member Access...'>('Sending Invite...')
 
   async function handleInviteMember(email: string) {
     actionRef.current!.value = 'invite'
     dataRef.current!.value = email
     formRef.current?.submit()
     setInviteModalOpen(false)
+    setLoadingModalText('Sending Invite...')
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+    }, 1000);
   }
 
   async function handleRemovingMembers(email: string) {
@@ -168,6 +176,11 @@ export default function OrganizationProfilePage() {
     dataRef.current!.value = JSON.stringify(data)
     formRef.current?.submit()
     setRemoveMemberModalOpen(false)
+    setLoadingModalText('Removing Member Access...')
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+    }, 1000);
   }
 
   const handleCheck = (ids: number[]) => {
@@ -204,6 +217,8 @@ export default function OrganizationProfilePage() {
       <PLTable data={members} columns={columns} columnsVisible={true} checked={checked} actionsAvailable={members.length > 1} onCheck={handleCheck}/>
       <PLInviteMemberModal isOpen={inviteModalOpen} onSubmit={handleInviteMember} setIsOpen={setInviteModalOpen}/>
       <PLConfirmModal open={removeMemberModalOpen} setOpen={setRemoveMemberModalOpen} onConfirm={handleRemovingMembers} message="Are you sure you would like to remove access from the selected members?"/>
+      <PLLoadingModal open={loading} setOpen={setLoading} title={loadingModalText}/>
+
     </div>
   )
 }

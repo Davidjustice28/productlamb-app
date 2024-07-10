@@ -119,6 +119,7 @@ model ApplicationSprint {
   notion_sprint_id String?
   clickup_sprint_id String?
   selectedInitiative Int?
+  is_generating Boolean @default(false)
   generatedTasks GeneratedTask[]
 }
 
