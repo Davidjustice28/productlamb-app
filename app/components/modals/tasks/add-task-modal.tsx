@@ -10,6 +10,7 @@ export function PLAddTaskModal({open,onSubmit, setOpen, application_id, authToke
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null)
   const [pointsButtonDisabled, setPointsButtonDisabled] = useState(false)
   const [usedPointGenerator, setUsedPointGenerator] = useState(false)
+  const [loading, setLoading] = useState(false)
   const getFormData = () => {
     const form = new FormData(formRef.current!)
     const data = Object.fromEntries(form.entries())
@@ -34,6 +35,7 @@ export function PLAddTaskModal({open,onSubmit, setOpen, application_id, authToke
       return
     } else {
       setPointsButtonDisabled(false)
+      setLoading(true)
       const title = titleInputRef.current!.value
       const description = descriptionInputRef.current!.value
       const url = `/api/points`
@@ -52,6 +54,7 @@ export function PLAddTaskModal({open,onSubmit, setOpen, application_id, authToke
         pointsInputRef.current!.value = points.toString()
         setUsedPointGenerator(true)
       }
+      setLoading(false)
     }
       
   }
@@ -95,6 +98,7 @@ export function PLAddTaskModal({open,onSubmit, setOpen, application_id, authToke
               colorClasses={"bg-orange-200 text-orange-600 " + (usedPointGenerator ? ' cursor-not-allowed opacity-50' : ' cursor-pointer hover:bg-orange-500 hover:text-white')}
               useStaticWidth={false} 
               onClick={getPointSuggestionByAi}
+              showLoader={loading}
             />
           </div>
         </div>

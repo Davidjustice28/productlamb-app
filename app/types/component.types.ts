@@ -12,7 +12,8 @@ export interface PLBasicButtonProps {
   rounded?: boolean
   disabled?: boolean
   useStaticWidth?: boolean
-  noDefaultDarkModeStyles?: boolean
+  noDefaultDarkModeStyles?: boolean,
+  showLoader?: boolean
 }
 
 export interface PLLabelButtonProps {
