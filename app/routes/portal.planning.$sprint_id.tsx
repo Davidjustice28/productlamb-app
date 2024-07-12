@@ -10,6 +10,7 @@ import { PLLoadingModal } from "~/components/modals/loading"
 import { PLAddTaskModal } from "~/components/modals/tasks/add-task-modal"
 import { TableColumn } from "~/types/base.types"
 import { ManualTaskData } from "~/types/component.types"
+import { encrypt } from "~/utils/encryption"
 
 interface SprintPlanningResult {
   sprint_id: number, 
@@ -28,17 +29,25 @@ export const loader: LoaderFunction = async ({request, params}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId
+  const iv = process.env.ENCRYPTION_IV as string
+  const key = process.env.ENCRYPTION_KEY as string
+  
+  const authToken = encrypt(process.env.SPRINT_GENERATION_SECRET as string, key, iv)
   if(sprintId === -1) {
     return json({
       initiatives: [],
-      taskMap: {}
+      taskMap: {},
+      authToken,
+      applicationId,
     })
   }
   const initiatives = await dbClient.generatedInitiative.findMany({where: {sprintId}})
   if(initiatives.length === 0) {
     return json({
       initiatives: [],
-      taskMap: {}
+      taskMap: {},
+      authToken,
+      applicationId,
     })
   }
   const responses = await Promise.all(initiatives.map(async initiative => {
@@ -55,7 +64,9 @@ export const loader: LoaderFunction = async ({request, params}) => {
   return json({
     initiatives,
     taskMap,
-    backlog
+    backlog,
+    applicationId,
+    authToken
   }) 
 }
 
@@ -104,7 +115,7 @@ export const action: ActionFunction  = async ({request, params}) => {
 }
 
 export default function SprintGenerationPage() {
-  const {taskMap: data, initiatives: loadedInitiatives, backlog} = useLoaderData() as {taskMap: Record<number, Array<GeneratedTask>>, initiatives: Array<GeneratedInitiative>, backlog: Array<GeneratedTask>}
+  const {taskMap: data, initiatives: loadedInitiatives, backlog, applicationId, authToken} = useLoaderData() as {taskMap: Record<number, Array<GeneratedTask>>, initiatives: Array<GeneratedInitiative>, backlog: Array<GeneratedTask>, applicationId: number, authToken: string}
   const [step, setStep] = useState<number>(0)
   const allTasks = Object.values(data).flat()
   const [selectedInitiative, setSelectedInitiative] = useState<number|null>()
@@ -219,7 +230,7 @@ export default function SprintGenerationPage() {
         <PLBasicButton text={step < 3 ? 'Go to Next Step' : "Start Sprint"} onClick={handleButtonClick} icon="ri-arrow-right-line" disabled={step === 0 && !itemsSelected}/>
       </div>
       <PLConfirmModal message={confirmationMessage} open={confirmModalOpen} setOpen={setConfirmModalOpen} onConfirm={onConfirm}/>
-      <PLAddTaskModal open={manualTaskModalOpen} setOpen={setManualTaskModalOpen} onSubmit={onAddTask}/>
+      <PLAddTaskModal open={manualTaskModalOpen} setOpen={setManualTaskModalOpen} onSubmit={onAddTask} application_id={applicationId} authToken={authToken}/>
       <PLLoadingModal open={loading} setOpen={setLoading} title="Generating Sprint in PM Tool..."/>
     </div>
   )
@@ -235,6 +246,7 @@ function SprintPlanningTaskTable({tasks, setItemsSelected, setIdsChecked}: {task
   const columns: Array<TableColumn> = [
     {key: "description", type: "text"},
     {key: "reason", type: "text"},
+    {key: "points", type: "text"},
   ]
   if (tasks.length === 0) return <p>No tasks found for this initiative.</p>
   return (

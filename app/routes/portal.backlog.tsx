@@ -10,6 +10,7 @@ import { PLTable } from "~/components/common/table";
 import { PLConfirmModal } from "~/components/modals/confirm";
 import { PLAddTaskModal } from "~/components/modals/tasks/add-task-modal";
 import { ManualTaskData } from "~/types/component.types";
+import { encrypt } from "~/utils/encryption";
 
 interface BaseFormData<T='delete' | 'add' | 'edit' | 'pull'> {
   action: T,
@@ -87,12 +88,15 @@ export const loader: LoaderFunction = args => {
     const dbClient = new PrismaClient()
     const backlog = await dbClient['generatedTask'].findMany({where: {applicationId: selectedApplicationId, backlog: true}})
     const activeSprint = await dbClient.applicationSprint.findFirst({ where: { applicationId: selectedApplicationId, status: 'In Progress'}})
-    return json({backlog, activeSprint})
+    const iv = process.env.ENCRYPTION_IV as string
+    const key = process.env.ENCRYPTION_KEY as string
+    const authToken = encrypt(process.env.SPRINT_GENERATION_SECRET as string, key, iv)
+    return json({backlog, activeSprint, application_id: selectedApplicationId, authToken})
   })
 }
 
 export default function BacklogPage() {
-  const { backlog: loadedBacklog, activeSprint } = useLoaderData() as {backlog: GeneratedTask[], activeSprint: ApplicationSprint | null}
+  const { backlog: loadedBacklog, activeSprint, application_id, authToken } = useLoaderData() as {backlog: GeneratedTask[], activeSprint: ApplicationSprint | null, application_id: number, authToken: string}
   const { updatedTasks } = useActionData<typeof action>() ?? {updatedTasks: null}
   const [backlog, setBacklog] = useState<GeneratedTask[]>(updatedTasks ?? loadedBacklog ?? [])
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false)
@@ -159,7 +163,7 @@ export default function BacklogPage() {
           </div>
         )
       }
-      <PLAddTaskModal open={addModalOpen} setOpen={setAddModalOpen}/>
+      <PLAddTaskModal open={addModalOpen} setOpen={setAddModalOpen} application_id={application_id} authToken={authToken}/>
       <PLConfirmModal open={deleteModalOpen} setOpen={setDeleteModalOpen} message="Are you sure you want to delete the selected items from your backlog?" onConfirm={submitDeleteRequest}/>
       <PLConfirmModal open={pullModalOpen} setOpen={setPullModalOpen} message="Are you sure you want to pull the selected tasks into the current sprint?" onConfirm={pullTasksIntoSprint} />
 

@@ -7,7 +7,7 @@ export interface PLBasicButtonProps {
   iconSide?: 'left' | 'right'
   iconColorClass?: string
   text: string
-  onClick?: () => void
+  onClick?: (e: any) => void
   colorClasses?: string
   rounded?: boolean
   disabled?: boolean
