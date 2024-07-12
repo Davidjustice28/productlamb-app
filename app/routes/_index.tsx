@@ -1,14 +1,33 @@
-import { SignInButton, SignUpButton, useUser } from "@clerk/remix";
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
-import { Form, useActionData, useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
-import React from "react";
+import { SignInButton } from "@clerk/remix";
+import { ActionFunction, LinksFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { PLBasicButton } from "~/components/buttons/basic-button";
-import { PLDeveloperButton } from "~/components/buttons/label-button";
-import ConfettiExplosion from 'react-confetti-explosion';
-import { ToggleSwitch } from "~/components/forms/toggle-switch";
-import { PLStatusBadge } from "~/components/common/status-badge";
-import { Colors } from "~/types/base.types";
+
+export const links: LinksFunction = () => {
+  return [
+    {
+      rel: "icon",
+      href: "https://storage.googleapis.com/product-lamb-images/productlamb_logo_icon.png",
+      type: "image/png",
+    },
+  ]
+}
+
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Product Management for Startups" },
+    {
+      property: "og:title",
+      content: "Product Management for Startups",
+    },
+    {
+      name: "description",
+      content: "This web platform provides an ai powered product manager for early-stage startups and small teams.",
+    },
+  ];
+};
 
 export const action: ActionFunction = async ({ request }) => {
   const form = await request.formData()
@@ -139,7 +158,7 @@ function FeaturesSection() {
     <div className="w-full flex flex-col items-center py-16 -mb-10 gap-20 md:gap-24 md:px-16 px-8" id="features">
       {imgs.map((img, i) => {
         return (
-          <div className={"mt-10 gap-16 w-full items-start md:items-center justify-between flex" + (i % 2 === 0 ? ' flex-col md:flex-row' : ' flex-col md:flex-row-reverse')}>
+          <div className={"mt-10 gap-16 w-full items-start md:items-center justify-between flex" + (i % 2 === 0 ? ' flex-col md:flex-row' : ' flex-col md:flex-row-reverse')} key={i}>
             <div className="md:w-1/2 w-full flex flex-col gap-8">
               <h2 className="font-bold text-4xl md:text-4xl">{featureHeaders[i]}</h2>
               <p className="font-regular text-lg md:text-xl">{featureDescriptions[i]}</p>

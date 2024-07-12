@@ -14,7 +14,6 @@ export function PLLineChart({data } : PLChartProps) {
         <CartesianGrid strokeDasharray="3 3"/>
         <XAxis dataKey="name"/>
         <YAxis/>
-        <Tooltip labelClassName='text-white font-semibold text-md underline' contentStyle={{backgroundColor: '#f2b949'}} />
         <Line type="monotone" dataKey="bugs" stroke="#ff0000" activeDot={{ r: 8 }} strokeWidth={3}/>
         <Line type="monotone" dataKey="features" stroke="#82ca9d" strokeWidth={3}/>
         <Line type="monotone" dataKey="chores" stroke="#ffc658" activeDot={{ r: 8 }} strokeWidth={3}/>
