@@ -4,8 +4,8 @@ export enum BugGroup {
 }
 
 export enum SettingsTabGroup {
-  PREFERENCES = "preferences",
-  NOTIFICATIONS = "notifications",
+  MANAGER = "manager",
+  TEAM = "team",
   BILLING = "billing",
 }
 
@@ -67,7 +67,7 @@ export enum SupportedTimezone {
   PT = "America/Los_Angeles",   // Pacific Time (US & Canada)
   WET = "Europe/London",         // Western European Time
   CET = "Europe/Paris",          // Central European Time
-  MOSCOWTIME = "Europe/Moscow",         // Moscow Standard Time
+  // MOSCOWTIME = "Europe/Moscow",         // Moscow Standard Time
   JST = "Asia/Tokyo",            // Japan Standard Time
   AET = "Australia/Sydney"  // Australian Eastern Time
 }

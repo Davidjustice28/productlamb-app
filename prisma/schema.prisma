@@ -8,74 +8,110 @@ datasource db {
 }
 
 model Account {
-  id               Int                  @id @default(autoincrement())
-  dateCreated      DateTime
-  subscriptionType String
-  status           String
-  user_prisma_id   String
-  organization_id  String @default("1")
-  applications     AccountApplication[]
-  isSetup Boolean
-  timezone String @default("America/Denver")
-  move_incomplete_to_backlog Boolean @default(true)
-  user AccountUser[]
+  id                         Int                  @id @default(autoincrement())
+  dateCreated                DateTime
+  subscriptionType           String
+  status                     String
+  user_prisma_id             String
+  isSetup                    Boolean
+  organization_id            String               @default("1")
+  move_incomplete_to_backlog Boolean              @default(true)
+  timezone                   String               @default("America/Denver")
+  AccountApplication         AccountApplication[]
+  AccountUser                AccountUser[]
 }
 
 model AccountApplication {
-  id                 Int                             @id @default(autoincrement())
-  name               String
-  summary            String
-  archived           Boolean
-  siteUrl            String?
-  type               String
-  accountId          Int
-  logo_url           String?
-  sprint_generation_enabled Boolean
-  sprint_interval String @default("weekly")
-  clickup_integration ApplicationClickupIntegration? @relation(fields: [clickup_integration_id], references: [id], onDelete: Cascade)
-  clickup_integration_id Int? @unique
-  notion_integration  ApplicationNotionIntegration? @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
-  notion_integration_id Int? @unique
-  lastSprintCheck String?
-  google_integration ApplicationGoogleIntegration? @relation(fields: [google_integration_id], references: [id], onDelete: Cascade)
-  google_integration_id Int?  @unique
-  account            Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  bugs               ApplicationBug[]
-  feedback           ApplicationFeedback[]
-  goals              ApplicationGoal[]
-  integrations       ApplicationIntegration[]
-  sprints            ApplicationSprint[]
-  initiatives        GeneratedInitiative[]
-  tasks              GeneratedTask[]
-  suggestions        ApplicationSuggestion[]
+  id                            Int                            @id @default(autoincrement())
+  name                          String
+  summary                       String
+  archived                      Boolean
+  siteUrl                       String?
+  type                          String
+  accountId                     Int
+  logo_url                      String?
+  clickup_integration_id        Int?                           @unique
+  notion_integration_id         Int?                           @unique
+  sprint_generation_enabled     Boolean
+  lastSprintCheck               String?
+  sprint_interval               String                         @default("weekly")
+  google_integration_id         Int?                           @unique
+  Account                       Account                        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  ApplicationClickupIntegration ApplicationClickupIntegration? @relation(fields: [clickup_integration_id], references: [id], onDelete: Cascade)
+  ApplicationGoogleIntegration  ApplicationGoogleIntegration?  @relation(fields: [google_integration_id], references: [id], onDelete: Cascade)
+  ApplicationNotionIntegration  ApplicationNotionIntegration?  @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
+  ApplicationBug                ApplicationBug[]
+  ApplicationFeedback           ApplicationFeedback[]
+  ApplicationGoal               ApplicationGoal[]
+  ApplicationIntegration        ApplicationIntegration[]
+  ApplicationSprint             ApplicationSprint[]
+  ApplicationSuggestion         ApplicationSuggestion[]
+  GeneratedInitiative           GeneratedInitiative[]
+  GeneratedTask                 GeneratedTask[]
 }
 
-model ApplicationGoal {
-  id            Int                @id @default(autoincrement())
-  goal          String
-  isLongTerm    Boolean
-  applicationId Int
-  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+model AccountManagerSettings {
+  id                       Int     @id @default(autoincrement())
+  accountId                Int
+  timezone                 String  @default("America/Denver")
+  incomplete_tasks_action  String  @default("backlog")
+  notify_on_planning_ready Boolean @default(true)
+  notify_on_sprint_ready   Boolean @default(true)
+  notify_on_member_join    Boolean @default(true)
+  notify_on_task_added     Boolean @default(true)
+}
+
+model AccountUser {
+  id        Int      @id @default(autoincrement())
+  accountId Int?
+  userId    String
+  darkMode  Boolean  @default(false)
+  Account   Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model ApplicationBug {
+  id                 Int                @id @default(autoincrement())
+  applicationId      Int
+  title              String
+  description        String
+  priority           String
+  source             String
+  reported_date      String?
+  AccountApplication AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model ApplicationClickupIntegration {
+  id                 Int                 @id @default(autoincrement())
+  applicationId      Int
+  api_token          String
+  parent_folder_id   BigInt
+  AccountApplication AccountApplication?
 }
 
 model ApplicationFeedback {
-  id            Int                @id @default(autoincrement())
-  applicationId Int
-  feedback      String
-  source        String
-  feedbackDate  String
-  ignored       Boolean           @default(false)
-  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id                 Int                @id @default(autoincrement())
+  applicationId      Int
+  feedback           String
+  source             String
+  feedbackDate       String
+  ignored            Boolean            @default(false)
+  AccountApplication AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
-model GeneratedInitiative {
-  id            Int                @id @default(autoincrement())
-  description   String
-  applicationId Int
-  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  sprint        ApplicationSprint  @relation(fields: [sprintId], references: [id])
-  sprintId      Int 
-  tasks         GeneratedTask[]
+model ApplicationGoal {
+  id                 Int                @id @default(autoincrement())
+  goal               String
+  isLongTerm         Boolean
+  applicationId      Int
+  AccountApplication AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model ApplicationGoogleIntegration {
+  id                 Int                 @id @default(autoincrement())
+  access_token       String
+  refresh_token      String
+  applicationId      Int
+  AccountApplication AccountApplication?
 }
 
 model ApplicationIntegration {
@@ -85,91 +121,66 @@ model ApplicationIntegration {
   secret               String
   secretExpirationDate String?
   metadata             String?
-  application          AccountApplication @relation(fields: [applicationId], references: [id])
   enabled              Boolean            @default(true)
-}
-
-model GeneratedTask {
-  id            Int                 @id @default(autoincrement())
-  applicationId Int
-  sprintId      Int?
-  title         String
-  status        String
-  points        Int?
-  description   String
-  initiativeId  Int?
-  reason        String
-  category         String
-  notion_id     String?
-  clickup_id    String?
-  backlog Boolean?
-  application   AccountApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  initiative    GeneratedInitiative? @relation(fields: [initiativeId], references: [id])
-  sprint        ApplicationSprint?   @relation(fields: [sprintId], references: [id])
-}
-
-model ApplicationSprint {
-  id             Int                  @id @default(autoincrement())
-  applicationId  Int
-  startDate      String?
-  endDate        String?
-  application    AccountApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  initiative     GeneratedInitiative[]
-  status         String
-  notion_sprint_id String?
-  clickup_sprint_id String?
-  selectedInitiative Int?
-  is_generating Boolean @default(false)
-  generatedTasks GeneratedTask[]
-}
-
-model ApplicationBug {
-  id            Int                @id @default(autoincrement())
-  applicationId Int
-  title         String
-  description   String
-  priority      String
-  reported_date String?
-  source        String
-  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-}
-
-model ApplicationClickupIntegration {
-  id            Int                @id @default(autoincrement())
-  applicationId Int
-  api_token        String
-  parent_folder_id BigInt
-  application AccountApplication?
+  AccountApplication   AccountApplication @relation(fields: [applicationId], references: [id])
 }
 
 model ApplicationNotionIntegration {
-  id            Int                @id @default(autoincrement())
-  applicationId Int
-  api_token        String
-  parent_page_id String
-  sprints_page_id String?
-  application   AccountApplication?
+  id                 Int                 @id @default(autoincrement())
+  applicationId      Int
+  api_token          String
+  parent_page_id     String
+  sprints_page_id    String?
+  AccountApplication AccountApplication?
+}
+
+model ApplicationSprint {
+  id                  Int                   @id @default(autoincrement())
+  applicationId       Int
+  startDate           String?
+  endDate             String?
+  selectedInitiative  Int?
+  status              String
+  notion_sprint_id    String?
+  clickup_sprint_id   String?
+  is_generating       Boolean               @default(false)
+  AccountApplication  AccountApplication    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  GeneratedInitiative GeneratedInitiative[]
+  GeneratedTask       GeneratedTask[]
 }
 
 model ApplicationSuggestion {
-  id            Int                @id @default(autoincrement())
-  suggestion    String
-  applicationId Int
-  application   AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id                 Int                @id @default(autoincrement())
+  suggestion         String
+  applicationId      Int
+  AccountApplication AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
-model ApplicationGoogleIntegration {
-  id            Int                @id @default(autoincrement())
-  access_token  String
-  refresh_token String
-  applicationId Int
-  application   AccountApplication?
+model GeneratedInitiative {
+  id                 Int                @id @default(autoincrement())
+  description        String
+  applicationId      Int
+  sprintId           Int
+  AccountApplication AccountApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  ApplicationSprint  ApplicationSprint  @relation(fields: [sprintId], references: [id])
+  GeneratedTask      GeneratedTask[]
 }
 
-model AccountUser {
-  id        Int      @id @default(autoincrement())
-  accountId Int?
-  userId    String
-  account   Account?  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  darkMode Boolean @default(false)
+model GeneratedTask {
+  id                  Int                  @id @default(autoincrement())
+  applicationId       Int
+  sprintId            Int?
+  title               String
+  status              String
+  points              Int?
+  description         String
+  initiativeId        Int?
+  reason              String
+  category            String
+  clickup_id          String?
+  notion_id           String?
+  backlog             Boolean?
+  AccountApplication  AccountApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  GeneratedInitiative GeneratedInitiative? @relation(fields: [initiativeId], references: [id])
+  ApplicationSprint   ApplicationSprint?   @relation(fields: [sprintId], references: [id])
 }
