@@ -1,7 +1,7 @@
 import { GeneratedInitiative, GeneratedTask, PrismaClient } from "@prisma/client"
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
 import { Form, useLoaderData } from "@remix-run/react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { account } from "~/backend/cookies/account"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLTable } from "~/components/common/table"
@@ -66,7 +66,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
     taskMap,
     backlog,
     applicationId,
-    authToken
+    authToken,
   }) 
 }
 
@@ -115,8 +115,9 @@ export const action: ActionFunction  = async ({request, params}) => {
 }
 
 export default function SprintGenerationPage() {
-  const {taskMap: data, initiatives: loadedInitiatives, backlog, applicationId, authToken} = useLoaderData() as {taskMap: Record<number, Array<GeneratedTask>>, initiatives: Array<GeneratedInitiative>, backlog: Array<GeneratedTask>, applicationId: number, authToken: string}
+  const {taskMap: data, initiatives: loadedInitiatives, backlog: loadedBacklog, applicationId, authToken} = useLoaderData() as {taskMap: Record<number, Array<GeneratedTask>>, initiatives: Array<GeneratedInitiative>, backlog: Array<GeneratedTask>, applicationId: number, authToken: string}
   const [step, setStep] = useState<number>(0)
+  const [backlog, setBacklog] = useState<Array<GeneratedTask>>(loadedBacklog || [])
   const allTasks = Object.values(data).flat()
   const [selectedInitiative, setSelectedInitiative] = useState<number|null>()
   const [initiatives, setInitiatives] = useState<Array<GeneratedInitiative>>(loadedInitiatives || [])
@@ -128,9 +129,11 @@ export default function SprintGenerationPage() {
   const [newTasks, setNewTasks] = useState<Array<ManualTaskData>>([])
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
   const [idsChecked, setIdsChecked] = useState<Array<number>>([])
+  const [alreadyUsedSuggestionButton, setAlreadyUsedSuggestionButton] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
+  const [backlogSuggestionsProcessing, setBacklogSuggestionsProcessing] = useState(false)
   const confirmationMessage = "Are you sure you want to close out planning and start the next sprint with the selected tasks?"
 
   function onConfirm() {
@@ -167,6 +170,19 @@ export default function SprintGenerationPage() {
     setManualTaskModalOpen(false)
   }
 
+  const getBacklogSuggestions = async () => {
+    if (!selectedInitiative) return
+    setBacklogSuggestionsProcessing(true)
+    const response = await fetch(`/api/backlog/`, {method: 'POST', body: JSON.stringify({initiative_id: selectedInitiative})}).then(res => res.json()).catch(err => null)
+    if (response) {
+      const suggestedTasks = response.tasks as Array<number>
+      const updatedBacklog = backlog.filter(task => suggestedTasks.includes(task.id))
+      setBacklog(updatedBacklog)
+      setAlreadyUsedSuggestionButton(true)
+    }
+    setBacklogSuggestionsProcessing(false)
+  }
+
   return (
     <div className="w-full flex flex-col">
       {step === 0 ? 
@@ -200,7 +216,21 @@ export default function SprintGenerationPage() {
           </>
         ) : step === 1 ? (
           <div className="mt-5 mb-5 min-h-[600px]">
-            <p className="font-semibold text-neutral-800 dark:text-neutral-400">Here's your backlog. Pull in any items you want tackle this sprint.</p>
+            <div className="flex flex-row justify-between w-full items-center">
+              <p className="font-semibold text-neutral-800 dark:text-neutral-400">Here's your backlog. Pull in any items you want tackle this sprint.</p>
+              <div>
+                <PLBasicButton 
+                  icon="ri-sparkling-line" 
+                  text="Suggest Items" 
+                  noDefaultDarkModeStyles={true}
+                  colorClasses={"bg-orange-200 text-orange-600 " + (alreadyUsedSuggestionButton ? " opacity-50 cursor-not-allowed" : " cursor-pointer hover:bg-orange-500 hover:text-white")}
+                  useStaticWidth={false} 
+                  showLoader={backlogSuggestionsProcessing}
+                  onClick={getBacklogSuggestions}
+                  disabled={alreadyUsedSuggestionButton}
+                />
+              </div>
+            </div>
             <BacklogTable tasks={backlog} setIdsChecked={setSelectedIdsFromBacklog} listType="backlog"/>
           </div>
         
@@ -271,6 +301,7 @@ function BacklogTable({tasks, setIdsChecked, listType}: {tasks: Array<GeneratedT
       {listType === 'backlog' ? 'Your backlog is empty.' : 'There are no unused suggestions. All have been pulled into this sprint.'}
     </p>
   )
+
   return (
     <div className="mt-5 mb-5">
       <PLTable data={tasks} checked={[]} columns={columns} onCheck={onCheck}/>
