@@ -18,6 +18,7 @@ export const loader: LoaderFunction = async ({request}) => {
   const accountCookie = await account.parse(cookies)
   const dbClient = new PrismaClient()
   const sprintsClient = ApplicationSprintsClient(dbClient['applicationSprint'])
+  const accountData = await dbClient['account'].findFirst({ where: { id: accountCookie.accountId } })
   const {data: sprints, errors} = await sprintsClient.getApplicationSprints(accountCookie.selectedApplicationId)
   let sprintInitiativeIds: Array<number> = []
   if ( sprints && sprints.length > 0) {
@@ -48,7 +49,8 @@ export const loader: LoaderFunction = async ({request}) => {
   return json({
     sprints,
     taskMap,
-    sprintInitiativesMap
+    sprintInitiativesMap,
+    timezone: accountData!.timezone
   })
 }
 
@@ -100,12 +102,12 @@ export const action: ActionFunction = async ({request}) => {
   return json({
     sprints,
     taskMap,
-    sprintInitiativesMap
+    sprintInitiativesMap,
   })
 
 }
 export default function SprintPage() {
-  const {sprints: loadedSprints, taskMap, sprintInitiativesMap } = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskMap: Record<number, GeneratedTask[]>, sprintInitiativesMap: Record<number, string>}
+  const {sprints: loadedSprints, taskMap, sprintInitiativesMap, timezone } = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskMap: Record<number, GeneratedTask[]>, sprintInitiativesMap: Record<number, string>, timezone: string}
   const [sprints, setSprints] = useState<Array<ApplicationSprint>>(loadedSprints || [])
   const {pathname} = useLocation()
   const parsedPath = pathname.split('/sprints/')
@@ -155,7 +157,7 @@ export default function SprintPage() {
       </div>
       <div className="mt-5 flex flex-col gap-3">
         {sprints.sort((a,b) => a.id - b.id).reverse().map((sprint, index) => {
-          return <SprintTableRow data={sprint} key={index} tasks={taskMap[sprint.id]} initiative={sprintInitiativesMap[sprint.id]}/>
+          return <SprintTableRow data={sprint} key={index} tasks={taskMap[sprint.id]} initiative={sprintInitiativesMap[sprint.id]} timezone={timezone}/>
         })}
       </div>
     </div>
@@ -163,7 +165,7 @@ export default function SprintPage() {
 }
 
 
-function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tasks?: GeneratedTask[], initiative?: string}) {
+function SprintTableRow({data, tasks, initiative, timezone}: {data: ApplicationSprint, tasks?: GeneratedTask[], initiative?: string, timezone: string}) {
   const [showDetails, setShowDetails] = useState<boolean>(false)
   const {percentage, percentageWidthClass} = calculatePercentage()
   const navigate = useNavigate()
@@ -203,7 +205,7 @@ function SprintTableRow({data, tasks, initiative}: {data: ApplicationSprint, tas
     {key: "points", type: "text", sortable: true},
   ]
 
-  const timeData = calculateTimeLeft(data.startDate!, data.endDate!, 'Past Due')
+  const timeData = calculateTimeLeft(timezone, data.startDate!, data.endDate!, 'Past Due')
   const timeTitle = timeData.type.charAt(0).toUpperCase() + timeData.type.slice(1)
   const timeLeft = `${timeTitle} left: ${timeData.count}`
 

@@ -52,6 +52,7 @@ export const loader: LoaderFunction = args => {
     } else {
       setupIsComplete = true
       accountId = accountCookie.accountId
+      const account = await dbClient.account.findFirst({ where: { id: accountId }})
       
       if (selectedApplicationId === undefined) {
         const applicationClient = ApplicationsClient(dbClient.accountApplication)
@@ -92,7 +93,7 @@ export const loader: LoaderFunction = args => {
       const currentSprint = sprints.find(s => s.status === 'In Progress')
       const currentSprintTasksData = currentSprint ? createCurrentSprintChartsData(tasks.filter(t => t.sprintId === currentSprint.id)) : []
       const taskTypesData = createTaskTypeChartData(sprints, tasks)
-      const timeLeftInSprint = currentSprint && currentSprint?.endDate ? calculateTimeLeft(new Date().toISOString(), currentSprint.endDate, 'Expired') : null
+      const timeLeftInSprint = currentSprint && currentSprint?.endDate ? calculateTimeLeft(account!.timezone, new Date().toISOString(), currentSprint.endDate, 'Expired') : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, time_left: timeLeftInSprint}
       return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint, taskTypesData, suggestions, sprintPointsChartData})
     }
