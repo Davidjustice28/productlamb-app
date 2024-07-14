@@ -39,7 +39,7 @@ export const loader: LoaderFunction = async ({request}) => {
   const taskMap: Record<number,GeneratedTask[]> = {}
   if (sprints) {
     sprints.forEach(sprint => {
-      taskMap[sprint.id] = sprint.generatedTasks
+      taskMap[sprint.id] = sprint.GeneratedTask
     })
     sprints.forEach(sprint => {
       sprintInitiativesMap[sprint.id] = sprint.selectedInitiative ? initiatives.find(initiative => initiative.id === sprint.selectedInitiative)?.description || "" : ""
@@ -91,7 +91,7 @@ export const action: ActionFunction = async ({request}) => {
   const taskMap: Record<number,GeneratedTask[]> = {}
   if (sprints) {
     sprints.forEach(sprint => {
-      taskMap[sprint.id] = sprint.generatedTasks
+      taskMap[sprint.id] = sprint.GeneratedTask
     })
     sprints.forEach(sprint => {
       sprintInitiativesMap[sprint.id] = sprint.selectedInitiative ? initiatives.find(initiative => initiative.id === sprint.selectedInitiative)?.description || "" : ""

@@ -8,7 +8,7 @@ export function wrapGetAllApplicationSprints(client: PrismaClient['applicationSp
 
   async function getAllApplicationSprints(application_id: number) {
     try {
-      const sprints =(await client.findMany({where: {applicationId: application_id}, include: {generatedTasks: true}}))
+      const sprints =(await client.findMany({where: {applicationId: application_id}, include: {GeneratedTask: true}}))
       return {data: sprints, errors: []}
     } catch (e) {
       return {data: undefined, errors: [1]}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { PLOptionsButtonGroup } from "~/components/buttons/options-button-group";
-import { BillingSettings } from "~/components/settings/biling";
+import { BillingSettings } from "~/components/settings/billing";
 import { SettingsTabGroup } from "~/types/database.types";
 import { TeamSettings } from "~/components/settings/team";
 import { ManagerSettings } from "~/components/settings/manager";
