@@ -80,3 +80,11 @@ export interface PLChartProps {
   data: Array<any>;
   darkMode?: boolean;
 }
+
+export interface TaskSuggestions {
+  description: string
+  title: string
+  reason: string
+  category: string
+  points?: number
+}

@@ -4,19 +4,22 @@ import { Form, useLoaderData } from "@remix-run/react"
 import { useEffect, useRef, useState } from "react"
 import { account } from "~/backend/cookies/account"
 import { PLBasicButton } from "~/components/buttons/basic-button"
+import { PLIconButton } from "~/components/buttons/icon-button"
 import { PLTable } from "~/components/common/table"
 import { PLConfirmModal } from "~/components/modals/confirm"
 import { PLLoadingModal } from "~/components/modals/loading"
+import { PLManualInitiativeModal } from "~/components/modals/planning/manual-initiative"
 import { PLAddTaskModal } from "~/components/modals/tasks/add-task-modal"
 import { TableColumn } from "~/types/base.types"
-import { ManualTaskData } from "~/types/component.types"
+import { ManualTaskData, TaskSuggestions } from "~/types/component.types"
 import { encrypt } from "~/utils/encryption"
 
 interface SprintPlanningResult {
   sprint_id: number, 
   task_ids: Array<number>,
-  initiative_id: number,
+  initiative_id: number | string,
   new_tasks: Array<ManualTaskData>,
+  manualInitiativeSuggestions: Array<TaskSuggestions>,
   task_backlogged_ids: Array<number>,
   deleted_task_ids: Array<number>
   backlog_ids_used: Array<number>
@@ -39,6 +42,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
       taskMap: {},
       authToken,
       applicationId,
+      sprintId
     })
   }
   const initiatives = await dbClient.generatedInitiative.findMany({where: {sprintId}})
@@ -48,6 +52,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
       taskMap: {},
       authToken,
       applicationId,
+      sprintId
     })
   }
   const responses = await Promise.all(initiatives.map(async initiative => {
@@ -67,6 +72,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
     backlog,
     applicationId,
     authToken,
+    sprintId
   }) 
 }
 
@@ -79,9 +85,31 @@ export const action: ActionFunction  = async ({request, params}) => {
   const dbClient = new PrismaClient()
   
   const selected_ids = sprintData.task_ids.concat(sprintData.backlog_ids_used)
+  let initiative_id: number
+  if (typeof sprintData.initiative_id === 'string') { 
+    const initiative = await dbClient.generatedInitiative.create({ data: {description: sprintData.initiative_id, sprintId: sprint_id, applicationId: accountCookie.selectedApplicationId}})
+    initiative_id = initiative.id
+  } else {
+    initiative_id = sprintData.initiative_id
+  }
 
+  if (sprintData.manualInitiativeSuggestions.length) {
+    await dbClient.generatedTask.createMany({data: sprintData.manualInitiativeSuggestions.map((task: TaskSuggestions) => {
+      return {
+        title: task.title,
+        description: task.description,
+        points: task.points,
+        category: task.category,
+        sprintId: sprint_id,
+        applicationId: accountCookie.selectedApplicationId,
+        initiativeId: initiative_id,
+        status: 'to do',
+        reason: task.reason
+      }
+    })})
+  }
   if (selected_ids.length) {
-    await dbClient.generatedTask.updateMany({where: {id: {in: selected_ids}}, data: {sprintId: sprint_id, backlog: false, initiativeId: sprintData.initiative_id}})
+    await dbClient.generatedTask.updateMany({where: {id: {in: selected_ids}}, data: {sprintId: sprint_id, backlog: false, initiativeId: initiative_id}})
   }
 
   if (sprintData.new_tasks.length) {
@@ -93,8 +121,8 @@ export const action: ActionFunction  = async ({request, params}) => {
         category: task.category,
         sprintId: sprint_id,
         applicationId: accountCookie.selectedApplicationId,
-        initiativeId: sprintData.initiative_id,
-        status: 'To Do',
+        initiativeId: initiative_id,
+        status: 'to do',
         reason: task.reason
       }
     })})
@@ -108,19 +136,20 @@ export const action: ActionFunction  = async ({request, params}) => {
     await dbClient.generatedTask.deleteMany({where: {id: {in: sprintData.deleted_task_ids}}})
   }
 
-  await dbClient.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: sprintData.initiative_id, is_generating: true}})
+  await dbClient.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: initiative_id, is_generating: true}})
   const url = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
   fetch(`${url}/sprints/${sprint_id}/generate`, { method: 'POST', headers: { 'Authorization': `${process.env.SPRINT_GENERATION_SECRET}` } })
   return redirect(`/portal/sprints`)
 }
 
 export default function SprintGenerationPage() {
-  const {taskMap: data, initiatives: loadedInitiatives, backlog: loadedBacklog, applicationId, authToken} = useLoaderData() as {taskMap: Record<number, Array<GeneratedTask>>, initiatives: Array<GeneratedInitiative>, backlog: Array<GeneratedTask>, applicationId: number, authToken: string}
+  const {taskMap: data, initiatives: loadedInitiatives, backlog: loadedBacklog, applicationId, authToken, sprintId} = useLoaderData() as {taskMap: Record<number, Array<GeneratedTask>>, initiatives: Array<GeneratedInitiative>, backlog: Array<GeneratedTask>, applicationId: number, authToken: string, sprintId: number}
   const [step, setStep] = useState<number>(0)
   const [backlog, setBacklog] = useState<Array<GeneratedTask>>(loadedBacklog || [])
   const allTasks = Object.values(data).flat()
   const [selectedInitiative, setSelectedInitiative] = useState<number|null>()
   const [initiatives, setInitiatives] = useState<Array<GeneratedInitiative>>(loadedInitiatives || [])
+  const [manualInitiative, setManualInitiative] = useState<string|null>(null)
   const [taskMap, setTaskMap] = useState<Record<number, Array<GeneratedTask>>>(data || {})
   const [itemsSelected, setItemsSelected] = useState(false)
   const [backloggedTaskIds, setBacklogTaskIds] = useState<Array<number>>([])
@@ -135,11 +164,19 @@ export default function SprintGenerationPage() {
   const [loading, setLoading] = useState(false)
   const [backlogSuggestionsProcessing, setBacklogSuggestionsProcessing] = useState(false)
   const confirmationMessage = "Are you sure you want to close out planning and start the next sprint with the selected tasks?"
+  const [initiativeModalOpen, setInitiativeModalOpen] = useState(false)
+  const [choseManualInitiative, setChoseManualInitiative] = useState(false)
+  const [manualInitiativeSuggestions, setManualInitiativeSuggestions] = useState<Array<TaskSuggestions>>([])
+  const [generatingInitiativeSuggestions, setGeneratingInitiativeSuggestions] = useState(false)
+  const [suggestions, setSuggestions] = useState<Array<TaskSuggestions & {id: number}>>([])
+
 
   function onConfirm() {
     inputRef.current!.value = JSON.stringify({
-      sprint_id: initiatives.find(initiative => initiative.id === selectedInitiative)?.sprintId, 
-      task_ids: idsChecked, initiative_id: selectedInitiative, 
+      sprint_id: sprintId,
+      task_ids: idsChecked, 
+      initiative_id: manualInitiative ?? selectedInitiative, 
+      manualInitiativeSuggestions,
       new_tasks: newTasks, 
       task_backlogged_ids: backloggedTaskIds,
       backlog_ids_used: selectedIdsFromBacklog,
@@ -183,18 +220,52 @@ export default function SprintGenerationPage() {
     setBacklogSuggestionsProcessing(false)
   }
 
+  const handleAddingInitiative = (initiative: string) => {
+    if (initiative.length) {
+      setManualInitiative(initiative)
+      setChoseManualInitiative(true)
+    }
+    setInitiativeModalOpen(false)
+  }
+
+  function ManualInitiativeView({initiative}: {initiative: string}) {
+    const onClick = async () => {
+      setGeneratingInitiativeSuggestions(true)
+      setLoading(true)
+      const data = await fetch(`/api/initiative`, {method: 'POST', body: JSON.stringify({initiative})}).then(res => res.json()).catch(err => null)
+      setLoading(false)
+      setGeneratingInitiativeSuggestions(false)
+      if (data?.tasks) {
+        const updatedSuggestions = data.tasks.map((suggestion: TaskSuggestions, index: number) => ({...suggestion, id: index}))
+        setSuggestions([...updatedSuggestions])
+      }
+    }
+
+    return (
+      <>
+        <div>
+          <PLBasicButton text="Generate Suggestions" onClick={onClick}/>
+        </div>
+        <SuggestionsTable tasks={suggestions} setIdsChecked={(ids) => setManualInitiativeSuggestions(suggestions.filter(s => ids.includes(s.id)))}/>
+      </>
+    )
+  }
+  
   return (
     <div className="w-full flex flex-col">
       {step === 0 ? 
         (
           <>
-            <p className="mt-5 mb-5 font-semibold text-neutral-800 dark:text-neutral-400">Choose an overall initiative for the sprint you wish to generate.</p>
+            <div className="flex flex-row justify-between w-full items-center">
+              <p className="mt-5 mb-5 font-semibold text-neutral-800 dark:text-neutral-400">Choose an overall initiative for the sprint you wish to generate.</p>
+              <PLIconButton icon="ri-add-line"  onClick={() => setInitiativeModalOpen(true)} disabled={!!manualInitiative}/>  
+            </div>
             <div className="mt-5 flex flex-row gap-3">
               {initiatives.map((initiative, index) => {
                 return (
                   <button 
                     key={index} 
-                    className={"w-full p-2 rounded-xl font-medium flex flex-col justify-start items-start border-2 "+ (selectedInitiative === initiative.id ? "dark:bg-neutral-800 bg-white dark:text-neutral-200 text-neutral-800 border-neutral-800" : "bg-neutral-200 dark:bg-neutral-400 border-neutral-400 dark:border-neutral-400 dark:text-neutral-200 text-black ")}
+                    className={"w-full p-2 rounded-xl font-medium flex flex-col justify-start items-start border-2 "+ (selectedInitiative === initiative.id && !choseManualInitiative ? "dark:bg-neutral-800 bg-white dark:text-neutral-200 text-neutral-800 border-neutral-800" : "bg-neutral-200 dark:bg-neutral-400 border-neutral-400 dark:border-neutral-400 dark:text-neutral-200 text-black ")}
                     onClick={() => setSelectedInitiative(initiative.id)}
                   >
                     <p className="font-bold underline text-lg">Option #{index + 1}</p>
@@ -202,14 +273,28 @@ export default function SprintGenerationPage() {
                   </button>
                 )
               })}
+              {manualInitiative && (
+                <>
+                  <button 
+                    className={"w-full p-2 rounded-xl font-medium flex flex-col justify-start items-start border-2 "+ (choseManualInitiative? "dark:bg-neutral-800 bg-white dark:text-neutral-200 text-neutral-800 border-neutral-800" : "bg-neutral-200 dark:bg-neutral-400 border-neutral-400 dark:border-neutral-400 dark:text-neutral-200 text-black ")}
+                    onClick={() => setChoseManualInitiative(true)}
+                  >
+                    <p className="font-bold underline text-lg">Preferred Initiative</p>
+                    <p className="text-left text-md">{manualInitiative}</p>
+                  </button>
+                </>
+              )}
+
             </div>
             <div className="mt-5 mb-5 w-full overflow-scroll relative">
             {
+              choseManualInitiative && manualInitiative ? <ManualInitiativeView initiative={manualInitiative}/> :
+
               <div className="flex flex-col gap-3">
-                { selectedInitiative ?  
-                  <SprintPlanningTaskTable tasks={taskMap[selectedInitiative]} setItemsSelected={setItemsSelected} setIdsChecked={setIdsChecked}/> :
+                { !manualInitiative && ( selectedInitiative ?  <SprintPlanningTaskTable tasks={taskMap[selectedInitiative]} setItemsSelected={setItemsSelected} setIdsChecked={setIdsChecked}/> :
                   <p>Please select an initiative. The chosen option will determine the tasks that will be included in the sprint.</p>
-                }
+                )}
+                  
               </div>
             }
             </div>
@@ -261,7 +346,12 @@ export default function SprintGenerationPage() {
       </div>
       <PLConfirmModal message={confirmationMessage} open={confirmModalOpen} setOpen={setConfirmModalOpen} onConfirm={onConfirm}/>
       <PLAddTaskModal open={manualTaskModalOpen} setOpen={setManualTaskModalOpen} onSubmit={onAddTask} application_id={applicationId} authToken={authToken}/>
-      <PLLoadingModal open={loading} setOpen={setLoading} title="Generating Sprint in PM Tool..."/>
+      <PLLoadingModal open={loading} setOpen={setLoading} title={generatingInitiativeSuggestions ? 'Getting Suggestions...' : "Generating Sprint in PM Tool..."}/>
+      <PLManualInitiativeModal 
+        isOpen={initiativeModalOpen} 
+        onSubmit={handleAddingInitiative} 
+        setIsOpen={setInitiativeModalOpen}
+      />
     </div>
   )
 }
@@ -293,12 +383,36 @@ function BacklogTable({tasks, setIdsChecked, listType}: {tasks: Array<GeneratedT
   }
 
   const columns: Array<TableColumn> = [
+    {key: "description", type: "text"},
+    {key: "reason", type: "text"},
+    {key: "points", type: "text"},
+  ]
+  if (tasks.length === 0) return (
+    <p className="text-red-400 mt-3">
+      {listType === 'backlog' ? 'Your backlog is empty.' : 'There are no unused suggestions. All have been pulled into this sprint.'}
+    </p>
+  )
+
+  return (
+    <div className="mt-5 mb-5">
+      <PLTable data={tasks} checked={[]} columns={columns} onCheck={onCheck}/>
+    </div>
+  )
+}
+
+function SuggestionsTable({tasks, setIdsChecked}: {tasks: Array<TaskSuggestions & {id: number}>, setIdsChecked: (ids: Array<number>) => void}) {
+
+  function onCheck(ids:Array<number>) {
+    setIdsChecked(ids)
+  }
+
+  const columns: Array<TableColumn> = [
     {key: "title", type: "text"},
     {key: "reason", type: "text"},
   ]
   if (tasks.length === 0) return (
     <p className="text-red-400 mt-3">
-      {listType === 'backlog' ? 'Your backlog is empty.' : 'There are no unused suggestions. All have been pulled into this sprint.'}
+      {'No suggestions were provided.'}
     </p>
   )
 
