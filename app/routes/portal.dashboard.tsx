@@ -65,7 +65,7 @@ export const loader: LoaderFunction = args => {
         }
       }
       const suggestions = await dbClient.applicationSuggestion.findMany({ where: { applicationId: selectedApplicationId }})
-      const sprints = await dbClient.applicationSprint.findMany({
+      const sprints = (await dbClient.applicationSprint.findMany({
         where: {
           applicationId: selectedApplicationId,
           status: { in: ['In Progress', 'Completed'] }
@@ -74,20 +74,20 @@ export const loader: LoaderFunction = args => {
           startDate: 'desc'
         },
         take: 8
-      });
+      })).sort((a,b) => (new Date(a.startDate!).getTime()) - (new Date(b.startDate!).getTime()))
       const tasks = await dbClient.generatedTask.findMany({ where: { sprintId: { in: sprints.map(s => s.id) } }})
       const completedStatuses = ['done', 'complete', 'completed', 'finished']
 
       const taskTotalsChartData = createSprintTaskTotalsChartData(
-        sprints.sort((a,b) => a.id - b.id).map(s => ({name: s.id.toString(), taskCount: tasks.filter(t => t.sprintId === s.id).length}))
+        sprints.map(s => ({name: s.id.toString(), taskCount: tasks.filter(t => t.sprintId === s.id).length}))
       )
 
       const sprintPointsChartData = createSprintPointsChartData(
-        sprints.sort((a,b) => a.id - b.id).map(s => ({name: s.id.toString(), points: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).reduce((acc, t) => acc + (t.points || 0), 0)}))
+        sprints.map(s => ({name: s.id.toString(), points: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).reduce((acc, t) => acc + (t.points || 0), 0)}))
       )
 
       const taskPercentagesChartData = createSprintTaskCompletionPercentageChartData(
-        sprints.sort((a,b) => a.id - b.id).map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).length, total: tasks.filter(t => t.sprintId === s.id).length}))
+        sprints.map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).length, total: tasks.filter(t => t.sprintId === s.id).length}))
       )
 
       const currentSprint = sprints.find(s => s.status === 'In Progress')

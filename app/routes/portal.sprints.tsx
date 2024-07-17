@@ -156,7 +156,7 @@ export default function SprintPage() {
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
       </div>
       <div className="mt-5 flex flex-col gap-3">
-        {sprints.sort((a,b) => a.id - b.id).reverse().map((sprint, index) => {
+        {sprints.sort((a,b) => (new Date(a.startDate!).getTime()) - (new Date(b.startDate!).getTime())).reverse().map((sprint, index) => {
           return <SprintTableRow data={sprint} key={index} tasks={taskMap[sprint.id]} initiative={sprintInitiativesMap[sprint.id]} timezone={timezone}/>
         })}
       </div>
