@@ -31,7 +31,7 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                           id="checkbox-all-search" 
                           type="checkbox"
                           checked={checkedRowIds.length === rowData.length && rowData.length !== 0}
-                          className="w-4 h-4 dark:accent-orange-600 accent-orange-300 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          className="w-4 h-4 dark:accent-orange-600 accent-orange-500 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                           onChange={(e) => {
                             if(e.target.checked) {
                               const updatedList = rowData.map(i => i.id)
@@ -120,7 +120,7 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                               }
                             }}
                             id="checkbox-table-search-1" type="checkbox" 
-                            className="w-4 h-4 dark:accent-orange-600 accent-orange-300 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            className="w-4 h-4 dark:accent-orange-600 accent-orange-500 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                           />
                           <label htmlFor="checkbox-table-search-1" className="sr-only">checkbox</label>
                       </div>

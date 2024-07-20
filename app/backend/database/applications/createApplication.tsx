@@ -6,14 +6,14 @@ export function wrapAddAccountApplication(client: PrismaClient['accountApplicati
   return addAccountApplication
 
   async function addAccountApplication(account_id: number, data: NewApplicationData): Promise<BaseResponse<AccountApplication>> {
-    const { name, summary, siteUrl, type, sprint_interval  } = data
+    const { name, summary, type, sprint_interval, siteUrl  } = data
     try {
       const app = await client.create({data: {
         accountId: account_id,
         name,
         summary,
         type,
-        siteUrl,
+        siteUrl: siteUrl.length ? siteUrl : null,
         archived: false,
         sprint_generation_enabled: false,
         sprint_interval

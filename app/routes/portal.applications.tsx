@@ -54,10 +54,8 @@ export let action: ActionFunction = async ({ request }) => {
 
       let pmToolConfigurationResponseId: number| null = null
       let pmToolType: 'clickup' | 'notion' | null = null
-      console.log(pmToolData)
       if ('parentFolderId' in pmToolData) {
         const {parentFolderId, apiToken} = pmToolData
-        console.log('attempting to add clickup config')
         const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, createAppResult.id)
         if (data) {
           pmToolConfigurationResponseId = data.id
@@ -70,7 +68,6 @@ export let action: ActionFunction = async ({ request }) => {
 
       } else {
         const {parentPageId, apiKey} = pmToolData
-        console.log('attempting to add notion config')
         const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parentPageId, createAppResult.id)
         if (data) {
           pmToolConfigurationResponseId = data.id
@@ -80,18 +77,11 @@ export let action: ActionFunction = async ({ request }) => {
         }
       }
       if (pmToolConfigurationResponseId && pmToolType) {
-        console.log(`adding pm tool config for app ${createAppResult.id}`)
         if (pmToolType === 'clickup') {
           const response = await appDbClient.updateApplication(createAppResult.id, {clickup_integration_id: pmToolConfigurationResponseId})
-          console.log('updated app with clickup config', response)
         } else {
           const response = await appDbClient.updateApplication(createAppResult.id, {notion_integration_id: pmToolConfigurationResponseId})
-          console.log('updated app with notion config', response)
         }
-
-        console.log('added pm tool config')
-      } else {
-        console.log('failed to add pm tool config due to missing data')
       }
     }
     return json({})
@@ -121,7 +111,9 @@ export default function ApplicationsPage() {
   const formRef = useRef<HTMLFormElement>(null)
   const {isAdmin} = useAdmin()
   function openDeleteModal(e: React.FormEvent<HTMLButtonElement>, applicationId: number) {
-    e.preventDefault()
+    if (e && e?.preventDefault) {
+      e.preventDefault()
+    }
     setSelectedAppId(applicationId)
     setAction('delete')
     setDeleteConfirmModalOpen(true)

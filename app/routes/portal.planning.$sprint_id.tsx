@@ -166,7 +166,7 @@ export default function SprintGenerationPage() {
   const confirmationMessage = "Are you sure you want to close out planning and start the next sprint with the selected tasks?"
   const [initiativeModalOpen, setInitiativeModalOpen] = useState(false)
   const [choseManualInitiative, setChoseManualInitiative] = useState(false)
-  const [manualInitiativeSuggestions, setManualInitiativeSuggestions] = useState<Array<TaskSuggestions>>([])
+  const [manualInitiativeSuggestions, setManualInitiativeSuggestions] = useState<Array<number>>([])
   const [generatingInitiativeSuggestions, setGeneratingInitiativeSuggestions] = useState(false)
   const [suggestions, setSuggestions] = useState<Array<TaskSuggestions & {id: number}>>([])
 
@@ -176,7 +176,7 @@ export default function SprintGenerationPage() {
       sprint_id: sprintId,
       task_ids: idsChecked, 
       initiative_id: manualInitiative ?? selectedInitiative, 
-      manualInitiativeSuggestions,
+      manualInitiativeSuggestions: suggestions.filter(suggestion => manualInitiativeSuggestions.includes(suggestion.id)),
       new_tasks: newTasks, 
       task_backlogged_ids: backloggedTaskIds,
       backlog_ids_used: selectedIdsFromBacklog,
@@ -208,9 +208,9 @@ export default function SprintGenerationPage() {
   }
 
   const getBacklogSuggestions = async () => {
-    if (!selectedInitiative) return
     setBacklogSuggestionsProcessing(true)
-    const response = await fetch(`/api/backlog/`, {method: 'POST', body: JSON.stringify({initiative_id: selectedInitiative})}).then(res => res.json()).catch(err => null)
+    const initiative = choseManualInitiative ? (manualInitiative ?? '') : (initiatives.find(i => i.id === selectedInitiative)?.description ?? '')
+    const response = await fetch(`/api/backlog`, {method: 'POST', body: JSON.stringify({initiative: initiative})}).then(res => res.json()).catch(err => null)
     if (response) {
       const suggestedTasks = response.tasks as Array<number>
       const updatedBacklog = backlog.filter(task => suggestedTasks.includes(task.id))
@@ -246,7 +246,7 @@ export default function SprintGenerationPage() {
         <div>
           <PLBasicButton text="Generate Suggestions" onClick={onClick}/>
         </div>
-        <SuggestionsTable tasks={suggestions} setIdsChecked={(ids) => setManualInitiativeSuggestions(suggestions.filter(s => ids.includes(s.id)))}/>
+        <SuggestionsTable tasks={suggestions} setIdsChecked={setManualInitiativeSuggestions} idsChecked={manualInitiativeSuggestions}/>
       </>
     )
   }
@@ -342,7 +342,7 @@ export default function SprintGenerationPage() {
         <input type="hidden" ref={inputRef} name="sprint_data"/>
       </Form>
       <div>
-        <PLBasicButton text={step < 3 ? 'Go to Next Step' : "Start Sprint"} onClick={handleButtonClick} icon="ri-arrow-right-line" disabled={step === 0 && !itemsSelected}/>
+        <PLBasicButton text={step < 3 ? 'Go to Next Step' : "Start Sprint"} onClick={handleButtonClick} icon="ri-arrow-right-line" disabled={step === 0 && !itemsSelected && !manualInitiativeSuggestions.length}/>
       </div>
       <PLConfirmModal message={confirmationMessage} open={confirmModalOpen} setOpen={setConfirmModalOpen} onConfirm={onConfirm}/>
       <PLAddTaskModal open={manualTaskModalOpen} setOpen={setManualTaskModalOpen} onSubmit={onAddTask} application_id={applicationId} authToken={authToken}/>
@@ -400,7 +400,7 @@ function BacklogTable({tasks, setIdsChecked, listType}: {tasks: Array<GeneratedT
   )
 }
 
-function SuggestionsTable({tasks, setIdsChecked}: {tasks: Array<TaskSuggestions & {id: number}>, setIdsChecked: (ids: Array<number>) => void}) {
+function SuggestionsTable({tasks, setIdsChecked, idsChecked}: {tasks: Array<TaskSuggestions & {id: number}>, setIdsChecked: (ids: Array<number>) => void, idsChecked: Array<number>}) {
 
   function onCheck(ids:Array<number>) {
     setIdsChecked(ids)
@@ -418,7 +418,7 @@ function SuggestionsTable({tasks, setIdsChecked}: {tasks: Array<TaskSuggestions 
 
   return (
     <div className="mt-5 mb-5">
-      <PLTable data={tasks} checked={[]} columns={columns} onCheck={onCheck}/>
+      <PLTable data={tasks} checked={idsChecked} columns={columns} onCheck={onCheck}/>
     </div>
   )
 }

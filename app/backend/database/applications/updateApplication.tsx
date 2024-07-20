@@ -7,6 +7,8 @@ export function wrapUpdateApplication(client: PrismaClient['accountApplication']
 
   async function updateApplication(id: number, data: Partial<NewApplicationData>): Promise<BaseResponse<AccountApplication>> {
     const {goals, ...rest} = data
+    let updates: Partial<NewApplicationData> = {...rest}
+    if ('siteUrl' in updates && !updates.siteUrl?.length) delete updates.siteUrl
     try {
       const entry = await client.update({where: {id}, data: {...rest}})
       return {data: entry, errors: []}

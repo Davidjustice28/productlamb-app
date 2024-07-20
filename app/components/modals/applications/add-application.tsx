@@ -15,7 +15,6 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
   // initials values
-  const repositoryJsonInputRef = useRef<HTMLInputElement>(null)
   const pmToolRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -75,11 +74,10 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
   const validateApplication = () => {
     const name = nameInputRef.current?.value || ''
     const summary = summaryInputRef.current?.value || ''
-    const siteUrl = siteUrlInputRef.current?.value || ''
     const type = typeInputRef.current?.value || ''
     const pmToolConfigured = !!pmToolRef.current?.value?.length
     const sprintInterval = sprintIntervalInputRef.current?.value || ''
-    const valid = (name.length && summary.length && siteUrl.length && type.length && pmToolConfigured && sprintInterval.length) ? true : false
+    const valid = (name.length && summary.length && type.length && pmToolConfigured && sprintInterval.length) ? true : false
     return valid
   
   }
