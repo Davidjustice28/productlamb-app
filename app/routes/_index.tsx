@@ -156,7 +156,7 @@ function FeaturesSection() {
 
   return (
     <div className="w-full flex flex-col items-center py-16 -mb-10 gap-20 md:gap-24 md:px-16 px-8" id="features">
-      {imgs.map((img, i) => {
+      {imgs.map((photo, i) => {
         return (
           <div className={"mt-10 gap-16 w-full items-start md:items-center justify-between flex" + (i % 2 === 0 ? ' flex-col md:flex-row' : ' flex-col md:flex-row-reverse')} key={i}>
             <div className="md:w-1/2 w-full flex flex-col gap-8">
@@ -222,8 +222,8 @@ function FeaturesSection() {
                 </div>
               )}
             </div>
-            <div className="md:w-2/3 w-full md:h-[450px] object-contain border-2 rounded-lg">
-              <img className="w-full h-full md:h-full object-fill shadow-2xl shadow-neutral-700" src={img} alt="feature image"/>
+            <div className="md:w-2/3 w-full md:h-[450px] 2xl:w-[33%] object-contain border-2 rounded-lg">
+              <img className="w-full h-full md:h-full object-fill shadow-2xl shadow-neutral-700" src={photo} alt="feature image"/>
             </div>
           </div>
         )

@@ -182,7 +182,7 @@ export default function DashboardPage() {
         </div>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Suggested Actions</h2>
-          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full flex flex-col px-3 justify-evenly">
+          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full flex flex-col px-3 py-2 lg:py-0  gap-2 lg:gap-0 lg:justify-evenly overflow-y-scroll lg:overflow-hidden">
             {!suggestions.length && <p className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>There are no suggestions at this time.</p>}
             {suggestions.map(s => <PLSuggestion suggestion={s} key={s.id}/>)}
           </div>
@@ -198,7 +198,7 @@ function PLSuggestion({suggestion}: {suggestion: ApplicationSuggestion}) {
       <div className="flex flex-row justify-between items-center border-2 dark:border-neutral-500 rounded-full px-2 py-1">
         <i className="ri ri-lightbulb-line text-xl text-yellow-500"></i>
       </div>
-      <p className="text-black dark:text-gray-300 italic text-xs w-full text-left">"{suggestion.suggestion}"</p>
+      <p className="text-black dark:text-gray-300 italic text-[10px] text-xs w-full text-left">"{suggestion.suggestion}"</p>
     </div>
   )
 }
