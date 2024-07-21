@@ -30,7 +30,7 @@ function getIntegrationsByname(setupIntegrations: Array<ApplicationIntegration>,
 export const action: ActionFunction = async ({ request }) => {
   const cookies = request.headers.get('Cookie')
   const form = await request.formData()
-  const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData | GithubIntegrationSetupFormData | GitlabIntegrationSetupFormData | { action: string, integration_id: string } | { google_type: string, application_id: string}
+  const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData | GithubIntegrationSetupFormData | GitlabIntegrationSetupFormData | { action: string, integration_id: string } | { google_type: string, application_id: string, form_id?: string }
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
   const prisma = new PrismaClient()
@@ -40,13 +40,16 @@ export const action: ActionFunction = async ({ request }) => {
     const type = formData.google_type.toLowerCase().includes('calendar') ? 'calendar' : 'forms'
     // update create base url based on environment
     const baseUrl = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
-
+    const body: {form_id?: string, type: string} = {type}
+    if (type === 'forms' && 'form_id' in formData) {
+      body['form_id'] = formData.form_id
+    }
     const response = await fetch(`${baseUrl}/integrations/google/${applicationId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({type}),
+      body: JSON.stringify(body),
     })
     
     if (response.status === 200) {

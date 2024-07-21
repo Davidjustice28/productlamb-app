@@ -45,6 +45,19 @@ export function IntegrationSetupComponent({integration, onBackButtonClick, showB
             <form method="POST" ref={googleFormRef} action="/portal/integrations">
               <input type="hidden" name="google_type" value={integration.name.toLowerCase()}/>
               <input type="hidden" name="application_id" value={applicationId}/>
+              {integration.name.includes('Google Form') && (
+                <div className="flex flex-col gap-2 w-60 mt-5 mb-2">
+                  <label className="text-gray-700 dark:text-neutral-300">Form ID</label>
+                  <input 
+                    required={true} 
+                    type='text' 
+                    name='form_id' 
+                    placeholder='Form ID'
+                    className="p-2 border border-gray-300 dark:border-neutral-700 rounded-lg" 
+                    autoComplete={"off"}
+                  />
+                </div>
+              )}
             </form>
             <PLBasicButton text={hasGoogleOAuth ? 'Enable' : "Connect with Google"} colorClasses="bg-orange-400 hover:bg-orange-500 text-white w-52 mt-5" rounded={true} onClick={connectGoogleAccount} noDefaultDarkModeStyles/> 
           </>

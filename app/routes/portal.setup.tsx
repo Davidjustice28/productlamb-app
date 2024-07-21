@@ -15,11 +15,12 @@ import { PLAddApplicationModal } from "~/components/modals/applications/add-appl
 import { PLIntegrationOptionsModal } from "~/components/modals/integrations/integration-options";
 import { availableIntegrations } from "~/static/integration-options";
 import { NewApplicationData, PLAvailableIntegrationNames, SupportedTimezone } from "~/types/database.types";
-import { TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types";
+import { GithubIntegrationSetupFormData, GitlabIntegrationSetupFormData, TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types";
 import { createClerkClient } from '@clerk/remix/api.server';
 import { useOrganizationList } from "@clerk/remix";
 import { PLInviteMemberModal } from "~/components/modals/account/invite-member";
 import { generateInviteToken } from "~/utils/jwt";
+import { encrypt } from "~/utils/encryption";
 
 
 interface SetupFieldProps {
@@ -163,16 +164,62 @@ export let action: ActionFunction = async (args) => {
     return json({hasApplication: true, applicationId: createAppResult?.id})
   }  else if ('integration' in data) {
     const {data: apps} = await appDbClient.getAccountApplications(accountId)
-    const integrationData = JSON.parse(data.integration as string) as TypeformIntegrationSetupFormData
-    const integrationOptionData = availableIntegrations.find(i => i.name.toLowerCase() === integrationData.integration_name)
-    if (integrationOptionData && integrationOptionData.name === 'typeform') {
-      await integrationClient.addIntegration<TypeformIntegrationMetaData>(apps![0].id, integrationData.integration_name as PLAvailableIntegrationNames, integrationData.api_token, {
-        form_id: integrationData.typeform_form_id,
-        tag_name: 'productlamb-webhook',
-        webhook_id: ''
+    const application_id = accountCookie.selectedApplicationId as number
+    const integrationData = JSON.parse(data.integration as string) as TypeformIntegrationSetupFormData | GithubIntegrationSetupFormData | GitlabIntegrationSetupFormData | { google_type: string, application_id: string, form_id?: string }
+    const integrationName = "integration_name" in integrationData ? integrationData.integration_name : "google_type" in integrationData ? ( integrationData.google_type.toLowerCase().includes('forms') ? 'google forms' : 'google calendar') : null
+    if (integrationName === null) return json({})
+    const integrationOptionData = availableIntegrations.find(i => i.name.toLowerCase() === integrationName)
+    if (!integrationOptionData) return json({})
+
+    if ('google_type' in integrationData) {
+      const type = integrationData.google_type.toLowerCase().includes('calendar') ? 'calendar' : 'forms'
+      const baseUrl = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
+      const body: {form_id?: string, type: string} = {type}
+      if (type === 'forms' && 'form_id' in integrationData) {
+        body['form_id'] = integrationData.form_id
+      }
+      const response = await fetch(`${baseUrl}/integrations/google/${application_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
       })
+      
+      if (response.status === 200) {
+        const body = await response.json()
+        if (body?.url) {
+          return redirect(body.url)
+        }
+      }
+    } else {
+      const integrationOptionData = availableIntegrations.find(i => i.name.toLowerCase() === integrationData.integration_name.toLowerCase())
+      const iv = process.env.ENCRYPTION_IV 
+      const key = process.env.ENCRYPTION_KEY
+       if (!key || !iv) {
+         return json({})
+       }
+       
+      const encryptedToken = encrypt(integrationData.api_token, key, iv)
+      if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'typeform') {
+        await integrationClient.addIntegration<TypeformIntegrationMetaData>(application_id, integrationName as PLAvailableIntegrationNames, encryptedToken, {
+          form_id: (integrationData as TypeformIntegrationSetupFormData).typeform_form_id,
+          tag_name: 'productlamb-webhook',        
+        })
+      } else if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'github') {
+        await integrationClient.addIntegration(application_id, integrationName  as PLAvailableIntegrationNames, encryptedToken, {
+          repository_name: (integrationData as GithubIntegrationSetupFormData).repo_name,
+          repository_owner: (integrationData as GithubIntegrationSetupFormData).repo_owner,
+        })
+  
+      } else if (integrationOptionData && integrationOptionData.name.toLowerCase() === 'gitlab') {
+        await integrationClient.addIntegration(application_id, integrationName  as PLAvailableIntegrationNames, encryptedToken, {
+          project_id: (integrationData as GitlabIntegrationSetupFormData).project_id,
+        })
+      } else {
+        return json({})
+      }
     } 
-    
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(apps![0].id)
     return json({hasIntegration: integrations ? integrations.length > 0 : false})
   } else if('organization_details' in data) {

@@ -50,7 +50,7 @@ export const availableIntegrations: Array<IntegrationOptions>= [
     img_url: 'https://storage.googleapis.com/productlamb-platform-images/google-forms.svg',
     description: 'Pull user feedback and data from Google Forms.',
     requiredFields: {
-
+      form_id: { label: 'Form ID', type: 'text'},
     },
     available: true,
   },
