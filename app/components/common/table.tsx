@@ -131,24 +131,25 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                           <label htmlFor="checkbox-table-search-1" className="sr-only">checkbox</label>
                       </div>
                   </td>
-                   {columns.map((column, index) => {
-                      const key = typeof column === "string" ? column : column.key
-                      const itemContent = item[key]
-                      const roundingClass = index === (columns.length - 1) ? "rounded-r-lg" : ""
-                      if(!index) {
-                        return (
-                          <th scope="row" className={"px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white w-full"} key={index} onClick={() => handleRowClick(item)}>
-                            <TableDataCellContent type={column.type} data={itemContent}/>
-                          </th>
-                        )
-                      } else {
-                        return (
-                          <td className={"px-6 py-4 w-full"} key={index} onClick={() => handleRowClick(item)}>
-                            <TableDataCellContent type={column.type} data={itemContent}/>
-                          </td>
-                        )
-                      }
-                    })}
+                  
+                  {columns.map((column, index) => {
+                    const key = typeof column === "string" ? column : column.key
+                    const itemContent = item[key]
+                    const roundingClass = index === (columns.length - 1) ? "rounded-r-lg" : ""
+                    if(!index) {
+                      return (
+                        <th scope="row" className={"px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"} key={index} onClick={() => handleRowClick(item)}>
+                          <TableDataCellContent type={column.type} data={itemContent}/>
+                        </th>
+                      )
+                    } else {
+                      return (
+                        <td className={"px-6 py-4 "} key={index} onClick={() => handleRowClick(item)}>
+                          <TableDataCellContent type={column.type} data={itemContent}/>
+                        </td>
+                      )
+                    }
+                  })}
               </tr>
             )
           })}
