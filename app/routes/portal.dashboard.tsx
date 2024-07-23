@@ -79,20 +79,20 @@ export const loader: LoaderFunction = args => {
       const completedStatuses = ['done', 'complete', 'completed', 'finished']
 
       const taskTotalsChartData = createSprintTaskTotalsChartData(
-        sprints.map(s => ({name: s.id.toString(), taskCount: tasks.filter(t => t.sprintId === s.id).length}))
+        sprints.filter(s => s.status !== 'In Progress').map(s => ({name: s.id.toString(), taskCount: tasks.filter(t => t.sprintId === s.id).length}))
       )
 
       const sprintPointsChartData = createSprintPointsChartData(
-        sprints.map(s => ({name: s.id.toString(), points: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).reduce((acc, t) => acc + (t.points || 0), 0)}))
+        sprints.filter(s => s.status !== 'In Progress').map(s => ({name: s.id.toString(), points: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).reduce((acc, t) => acc + (t.points || 0), 0)}))
       )
 
       const taskPercentagesChartData = createSprintTaskCompletionPercentageChartData(
-        sprints.map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).length, total: tasks.filter(t => t.sprintId === s.id).length}))
+        sprints.filter(s => s.status !== 'In Progress').map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).length, total: tasks.filter(t => t.sprintId === s.id).length}))
       )
 
       const currentSprint = sprints.find(s => s.status === 'In Progress')
       const currentSprintTasksData = currentSprint ? createCurrentSprintChartsData(tasks.filter(t => t.sprintId === currentSprint.id)) : []
-      const taskTypesData = createTaskTypeChartData(sprints, tasks)
+      const taskTypesData = createTaskTypeChartData(sprints.filter(s => s.status !== 'In Progress'), tasks)
       const timeLeftInSprint = currentSprint && currentSprint?.endDate ? calculateTimeLeft(account!.timezone, new Date().toISOString(), currentSprint.endDate, 'Expired') : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, time_left: timeLeftInSprint}
       return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint, taskTypesData, suggestions, sprintPointsChartData})
@@ -132,7 +132,7 @@ export default function DashboardPage() {
     <div className="flex flex-col items-center gap-5 justify-start">
       <div className="w-full flex flex-col">
         <div className="flex flex-row justify-between w-full items-center">
-          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Task Completed' : (chartIndex === 0) ? 'Tasks Assigned' : chartIndex === 2 ? 'Task Types' : 'Points Completed'}</span></h2>
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Completion Percentage' : (chartIndex === 0) ? 'Tasks Assigned' : chartIndex === 2 ? 'Task Types' : 'Points Completed'}</span></h2>
           <div className="inline-flex">
             <button 
               className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 2 || chartIndex == 0 ? "cursor-not-allowed" : "hover:text-gray-400")} 

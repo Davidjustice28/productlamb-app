@@ -102,10 +102,11 @@ export function createSprintPointsChartData(data: Array<{name: string, points: n
 }
 
 export function createSprintTaskCompletionPercentageChartData(data: Array<{name: string, completed: number, total: number}>): Array<{name: string, completed: number}> {
-  return data.map(entry => {
+  return data.map(({total, completed, name}) => {
+    const percentage = Math.round((completed / total) * 100)
     return {
-      name:`Sprint ${entry.name}`,
-      completed: entry.completed,
+      name:`Sprint ${name}`,
+      completed: percentage,
     }
   })
 }
@@ -148,10 +149,11 @@ export function createCurrentSprintChartsData(data: GeneratedTask[]) {
 
 interface SprintTaskTypeData{
     sprintName: string;
-    bugs: 0;
-    features: 0;
-    chores: 0;
-    other: 0;
+    bugs: number;
+    features: number;
+    chores: number;
+    other: number;
+    date_started: number;
 };
 
 interface SprintsTaskData {
@@ -166,7 +168,8 @@ export function createTaskTypeChartData(sprints: ApplicationSprint[], tasks: Gen
       features: 0,
       chores: 0,
       other: 0,
-      sprintName: `Sprint ${sprint.id}`
+      sprintName: `Sprint ${sprint.id}`,
+      date_started: new Date(sprint!.startDate!).getTime()
     }
     
     sprintTasks.forEach(task => {
@@ -189,15 +192,16 @@ export function createTaskTypeChartData(sprints: ApplicationSprint[], tasks: Gen
     return acc;
   }, {} as SprintsTaskData)
 
-  const chartData: Array<any> = Object.values(sprintMap).map((sprint, i) => {
+  const chartData = Object.values(sprintMap).map((data: SprintTaskTypeData, i) => {
     return { 
-      name: sprint.sprintName,
-      bugs: sprint.bugs,
-      features: sprint.features,
-      chores: sprint.chores,
-      other: sprint.other,
-      count: i
+      name: data.sprintName,
+      bugs: data.bugs,
+      features: data.features,
+      chores: data.chores,
+      other: data.other,
+      count: i,
+      date_ms: data.date_started
     }
-  })
+  }).sort((a, b) => a.date_ms - b.date_ms)
   return chartData;
 }
