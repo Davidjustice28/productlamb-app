@@ -1,4 +1,4 @@
-import { GeneratedTask, PrismaClient } from "@prisma/client"
+import { ApplicationBug, GeneratedTask, PrismaClient } from "@prisma/client"
 
 export type PLButtonIcons = string | 'ri-add-line' | 'ri-equalizer-line' | 'ri-pencil-line' | 'ri-delete-bin-line' | 'ri-archive-line' | 'ri-restore-line' | 'ri-check-line' | 'ri-close-line' | 'ri-information-line' | 'ri-external-link-line' | 'ri-arrow-up-line' | 'ri-arrow-down-line' | 'ri-arrow-left-line' | 'ri-arrow-right-line' | 'ri-arrow-up-line' | 'ri-arrow-down-line' | 'ri-arrow-left-line' | 'ri-arrow-right-line' | 'ri-arrow-up-fill' | 'ri-arrow-down-fill' | 'ri-arrow-left-fill' | 'ri-arrow-right-fill' | 'ri-arrow-up-fill' | 'ri-arrow-down-fill' | 'ri-arrow-left-fill' | 'ri-arrow-right-fill' | 'ri-arrow-up-s-fill' | 'ri-arrow-down-fill' | 'ri-arrow-left-s-fill' | 'ri-arrow-right-s-fill' | 'ri-arrow-up-fill' | 'ri-arrow-down-fill' | 'ri-arrow-left-fill' | 'ri-arrow-right-fill' | 'ri-arrow-up-s-fill' | 'ri-arrow-down-s-fill' | 'ri-arrow-left-s-fill' | 'ri-arrow-right-s-fill' | 'ri-arrow-up-fill' | 'ri-arrow-down-fill' | 'ri-arrow-left-fill' | 'ri-arrow-right-fill' | 'ri-arrow-up-s-fill' | 'ri-arrow-down-s-fill' | 'ri-arrow-left-s-fill' | 'ri-arrow-right-s-fill' | 'ri-arrow-up-fill' | 'ri-arrow-down-fill' | 'ri-arrow-left-fill' | 'ri-arrow-right-fill' | 'ri-arrow-up-s-fill' | 'ri-arrow-down-s-fill' | 'ri-arrow-left-s-fill' | 'ri-arrow-right-s-fill' | 'ri-arrow-up-fill' | 'ri-arrow-down-fill' | 'ri-arrow-left-fill' | 'ri-arrow-right-fill' | 'ri-arrow-up-s-fill' | 'ri-arrow-down-s-fill' | 'ri-arrow-left-s-fill' | 'ri-arrow-right-s-fill' | 'ri-arrow-up-fill' | 'ri-arrow-down-fill' | 'ri-arrow-left-fill' | 'ri-arrow-right-fill' | 'ri-arrow-up-s-fill' | 'ri-arrow-down-s-fill' | 'ri-arrow-left-s-fill' | 'ri-arrow-right'
 
@@ -41,12 +41,21 @@ export interface PLTableProps<T> {
   component?: React.ComponentType<{data: T}>
   tableModalName?: string
   onCheck?: (ids: Array<number>) => void
+  onRowClick?: (item: T) => void
 }
 
 export interface PLAddBugModalProps {
   open: boolean,
   onClose: () => void,
   setOpen: (open: boolean) => void
+}
+
+export interface PLEditBugModalProps {
+  open: boolean,
+  onClose: () => void,
+  setOpen: (open: boolean) => void
+  bug: ApplicationBug | null
+  onSubmit?: (data: ApplicationBug[]) => void
 }
 
 
@@ -67,8 +76,8 @@ export interface PLSelectorModalOption<T=any> {
   available: boolean
 }
 
-export type ManualTaskData = Pick<GeneratedTask, 'title'|'description'| 'reason'| 'category'> & {id: number, points: string}
-
+export type ManualTaskData = Pick<GeneratedTask, 'title'|'description'| 'reason'| 'category'> & {id: string, points: string}
+export type EditBugData = {title: string, description: string, priority: string, source: string, action: string, id: string}
 
 export enum FeedbackIntegrations {
   TYPEFORM = 'typeform',

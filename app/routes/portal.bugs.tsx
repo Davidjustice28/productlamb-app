@@ -8,6 +8,7 @@ import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLOptionsButtonGroup } from "~/components/buttons/options-button-group";
 import { PLTable } from "~/components/common/table";
 import { PLAddBugModal } from "~/components/modals/bugs/add-bug";
+import { PLEditBugModal } from "~/components/modals/bugs/edit-bug";
 import { PLConfirmModal } from "~/components/modals/confirm";
 import { TableColumn } from "~/types/base.types";
 import { BugGroup, BugPriority, BugSource, BugStatus } from "~/types/database.types";
@@ -106,6 +107,8 @@ export default function BugsPage() {
   const [idsChecked, setIdsChecked] = useState<Array<number>>([])
   const [addModalOpen, setAddModalOpen] = useState<boolean>(false)
   const [pullModalOpen, setPullModalOpen] = useState<boolean>(false)
+  const [selectedBug, setSelectedBug] = useState<ApplicationBug | null>(null)
+  const [editBugModalOpen, setEditBugModalOpen] = useState<boolean>(false)
 
   function handleDelete() {
     setDeleteModalOpen(true)
@@ -117,8 +120,18 @@ export default function BugsPage() {
     setIdsChecked(ids)
   }
 
+  function onEdit(bug: ApplicationBug) {
+    setSelectedBug(bug)
+    setEditBugModalOpen(true)
+  }
+
+  function onEditModalClose() {
+    setEditBugModalOpen(false)
+    setSelectedBug(null)
+  }
+
   const columns: Array<TableColumn> = [
-    {key: "description", type: "text"},
+    {key: "title", type: "text"},
     {key: "priority", type: "status", sortable: true},
   ]
 
@@ -173,10 +186,14 @@ export default function BugsPage() {
         <input type="hidden" name="action" ref={actionInputRef}/>
         <input type="hidden" name="sprint_id" ref={sprintIdInputRef}/>
       </form>
-      <PLTable data={filterBugs} checked={[]} actionsAvailable={true} columns={columns} tableModalName="bugs" onCheck={onCheck}/>
+      <PLTable data={filterBugs} checked={[]} actionsAvailable={true} columns={columns} tableModalName="bugs" onCheck={onCheck} onRowClick={onEdit}/>
       <PLConfirmModal open={deleteModalOpen} setOpen={setDeleteModalOpen} message="Are you sure you want to delete the selected bugs?" onConfirm={submitDeleteRequest}/>
       <PLConfirmModal open={pullModalOpen} setOpen={setPullModalOpen} message="Are you sure you want to pull the selected bugs into the current sprint?" onConfirm={pullBugsIntoSprint} />
       <PLAddBugModal open={addModalOpen} onClose={() => setAddModalOpen(false)} setOpen={setAddModalOpen}/>
+      <PLEditBugModal open={editBugModalOpen} onClose={onEditModalClose} setOpen={setEditBugModalOpen} bug={selectedBug} onSubmit={(bugs) => {
+        setBugs(bugs)
+        setFilterBugs(bugs)
+      }} />
     </div>
   )
 }

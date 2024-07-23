@@ -3,7 +3,7 @@ import { PLStatusBadge } from "./status-badge"
 import { Colors } from "~/types/base.types"
 import { PLTableProps } from "~/types/component.types"
 
-export function PLTable<T extends {[key:string]: any, id: number}>({data, columns=[], actionsAvailable=true, checked, columnsVisible=true, component, tableModalName="rows", onCheck}: PLTableProps<T>) {
+export function PLTable<T extends {[key:string]: any, id: number}>({data, columns=[], actionsAvailable=true, checked, columnsVisible=true, component, tableModalName="entries", onCheck, onRowClick}: PLTableProps<T>) {
   const [checkedRowIds, setCheckedRowIds] = React.useState<Array<number>>([...checked])
   const [rowData, setRowData] = React.useState<Array<T>>(data)
   
@@ -13,6 +13,12 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
     } else {
       const sorted = rowData.sort((a,b) => sortUnknownField(a[key], b[key], direction))
       setRowData(sorted)
+    }
+  }
+
+  function handleRowClick(item: T) {
+    if(onRowClick) {
+      onRowClick(item)
     }
   }
 
@@ -99,7 +105,7 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
               );
             }
             return (
-              <tr key={index} className="bg-white border-b dark:bg-neutral-700 dark:border-neutral-600 hover:bg-gray-50 dark:hover:bg-orange-400 dark:hover:text-white">
+              <tr key={index} className={"bg-white border-b dark:bg-neutral-700 dark:border-neutral-600 hover:bg-gray-50 dark:hover:bg-orange-400 dark:hover:text-white" + (onRowClick ? ' cursor-pointer' : '')}>
                   <td className={"w-4 p-4 " + (actionsAvailable ? '' : 'hidden')}>
                       <div className="flex items-center">
                           <input 
@@ -125,25 +131,24 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                           <label htmlFor="checkbox-table-search-1" className="sr-only">checkbox</label>
                       </div>
                   </td>
-
-                  {columns.map((column, index) => {
-                    const key = typeof column === "string" ? column : column.key
-                    const itemContent = item[key]
-                    const roundingClass = index === (columns.length - 1) ? "rounded-r-lg" : ""
-                    if(!index) {
-                      return (
-                        <th scope="row" className={"px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"} key={index}>
-                          <TableDataCellContent type={column.type} data={itemContent}/>
-                        </th>
-                      )
-                    } else {
-                      return (
-                        <td className={"px-6 py-4 "} key={index}>
-                          <TableDataCellContent type={column.type} data={itemContent}/>
-                        </td>
-                      )
-                    }
-                  })}
+                   {columns.map((column, index) => {
+                      const key = typeof column === "string" ? column : column.key
+                      const itemContent = item[key]
+                      const roundingClass = index === (columns.length - 1) ? "rounded-r-lg" : ""
+                      if(!index) {
+                        return (
+                          <th scope="row" className={"px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white w-full"} key={index} onClick={() => handleRowClick(item)}>
+                            <TableDataCellContent type={column.type} data={itemContent}/>
+                          </th>
+                        )
+                      } else {
+                        return (
+                          <td className={"px-6 py-4 w-full"} key={index} onClick={() => handleRowClick(item)}>
+                            <TableDataCellContent type={column.type} data={itemContent}/>
+                          </td>
+                        )
+                      }
+                    })}
               </tr>
             )
           })}

@@ -9,6 +9,7 @@ import { PLContentLess } from "~/components/common/contentless";
 import { PLTable } from "~/components/common/table";
 import { PLConfirmModal } from "~/components/modals/confirm";
 import { PLAddTaskModal } from "~/components/modals/tasks/add-task-modal";
+import { PLEditTaskModal } from "~/components/modals/tasks/edit-task-modal";
 import { ManualTaskData } from "~/types/component.types";
 import { encrypt } from "~/utils/encryption";
 
@@ -104,6 +105,13 @@ export default function BacklogPage() {
   const [idsChecked, setIdsChecked] = useState<Array<number>>([])
   const [addModalOpen, setAddModalOpen] = useState<boolean>(false)
   const [pullModalOpen, setPullModalOpen] = useState<boolean>(false)
+  const [editModalOpen, setEditModalOpen] = useState<boolean>(false)
+  const [selectedTask, setSelectedTask] = useState<GeneratedTask | null>(null)
+
+  function handleEdit(task: GeneratedTask) {
+    setSelectedTask(task)
+    setEditModalOpen(true)
+  }
 
   function handleDelete() {
     setDeleteModalOpen(true)
@@ -118,9 +126,6 @@ export default function BacklogPage() {
   const actionInputRef = useRef<HTMLInputElement>(null)
   const sprintIdInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
-
-
-
 
   const submitDeleteRequest = async (e: React.FormEvent<HTMLFormElement>) => {
     idsInputRef.current!.value = idsChecked.join(',')
@@ -159,14 +164,14 @@ export default function BacklogPage() {
               <input type="hidden" name="action" ref={actionInputRef}/>
               <input type="hidden" name="sprint_id" ref={sprintIdInputRef}/>
             </form>
-            <PLTable data={backlog} columnsVisible checked={[]}  columns={[{key: 'title', type: 'text'}, {key: 'points', type: 'text'}, {key: 'category', type: 'status'}]} tableModalName="backlog" actionsAvailable={true} onCheck={onCheck}/>
+            <PLTable data={backlog} columnsVisible checked={[]}  columns={[{key: 'title', type: 'text'}, {key: 'points', type: 'text'}, {key: 'category', type: 'status'}]} tableModalName="backlog" actionsAvailable={true} onCheck={onCheck} onRowClick={handleEdit}/>
           </div>
         )
       }
       <PLAddTaskModal open={addModalOpen} setOpen={setAddModalOpen} application_id={application_id} authToken={authToken}/>
       <PLConfirmModal open={deleteModalOpen} setOpen={setDeleteModalOpen} message="Are you sure you want to delete the selected items from your backlog?" onConfirm={submitDeleteRequest}/>
       <PLConfirmModal open={pullModalOpen} setOpen={setPullModalOpen} message="Are you sure you want to pull the selected tasks into the current sprint?" onConfirm={pullTasksIntoSprint} />
-
+      <PLEditTaskModal open={editModalOpen} setOpen={setEditModalOpen} task={selectedTask} authToken={authToken} setTask={setSelectedTask} onSubmit={(tasks) => setBacklog(tasks)}/>
     </div>
   )
 }
