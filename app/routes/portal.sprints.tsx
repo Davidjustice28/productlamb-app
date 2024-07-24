@@ -12,6 +12,7 @@ import { ApplicationsClient } from "~/backend/database/applications/client"
 import React from "react"
 import { PLContentLess } from "~/components/common/contentless"
 import { calculateTimeLeft } from "~/utils/date"
+import { PLConfirmModal } from "~/components/modals/confirm"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
@@ -113,9 +114,7 @@ export default function SprintPage() {
   const parsedPath = pathname.split('/sprints/')
   const generationPage = parsedPath.length > 1 && parsedPath[1] === 'generation'
   const formRef = React.createRef<HTMLFormElement>()
-
   function generateFirstSprint() {
-    console.log('Generating first sprint')
     formRef.current?.submit()
   }
 
@@ -157,7 +156,7 @@ export default function SprintPage() {
       </div>
       <div className="mt-5 flex flex-col gap-3">
         {sprints.sort((a,b) => (new Date(a.startDate!).getTime()) - (new Date(b.startDate!).getTime())).reverse().map((sprint, index) => {
-          return <SprintTableRow data={sprint} key={index} tasks={taskMap[sprint.id]} initiative={sprintInitiativesMap[sprint.id]} timezone={timezone}/>
+          return <SprintTableRow data={sprint} key={index} tasks={taskMap[sprint.id]} initiative={sprintInitiativesMap[sprint.id]} timezone={timezone} />
         })}
       </div>
     </div>
@@ -165,10 +164,39 @@ export default function SprintPage() {
 }
 
 
-function SprintTableRow({data, tasks, initiative, timezone}: {data: ApplicationSprint, tasks?: GeneratedTask[], initiative?: string, timezone: string}) {
+function SprintTableRow({data, tasks: initialTasks, initiative, timezone}: {data: ApplicationSprint, tasks?: GeneratedTask[], initiative?: string, timezone: string }) {
+  const [tasks, setTasks] = useState<Array<GeneratedTask>|undefined>(initialTasks)
   const [showDetails, setShowDetails] = useState<boolean>(false)
+  const isCurrentSprint = data.status === 'In Progress'
+  const [idsChecked, setIdsChecked] = useState<Array<number>>([])
   const {percentage, percentageWidthClass} = calculatePercentage()
+  const [removeItemsModalOpen, setRemoveItemsModalOpen] = useState<boolean>(false)
+
   const navigate = useNavigate()
+
+  function handleCheck(ids: Array<number>) {
+    setIdsChecked(ids)
+  }
+
+  async function handleRemovingItems() {
+    const response: {tasks: GeneratedTask[]} | null = await fetch('/api/update-sprint', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ids: idsChecked,
+        sprint_id: data.id,
+        action: 'remove'
+      })
+    }).then(res => res.json()).catch(err => null)
+
+    if (response && response?.tasks) {
+      setTasks(response.tasks)
+      setIdsChecked([])
+    }
+  }
+
   function toggleDetails() {
     setShowDetails(!showDetails)
   }
@@ -214,9 +242,14 @@ function SprintTableRow({data, tasks, initiative, timezone}: {data: ApplicationS
       <div className="w-full flex flex-col gap-2">
         <div className="w-full flex flex-row justify-between items-center">
           <h3 className="text-black dark:text-white font-semibold">Sprint <span className="text-gray-500">#{data.id}</span></h3>
-          <button className={"text-gray-500 dark:text-white font-semibold " + (data.status === 'Under Construction' ? ' hidden' : '')} onClick={toggleDetails} disabled={data.status === 'Under Construction'}>
-            <i className={showDetails ? 'ri-arrow-up-double-fill' : "ri-arrow-down-double-fill"}></i>
-          </button>
+          <div className="flex flex-row justify-between items-center gap-3">
+            <button className={"text-gray-500 dark:text-white font-semibold " + (isCurrentSprint && idsChecked.length ? '' : ' hidden')} onClick={() => setRemoveItemsModalOpen(true)}>
+              <i className='ri-eraser-line'></i>
+            </button>
+            <button className={"text-gray-500 dark:text-white font-semibold " + (data.status === 'Under Construction' ? ' hidden' : '')} onClick={toggleDetails} disabled={data.status === 'Under Construction'}>
+              <i className={showDetails ? 'ri-arrow-up-double-fill' : "ri-arrow-down-double-fill"}></i>
+            </button>
+          </div>
         </div>
         <div className="w-full flex justify-start items-center gap-5">
           {/* Make start date not optional */}
@@ -235,8 +268,14 @@ function SprintTableRow({data, tasks, initiative, timezone}: {data: ApplicationS
       </div>
       <div className={"w-full pt-5 flex flex-col gap-5 " + (showDetails ? '' : 'hidden')}>
         <p className="text-neutral-700 dark:text-neutral-500"><span className="text-black dark:text-neutral-400 font-semibold">Initiative: </span>{initiative && initiative.length ? initiative : 'No initiative selected yet'}</p>
-        {tasks && <PLTable actionsAvailable={false} checked={[]} data={tasks} columns={columns}/>}
+        {tasks && <PLTable actionsAvailable={isCurrentSprint} checked={idsChecked} data={tasks} columns={columns} onCheck={handleCheck}/>}
       </div>
+      <PLConfirmModal
+        message="Are you sure you want to remove the selected items? They will be moved to your backlog and their statuses will be reset." 
+        onConfirm={handleRemovingItems} 
+        open={removeItemsModalOpen} 
+        setOpen={setRemoveItemsModalOpen}
+      />
     </div>
   )
 }
