@@ -225,10 +225,10 @@ function SprintTableRow({data, tasks: initialTasks, initiative, timezone}: {data
 
   
   const columns: Array<TableColumn> = [
-    {key: "id", type: "text", sortable: true},
+    {key: "id", type: "text"},
     {key: "title", type: "text"},
     {key: "description", type: "text"},
-    {key: "category", type: "text"},
+    {key: "category", type: "text", sortable: true},
     {key: "status", type: "status", sortable: true},
     {key: "points", type: "text", sortable: true},
   ]

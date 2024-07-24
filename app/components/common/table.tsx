@@ -84,7 +84,11 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                     }, [sort])
                     
                     return (
-                      <th scope="col" className="px-6 py-3" key={index} onClick={sortColumn}>
+                      <th scope="col" className="px-6 py-3" key={index} onClick={() => {
+                        if(columnData.sortable) {
+                          sortColumn()
+                        }
+                      }}>
                         {columnData?.label || key}
                         {columns[index].sortable && <i className={"ml-2 " + sortIcon}></i>}
                       </th>
