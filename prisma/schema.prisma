@@ -14,8 +14,8 @@ model Account {
   status                     String
   user_prisma_id             String
   isSetup                    Boolean
-  organization_id            String               @default("1")
   move_incomplete_to_backlog Boolean              @default(true)
+  organization_id            String               @default("1")
   timezone                   String               @default("America/Denver")
   AccountApplication         AccountApplication[]
   AccountUser                AccountUser[]
@@ -31,14 +31,16 @@ model AccountApplication {
   accountId                     Int
   logo_url                      String?
   clickup_integration_id        Int?                           @unique
+  google_integration_id         Int?                           @unique
+  jira_integration_id           Int?                           @unique
+  lastSprintCheck               String?
   notion_integration_id         Int?                           @unique
   sprint_generation_enabled     Boolean
-  lastSprintCheck               String?
   sprint_interval               String                         @default("weekly")
-  google_integration_id         Int?                           @unique
   Account                       Account                        @relation(fields: [accountId], references: [id], onDelete: Cascade)
   ApplicationClickupIntegration ApplicationClickupIntegration? @relation(fields: [clickup_integration_id], references: [id], onDelete: Cascade)
   ApplicationGoogleIntegration  ApplicationGoogleIntegration?  @relation(fields: [google_integration_id], references: [id], onDelete: Cascade)
+  ApplicationJiraIntegration    ApplicationJiraIntegration?    @relation(fields: [jira_integration_id], references: [id], onDelete: Cascade)
   ApplicationNotionIntegration  ApplicationNotionIntegration?  @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
   ApplicationBug                ApplicationBug[]
   ApplicationFeedback           ApplicationFeedback[]
@@ -139,11 +141,12 @@ model ApplicationSprint {
   applicationId       Int
   startDate           String?
   endDate             String?
-  selectedInitiative  Int?
-  status              String
-  notion_sprint_id    String?
   clickup_sprint_id   String?
   is_generating       Boolean               @default(false)
+  jira_sprint_id      String?
+  notion_sprint_id    String?
+  selectedInitiative  Int?
+  status              String
   AccountApplication  AccountApplication    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   GeneratedInitiative GeneratedInitiative[]
   GeneratedTask       GeneratedTask[]
@@ -176,11 +179,23 @@ model GeneratedTask {
   description         String
   initiativeId        Int?
   reason              String
+  backlog             Boolean?
   category            String
   clickup_id          String?
   notion_id           String?
-  backlog             Boolean?
+  jira_id             String?
   AccountApplication  AccountApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   GeneratedInitiative GeneratedInitiative? @relation(fields: [initiativeId], references: [id])
   ApplicationSprint   ApplicationSprint?   @relation(fields: [sprintId], references: [id])
+}
+
+model ApplicationJiraIntegration {
+  id                 Int                 @id @default(autoincrement())
+  applicationId      Int
+  api_token          String
+  parent_board_id    BigInt
+  project_key        String
+  host_url           String
+  email              String
+  AccountApplication AccountApplication?
 }

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
-import { ClickUpData, NotionData, PROJECT_MANAGEMENT_TOOL } from "~/types/database.types"
+import { ClickUpData, JiraData, NotionData, PROJECT_MANAGEMENT_TOOL } from "~/types/database.types"
 
 
 export function PLProjectManagementToolLink({onToolConfirmation}: {onToolConfirmation: (data: any) => void}) {
   const options = Object.values(PROJECT_MANAGEMENT_TOOL)
   const [selectedToolIndex, setSelectedToolIndex] = useState<number>(0)
-  const [data, setData] = useState<NotionData|ClickUpData>()
+  const [data, setData] = useState<NotionData|ClickUpData |JiraData>()
   const [toolConfirmed, setToolConfirmed] = useState<boolean>(false)
 
   const onTabChange = (index: number) => {
@@ -35,7 +35,8 @@ export function PLProjectManagementToolLink({onToolConfirmation}: {onToolConfirm
       </div>
       <div>
         {selectedToolIndex === 0 && <ClickUpToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
-        {selectedToolIndex === 1 && <NotionToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
+        {selectedToolIndex === 1 && <JiraToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
+        {selectedToolIndex === 2 && <NotionToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
       </div>
     </div>
   )
@@ -68,7 +69,7 @@ const NotionToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfi
         <small>Get your Notion API Token from <a href="https://www.notion.so/my-integrations">here</a></small>
       </div>
       <div className="flex flex-col gap-2">
-        <label className="dark:text-white">Parent Parent Id</label>
+        <label className="dark:text-white">Parent Page Id</label>
         <input type="text" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={parentIdInputRef} onChange={checkValidity} disabled={confirmed}/>
         <small>This page is where we create ProductLamb's page</small>
       </div>
@@ -112,6 +113,61 @@ const ClickUpToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConf
         </div>
       </div>
       <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/>
+    </>
+  )
+}
+
+const JiraToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfirmed: any}) => {
+
+  const tokenInputRef = useRef<HTMLInputElement>(null)
+  const parentIdInputRef = useRef<HTMLInputElement>(null)
+  const emailInputRef = useRef<HTMLInputElement>(null)
+  const hostUrlInputRef = useRef<HTMLInputElement>(null)
+  const projectKeyInputRef = useRef<HTMLInputElement>(null)
+  const [formValid, setFormValid] = useState<boolean>(false)
+  const [confirmed, setConfirmed] = useState<boolean>(false)
+
+  const checkValidity = () => {
+    const notValid = !tokenInputRef.current?.value || !parentIdInputRef.current?.value || !emailInputRef.current?.value || !hostUrlInputRef.current?.value || !projectKeyInputRef.current?.value
+    setFormValid(!notValid)
+  }
+
+  const onConfirm = () => {
+    setData({apiToken: tokenInputRef.current?.value, parentBoardId: parentIdInputRef.current!.value, email: emailInputRef.current!.value, hostUrl: hostUrlInputRef.current!.value, projectKey: projectKeyInputRef.current!.value})
+    setConfirmed(true)
+    setToolConfirmed(true)
+  }
+
+  return (
+    <>
+    <div className="flex flex-col gap-5 text-black dark:text-neutral-400 mb-5">
+      <div className="flex flex-col gap-2">
+        <label className="dark:text-white">API Key</label>
+        <input type="password" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={tokenInputRef} onChange={checkValidity} disabled={confirmed}/>
+        <small>Get your Jira API Token from <a href="https://www.notion.so/my-integrations">here</a></small>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="dark:text-white">Parent Board Id</label>
+        <input type="number" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={parentIdInputRef} onChange={checkValidity} disabled={confirmed}/>
+        <small>This board is where we create ProductLamb's sprints</small>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="dark:text-white">Email</label>
+        <input type="email" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={emailInputRef} onChange={checkValidity} disabled={confirmed}/>
+        <small>The email address used for your Jira account</small>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="dark:text-white">Host URL</label>
+        <input type="text" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={hostUrlInputRef} onChange={checkValidity} disabled={confirmed}/>
+        <small>The URL of your Jira instance</small>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="dark:text-white">Project Key</label>
+        <input type="text" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={projectKeyInputRef} onChange={checkValidity} disabled={confirmed}/>
+        <small>The key of the project you want to link</small>
+      </div>
+    </div>
+    <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/>
     </>
   )
 }

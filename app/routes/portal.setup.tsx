@@ -14,13 +14,14 @@ import { PLOrganizationDetailsModal } from "~/components/modals/account/organiza
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application";
 import { PLIntegrationOptionsModal } from "~/components/modals/integrations/integration-options";
 import { availableIntegrations } from "~/static/integration-options";
-import { NewApplicationData, PLAvailableIntegrationNames, SupportedTimezone } from "~/types/database.types";
+import { ClickUpData, JiraData, NewApplicationData, NotionData, PLAvailableIntegrationNames, SupportedTimezone } from "~/types/database.types";
 import { GithubIntegrationSetupFormData, GitlabIntegrationSetupFormData, TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types";
 import { createClerkClient } from '@clerk/remix/api.server';
 import { useOrganizationList } from "@clerk/remix";
 import { PLInviteMemberModal } from "~/components/modals/account/invite-member";
 import { generateInviteToken } from "~/utils/jwt";
 import { encrypt } from "~/utils/encryption";
+import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client";
 
 
 interface SetupFieldProps {
@@ -156,10 +157,58 @@ export let action: ActionFunction = async (args) => {
     }
   } else if ('new_application' in data) {
     const newAppData = JSON.parse(data.new_application as string) as NewApplicationData 
+    const pmToolClient = ApplicationPMToolClient(dbClient)
+
     const {data: createAppResult } = await appDbClient.addApplication(accountId, newAppData)
     if (createAppResult) {
       const goals = newAppData.goals.length < 0 ? [] : JSON.parse(newAppData.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)      
+
+      const pmToolData = JSON.parse(newAppData.projectManagementTool) as ClickUpData | NotionData | JiraData
+
+      let pmToolConfigurationResponseId: number| null = null
+      let pmToolType: 'clickup' | 'notion' | 'jira' | null = null
+      if ('parentFolderId' in pmToolData) {
+        const {parentFolderId, apiToken} = pmToolData
+        const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, createAppResult.id)
+        if (data) {
+          pmToolConfigurationResponseId = data.id
+          pmToolType = 'clickup'
+        }
+
+        if (errors) {
+          console.log('error adding clickup config', errors)
+        }
+
+      } else if ('parentBoardId' in pmToolData) {
+        const {parentBoardId, apiToken, email, hostUrl, projectKey} = pmToolData
+        const {data, errors} = await pmToolClient.jira.addConfig(apiToken, parentBoardId, email, projectKey, hostUrl, createAppResult.id)
+        if (data) {
+          pmToolConfigurationResponseId = data.id
+          pmToolType = 'jira'
+        } else {
+          console.error('error adding jira config', errors)
+        }
+
+      }else {
+        const {parentPageId, apiKey} = pmToolData
+        const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parentPageId, createAppResult.id)
+        if (data) {
+          pmToolConfigurationResponseId = data.id
+          pmToolType = 'notion'
+        } else {
+          console.error('error adding notion config', errors)
+        }
+      }
+      if (pmToolConfigurationResponseId && pmToolType) {
+        if (pmToolType === 'clickup') {
+          const response = await appDbClient.updateApplication(createAppResult.id, {clickup_integration_id: pmToolConfigurationResponseId})
+        } else if(pmToolType === 'jira') {
+          const response = await appDbClient.updateApplication(createAppResult.id, {jira_integration_id: pmToolConfigurationResponseId})
+        } else {
+          const response = await appDbClient.updateApplication(createAppResult.id, {notion_integration_id: pmToolConfigurationResponseId})
+        }
+      }
     }
     return json({hasApplication: true, applicationId: createAppResult?.id})
   }  else if ('integration' in data) {

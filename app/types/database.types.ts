@@ -28,6 +28,7 @@ export interface NewApplicationData {
   notion_integration_id?: number
   sprint_generation_enabled?: boolean
   sprint_interval: SprintInterval
+  jira_integration_id?: number
 }
 
 export type BugSource = 'repository' | 'self-identified' | 'productLamb' | 'integration' | 'pm-tool' | 'other'
@@ -46,7 +47,7 @@ export type PLAvailableIntegrationNames = 'google calendar' | 'google forms' | '
 
 export enum PROJECT_MANAGEMENT_TOOL {
   CLICKUP = "ClickUp",
-  // JIRA = "Jira", tbd
+  JIRA = "Jira",
   NOTION = "Notion",
 }
 
@@ -58,6 +59,14 @@ export interface NotionData {
 export interface ClickUpData {
   apiToken: string
   parentFolderId: number
+}
+
+export interface JiraData {
+  apiToken: string, 
+  parentBoardId: number, 
+  email: string, 
+  hostUrl: string, 
+  projectKey: string
 }
 
 export enum SupportedTimezone {

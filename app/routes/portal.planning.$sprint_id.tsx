@@ -328,7 +328,7 @@ export default function SprintGenerationPage() {
               </div>
             </div>
             <div className="min-h-[550px] mb-5">
-              <PLTable data={newTasks} checked={[]} columns={[{key: 'title', type: 'text'}, {key: 'description', type: 'text'}, {key: 'points', type: 'text'}, {key: 'category', type: 'text'}]} actionsAvailable={false}/>
+              <PLTable data={newTasks.map((item, i) => ({...item, id: i}))} checked={[]} columns={[{key: 'title', type: 'text'}, {key: 'description', type: 'text'}, {key: 'points', type: 'text'}, {key: 'category', type: 'text'}]} actionsAvailable={false}/>
             </div>
           </>
         ) : (
