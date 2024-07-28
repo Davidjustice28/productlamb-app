@@ -4,14 +4,12 @@ import { useEffect, useState } from 'react'
 import { PLConfirmModal } from '../modals/confirm'
 import { useClerk, useOrganizationList } from '@clerk/remix'
 import { useSidebar } from '~/backend/providers/siderbar'
-import { useAdmin } from '~/backend/providers/admin'
 
-export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolean, darkMode: boolean, applicationSelected: boolean}) => {
+export const LoggedInNavbar = ({darkMode, setupComplete, internalPageAccess, isAdmin}: {setupComplete: boolean, darkMode: boolean, applicationSelected: boolean, internalPageAccess: boolean, isAdmin: boolean}) => {
   const { isLoaded, setActive, userMemberships } = useOrganizationList({
     userMemberships: {infinite: true},
   })
 
-  const { isAdmin } = useAdmin()
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
   const { isExpanded, toggleSidebar} = useSidebar()
   const { signOut } = useClerk()
@@ -55,7 +53,7 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
           className={'h-auto object-contain object-center ml-3' + (!isExpanded ? ' max-w-5' : ' max-w-40')}
         />
       </div>
-      <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={isExpanded} darkMode={darkMode} isAdmin={isAdmin}/>
+      <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={isExpanded} darkMode={darkMode} isAdmin={isAdmin} hasInternalAccess={internalPageAccess}/>
       
       <button 
         className='w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 text-black dark:text-gray-500 dark:hover:text-white dark:hover:bg-neutral-800 hover:bg-[#f0f0f0]'
@@ -73,17 +71,17 @@ export const LoggedInNavbar = ({darkMode, setupComplete}: {setupComplete: boolea
   )
 }
 
-const NavOptionsComponent = ({ links, menuExpanded, darkMode,isAdmin}: { links: Array<NavLink>, menuExpanded: boolean, darkMode: boolean, isAdmin?: boolean}) => {
+const NavOptionsComponent = ({ links, menuExpanded, darkMode, isAdmin ,hasInternalAccess}: { links: Array<NavLink>, menuExpanded: boolean, darkMode: boolean, isAdmin?: boolean, hasInternalAccess: boolean}) => {
   const location = useLocation()
   const lightModeStyle = (url: string, linkLabel: string) => (location.pathname.includes(url) || (location.pathname.toLowerCase().includes('planning') &&  linkLabel.toLowerCase().includes('sprints')) ? 'text-white bg-[#F28C28]' : 'hover:bg-[#f0f0f0]') 
   const darkModeStyle = (url: string, linkLabel: string) => (location.pathname.includes(url) || (location.pathname.toLowerCase().includes('planning') &&  linkLabel.toLowerCase().includes('sprints')) ? 'text-white bg-neutral-800' : 'hover:bg-neutral-800 hover:text-white')
-  const enabledLinks = isAdmin ? links : links.filter(link => !link.adminOnly)
+  const enabledLinks = (isAdmin ? links : links.filter(link => !link.adminOnly)).concat({ iconClass: "ri-contacts-line", absoluteHref: '/portal/internal', text: 'Internal Portal', internalOnly: true},)
   return(
     <ul className='p-0 m-0 list-none flex-col justify-evenly w-full'>
       {enabledLinks.map((link, index) => {
         return (
           <li key={index} className='p-0 m-0 list-none'>
-            <Link to={link.absoluteHref} className={'no-underline ' + (darkMode ? 'text-gray-500' : 'text-black')}>
+            <Link to={link.absoluteHref} className={'no-underline '  + (darkMode ? ' text-gray-500 ' : ' text-black ')}>
               <div className={'w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 ' + ( darkMode ? darkModeStyle(link.absoluteHref, link.text) : lightModeStyle(link.absoluteHref, link.text))}>
                 <i className={link.iconClass + (menuExpanded ? " ml-3" : ' mx-auto')} style={{fontSize: '20px'}}></i>
                 <span className={'text-18 font-bold inline-block ' + (menuExpanded ? '' : 'hidden')}>{link.text}</span>

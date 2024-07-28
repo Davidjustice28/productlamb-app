@@ -5,13 +5,14 @@ import { SidebarProvider } from "~/backend/providers/siderbar";
 import { AdminProvider } from "~/backend/providers/admin";
 
 
-export function RootLayout({appData, setupIsComplete, toggleDarkMode, darkMode}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number }, toggleDarkMode: () => void, darkMode: boolean}) {
+export function RootLayout({appData, setupIsComplete, toggleDarkMode, darkMode, isInternal}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number }, toggleDarkMode: () => void, darkMode: boolean, isInternal: boolean}) {
+  
   return (
     <SidebarProvider>
       <AdminProvider>
         <div>
           <SignedIn>
-            <AuthenticatedLayout appData={appData} setupIsComplete={setupIsComplete} toggleDarkMode={toggleDarkMode} darkMode={darkMode}/>
+            <AuthenticatedLayout appData={appData} setupIsComplete={setupIsComplete} toggleDarkMode={toggleDarkMode} darkMode={darkMode} isInternal={isInternal}/>
           </SignedIn>
           <SignedOut>
             <div>

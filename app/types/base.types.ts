@@ -11,6 +11,7 @@ export interface NavLink {
   absoluteHref: string
   text: string
   adminOnly?: boolean
+  internalOnly?: boolean
 }
 
 export enum Colors {

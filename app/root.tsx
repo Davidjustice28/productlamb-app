@@ -80,7 +80,8 @@ export const loader: LoaderFunction = (args) => {
             return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
           }
         }
-        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId },
+        const internal_account_id = process.env.INTERNAL_ACCOUNT_ID ? parseInt(process.env.INTERNAL_ACCOUNT_ID) : null;
+        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id },
           { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
         );
       }
@@ -116,7 +117,8 @@ export const loader: LoaderFunction = (args) => {
             return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
           }
         }
-        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId },
+        const internal_account_id = process.env.INTERNAL_ACCOUNT_ID ? parseInt(process.env.INTERNAL_ACCOUNT_ID) : null;
+        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id },
           { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
         );
       }
@@ -126,7 +128,7 @@ export const loader: LoaderFunction = (args) => {
 
  
 export function App() {
-  const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, selectedApplicationId} = useLoaderData<typeof loader>()
+  const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, selectedApplicationId, account_id, internal_account_id} = useLoaderData<typeof loader>()
   const [ darkModeState, setDarkMode ] = useState<boolean>(loadedDarkMode)
   const {userId} = useAuth()
   const darkmodeFormRef = React.useRef<HTMLFormElement>(null)
@@ -152,7 +154,7 @@ export function App() {
       console.error('Error caught updating account dark mode: ', error)
     }
   };
-
+  const isInternalAccount = account_id && internal_account_id ? internal_account_id === account_id : false;
   return (
     <html lang="en" className={ (darkModeState ? 'dark' : '') }>
       <head>
@@ -165,7 +167,7 @@ export function App() {
         <form ref={darkmodeFormRef}>
           <input type="hidden" name="_darkMode" ref={inputRef}/>
         </form>
-        <RootLayout appData={{selectedApplicationName, selectedApplicationId}} setupIsComplete={setupIsComplete} toggleDarkMode={toggleDarkMode} darkMode={darkModeState} />
+        <RootLayout appData={{selectedApplicationName, selectedApplicationId}} setupIsComplete={setupIsComplete} toggleDarkMode={toggleDarkMode} darkMode={darkModeState} isInternal={isInternalAccount}/>
         <ScrollRestoration />
         <Scripts />
 

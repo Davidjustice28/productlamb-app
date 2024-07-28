@@ -8,7 +8,7 @@ import { useAdmin } from "~/backend/providers/admin"
 import { PLStatusBadge } from "../common/status-badge"
 import { Colors } from "~/types/base.types"
 
-export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, darkMode}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number }, toggleDarkMode: () => void, darkMode: boolean}) {
+export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, darkMode, isInternal}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number }, toggleDarkMode: () => void, darkMode: boolean, isInternal: boolean}) {
   const {user} = useUser()
   const [darkModeState, setDarkModeState] = useState(darkMode)
   const contentBg = darkMode ? 'bg-neutral-950' : 'bg-neutral-200'
@@ -30,7 +30,7 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
 
   return (
     <div className="flex">
-      <LoggedInNavbar darkMode={darkModeState} setupComplete={setupIsComplete} applicationSelected={!!(appData?.selectedApplicationName && appData?.selectedApplicationName.length)}/>
+      <LoggedInNavbar darkMode={darkModeState} setupComplete={setupIsComplete} applicationSelected={!!(appData?.selectedApplicationName && appData?.selectedApplicationName.length)} isAdmin={isAdmin} internalPageAccess={isInternal && isAdmin}/>
       <div className={"h-screen w-full py-3 px-6 overflow-scroll " + contentBg}>
         <div className="flex justify-between items-center w-full mb-2">
           <div className="flex gap-2">
