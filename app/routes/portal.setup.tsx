@@ -23,7 +23,6 @@ import { generateInviteToken } from "~/utils/jwt";
 import { encrypt } from "~/utils/encryption";
 import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client";
 
-type LemonSqueezyModalEvent = 'close' | 'Checkout.Success'
 interface SetupFieldProps {
   id: number, 
   title: string, 
@@ -59,7 +58,7 @@ export const loader: LoaderFunction = args => {
       if (!accountData) {
         const result = await accountClient.createAccount(userId, "free", SupportedTimezone.MST);
         if (result.errors.length > 0 || !result.data) return json({});
-
+        await dbClient.accountManagerSettings.create({ data: { accountId: result.data.id } });
         accountId = result.data.id;
         accountCookie.accountId = accountId;
         accountCookie.setupIsComplete = false;
