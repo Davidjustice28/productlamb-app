@@ -1,7 +1,7 @@
-import { SignInButton } from "@clerk/remix";
+import { SignInButton, useAuth, useUser } from "@clerk/remix";
 import { ActionFunction, LinksFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PLBasicButton } from "~/components/buttons/basic-button";
 
 export const links: LinksFunction = () => {
@@ -64,7 +64,7 @@ export default function LandingPage() {
   const actionData = useActionData<typeof action>()
   const { isLocalHost } = useLoaderData<typeof loader>()
   const [showConfetti, setShowConfetti] = useState(actionData?.joined || false)
-
+ 
   return (
     <div className="flex flex-col bg-white w-full md:pt-2">
       <div className="relative flex flex-wrap items-center justify-between w-full bg-white group py-7 shrink-0 md:px-16 px-5">

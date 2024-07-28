@@ -1,7 +1,7 @@
 import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
 import { Account, ApplicationIntegration, PrismaClient } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
-import { useActionData, useLoaderData } from "@remix-run/react";
+import { useActionData, useLoaderData, useNavigate } from "@remix-run/react";
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
@@ -23,7 +23,7 @@ import { generateInviteToken } from "~/utils/jwt";
 import { encrypt } from "~/utils/encryption";
 import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client";
 
-
+type LemonSqueezyModalEvent = 'close' | 'Checkout.Success'
 interface SetupFieldProps {
   id: number, 
   title: string, 
@@ -63,13 +63,13 @@ export const loader: LoaderFunction = args => {
         accountId = result.data.id;
         accountCookie.accountId = accountId;
         accountCookie.setupIsComplete = false;
-        return json({ hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false }, {
+        return json({ hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false, account_id: accountId, subscriptionPaid: false }, {
           headers: {
             "Set-Cookie": await account.serialize(accountCookie)
           }
         });
       } 
-
+      accountId = accountData.id;
       const { data: apps } = await appClient.getAccountApplications(accountData.id);
       let integrations: ApplicationIntegration[] = [];
       if (apps && apps.length > 0) {
@@ -78,9 +78,9 @@ export const loader: LoaderFunction = args => {
       const isSetup = accountData.isSetup;
       accountCookie.accountId = accountData.id;
       accountCookie.setupIsComplete = isSetup;
-
+      const subscriptionPaid = accountData.status === 'active';
       if (!isSetup) {
-        return json({ hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false }, {
+        return json({ hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false, account_id: accountData.id, subscriptionPaid}, {
           headers: {
             "Set-Cookie": await account.serialize(accountCookie)
           }
@@ -96,12 +96,13 @@ export const loader: LoaderFunction = args => {
         integrations = (await integrationClient.getAllApplicationIntegrations(apps[0].id)).data ?? [];
       }
       if (accountData && !accountData.isSetup) {
-        return json({ hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id });
+        const subscriptionPaid = accountData.status === 'active';
+        return json({ account_id: accountData.id, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id, subscriptionPaid });
       }
       if (accountData && accountData.isSetup) {
         return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
       }
-      return json({ hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id });
+      return json({ account_id: accountId, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id, subscriptionPaid: false });
     }
   });
 };
@@ -112,7 +113,7 @@ export let action: ActionFunction = async (args) => {
   const { userId } = await getAuth(args);
   const request = args.request
   const form = await request.formData()
-  const data = Object.fromEntries(form) as unknown as {new_application?: string, integration?: string, setup_complete?: string, organization_details?: string, invited_email?: string} 
+  const data = Object.fromEntries(form) as unknown as {new_application?: string, integration?: string, setup_complete?: string, organization_details?: string, invited_email?: string, payment_account_id?: string} 
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const accountId = accountCookie.accountId
@@ -284,6 +285,14 @@ export let action: ActionFunction = async (args) => {
     }
     return json({organizationCreated: true})
 
+  } else if ('payment_account_id' in data) {
+    const account_id = accountCookie.accountId as number
+    const accountData = await accountClient.getAccountById(account_id)
+    if (accountData) {
+      await accountClient.updateAccount(account_id, {status: 'active', subscriptionType: 'Monthly'})
+      return json({subscriptionPaid: true})
+    }
+    return json({})
   } else {
     return json({})
   }
@@ -294,7 +303,7 @@ export default function SetupPage() {
     userMemberships: {infinite: true},
   })
 
-  const { hasApplication: loaderHasApplication, isSetup: loaderIsSetup, hasIntegration: loaderHasIntegration, applicationId: loadedApplicationId, organizationCreated: loadedOrganizationCreated } = useLoaderData<{hasApplication: boolean, isSetup: boolean, hasIntegration: boolean, organizationCreated: boolean, applicationId?: number }>()
+  const { subscriptionPaid, account_id, hasApplication: loaderHasApplication, isSetup: loaderIsSetup, hasIntegration: loaderHasIntegration, applicationId: loadedApplicationId, organizationCreated: loadedOrganizationCreated } = useLoaderData<{hasApplication: boolean, isSetup: boolean, hasIntegration: boolean, organizationCreated: boolean, applicationId?: number, account_id: number, subscriptionPaid: boolean }>()
   const { hasApplication: actionHasApplication, isSetup: actionIsSetup, hasIntegration: actionHasIntegration, applicationId: actionApplicationId, organizationCreated: actionOrganizationCreated } = useActionData<{hasApplication?: boolean|null, isSetup?: boolean|null, hasIntegration?: boolean|null, organizationCreated?: boolean|null, applicationId?: number}>() || {hasApplication: null, isSetup: null, hasIntegration: null, organizationCreated: null, applicationId: null}
   const hasApplication = loaderHasApplication ?? actionHasApplication
   const hasIntegration = loaderHasIntegration ?? actionHasIntegration
@@ -304,12 +313,14 @@ export default function SetupPage() {
   const [organizationDetailsModalOpen, setOrganizationDetailsModalOpen] = useState(false)
   const [applicationId, setApplicationId] = useState(loadedApplicationId ?? actionApplicationId)
   const [organizationCreated, setOrganizationCreated] = useState(loadedOrganizationCreated ?? actionOrganizationCreated)
-  const isSetup = hasApplication
+  const isSetup = hasApplication && subscriptionPaid && organizationCreated
+  const [paymentMade, setPaymentMade] = useState(false)
   const [stepsMap, setStepsMap] = useState<{[key: number]: {completed: boolean, enabled: boolean, required: boolean}}>({
     0: {completed: !!organizationCreated, enabled: true, required: true},
-    1: {completed: !!hasApplication, enabled: organizationCreated, required: true},
-    2: {completed: !!hasIntegration, enabled: hasApplication, required: false},
-    3: {completed: false, enabled: organizationCreated && hasApplication, required: false}
+    1: {completed: subscriptionPaid, enabled: organizationCreated, required: true},
+    2: {completed: !!hasApplication, enabled: subscriptionPaid, required: true},
+    3: {completed: !!hasIntegration, enabled: hasApplication, required: false},
+    4: {completed: false, enabled: organizationCreated && hasApplication && subscriptionPaid, required: false}
   })
 
   const incompleteSteps = Object.values(stepsMap).filter(s => !s.completed && s.required).length
@@ -327,16 +338,11 @@ export default function SetupPage() {
 
   const inviteFormRef  = React.createRef<HTMLFormElement>()
   const inviteDataRef = React.createRef<HTMLInputElement>()
+  const paymentLinkRef = React.createRef<HTMLAnchorElement>()
+  const paymentAccountIdRef = React.createRef<HTMLInputElement>()
+  const paymentFormRef = React.createRef<HTMLFormElement>()
 
   const fields: SetupFieldProps[] = [
-    // {
-    //   id: 0,
-    //   title: "Choose a Subscription Plan",
-    //   description: "Add your payment information and pick a subscription plan.",
-    //   onClick: () => console.log("Adding payment info"),
-    //   icon: "ri-money-dollar-circle-line",
-    //   buttonText: "Open Stripe"
-    // },
     {
       id: 0,
       title: "Add Organization Details",
@@ -347,6 +353,15 @@ export default function SetupPage() {
     },
     {
       id: 1,
+      title: "Choose a Subscription Plan",
+      description: "Add your payment information and pick a subscription plan.",
+      onClick: () => openPaymentOverlay(),
+      icon: "ri-money-dollar-circle-line",
+      buttonText: "Make Payment",
+    },
+    
+    {
+      id: 2,
       title: "Setup First Application",
       description: "Add your first application that will be managed by ProductLamb.",
       onClick: () => setAddApplicationModalOpen(true),
@@ -354,7 +369,7 @@ export default function SetupPage() {
       buttonText: "Add Application",
     },
     {
-      id: 2,
+      id: 3,
       title: "Configure an Integration",
       description: "Configure an integration to get started with your account.",
       onClick: () => setIntegrationModalOpen(true),
@@ -363,7 +378,7 @@ export default function SetupPage() {
       isOptional: true
     },
     {
-      id: 3,
+      id: 4,
       title: "Invite Team Members",
       description: "Invite team members to collaborate on your applications.",
       onClick: () => setInviteModalOpen(true),
@@ -399,6 +414,9 @@ export default function SetupPage() {
     setIntegrationModalOpen(false)
   }
 
+  const openPaymentOverlay = () => {
+    paymentLinkRef.current!.click()
+  }
 
   const finishOnboarding = () => {
     setupCompleteInputRef.current!.value = 'true'
@@ -416,12 +434,32 @@ export default function SetupPage() {
     inviteFormRef.current?.submit()
     setInviteModalOpen(false)
   }
+
+  function submitPaymentForm() {
+    paymentFormRef.current?.submit()
+    setPaymentMade(false)
+  }
   
   useEffect(() => {
     if (isLoaded && userMemberships.data.length > 0) {
       const membership = userMemberships.data[0]
       setActive({organization: membership.organization.id})
     }
+  }, [])
+
+  useEffect(() => {
+    if (paymentMade) {
+      submitPaymentForm()
+    }
+  }, [paymentMade])
+
+  useEffect(() => {
+    window.createLemonSqueezy()
+    window.LemonSqueezy.Setup({
+      eventHandler: (event) => {
+        if(event?.event === 'Checkout.Success') setPaymentMade(true)
+      },
+  })
   }, [])
 
   return (
@@ -457,7 +495,10 @@ export default function SetupPage() {
       <form method="POST" ref={inviteFormRef}>
         <input type="hidden" name="invited_email" ref={inviteDataRef}/>
       </form>
-
+      <form method="POST" ref={paymentFormRef}>
+        <input type="hidden" name="payment_account_id" ref={paymentAccountIdRef}/>
+      </form>
+      <a href={`https://productlamb.lemonsqueezy.com/buy/70d85f32-6fd0-4d35-8224-7460db09ffcc?checkout[custom][pl_account_id]=${account_id}&embed=1`} className="lemonsqueezy-button" ref={paymentLinkRef}></a>
       <PLIntegrationOptionsModal configuredIntegrations={[]} open={integrationModalOpen} setOpen={setIntegrationModalOpen} onSubmit={onIntegrationSubmit} applicationId={applicationId ?? 0}/>
       <PLAddApplicationModal open={addApplicationModalOpen} setOpen={setAddApplicationModalOpen} onSubmit={onAddApplication}/>
       <PLOrganizationDetailsModal isOpen={organizationDetailsModalOpen} setIsOpen={setOrganizationDetailsModalOpen} onSubmit={onOrganizationDetailsSubmit}/>

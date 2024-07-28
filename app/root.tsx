@@ -17,7 +17,7 @@ import { getSharedEnvs } from './utils/envs';
 import { account } from './backend/cookies/account';
 import { AccountsClient } from './backend/database/accounts/client';
 import { Account, PrismaClient } from '@prisma/client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import React from 'react';
 import { ApplicationsClient } from './backend/database/applications/client';
 import { createClerkClient } from '@clerk/remix/api.server';
@@ -175,7 +175,7 @@ export function App() {
             __html: `window.ENV = ${JSON.stringify(ENV)}`,
           }}
         />
-
+        <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
         {process.env.NODE_ENV === 'development' && <LiveReload />}
       </body>
     </html>
