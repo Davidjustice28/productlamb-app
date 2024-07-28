@@ -30,6 +30,7 @@ export interface TableColumn {
   label?: string,
   type: "text" | "status" | "image" | "date",
   sortable?: boolean
+  capitalize?: boolean
 }
 
 export interface FAQQuestion {

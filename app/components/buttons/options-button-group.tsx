@@ -1,7 +1,7 @@
-export function PLOptionsButtonGroup({groups, current, handleGroupChange, vertical, customButtonClasses='', disabledList=[]}:{groups: Array<string>, current: string, handleGroupChange: (group: string) => void, vertical?: boolean, customButtonClasses?: string, disabledList?: string[]}) {
+export function PLOptionsButtonGroup({groups, current, handleGroupChange, vertical, customButtonClasses='', disabledList=[]}:{groups: Array<string>, current: string, handleGroupChange?: (group: string) => void, vertical?: boolean, customButtonClasses?: string, disabledList?: string[]}) {
   const onClick = (group: string) => {
     if(disabledList.includes(group)) return
-    handleGroupChange(group)
+    if (handleGroupChange) handleGroupChange(group)
   }
   const isdisabled = (group: string) => {
     return disabledList.includes(group) ? 'cursor-not-allowed opacity-50' : ''

@@ -30,6 +30,8 @@ export const LoggedInNavbar = ({darkMode, setupComplete, internalPageAccess, isA
     { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Account', adminOnly: true},
     { iconClass: "ri-booklet-line" , absoluteHref: '/portal/documentation', text: 'Documentation', adminOnly: false},
   ]
+
+  if (internalPageAccess) links.push({ iconClass: "ri-dashboard-3-line", absoluteHref: '/portal/internal', text: 'Internal Portal'})
   
   const handleSigningOut = async () => {
     await signOut(() => {
@@ -75,20 +77,36 @@ const NavOptionsComponent = ({ links, menuExpanded, darkMode, isAdmin ,hasIntern
   const location = useLocation()
   const lightModeStyle = (url: string, linkLabel: string) => (location.pathname.includes(url) || (location.pathname.toLowerCase().includes('planning') &&  linkLabel.toLowerCase().includes('sprints')) ? 'text-white bg-[#F28C28]' : 'hover:bg-[#f0f0f0]') 
   const darkModeStyle = (url: string, linkLabel: string) => (location.pathname.includes(url) || (location.pathname.toLowerCase().includes('planning') &&  linkLabel.toLowerCase().includes('sprints')) ? 'text-white bg-neutral-800' : 'hover:bg-neutral-800 hover:text-white')
-  const enabledLinks = (isAdmin ? links : links.filter(link => !link.adminOnly)).concat({ iconClass: "ri-contacts-line", absoluteHref: '/portal/internal', text: 'Internal Portal', internalOnly: true},)
-  return(
+
+  const NavLinkComponent = ({data, enabled}:{data: NavLink, enabled: boolean}) => {
+    if (enabled) {
+      return (
+        <li className='p-0 m-0 list-none'>
+          <Link to={data.absoluteHref} className={'no-underline '  + (darkMode ? ' text-gray-500 ' : ' text-black ')} >
+            <div className={'w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 ' + ( darkMode ? darkModeStyle(data.absoluteHref, data.text) : lightModeStyle(data.absoluteHref, data.text))}>
+              <i className={data.iconClass + (menuExpanded ? " ml-3" : ' mx-auto')} style={{fontSize: '20px'}}></i>
+              <span className={'text-18 font-bold inline-block ' + (menuExpanded ? '' : 'hidden')}>{data.text}</span>
+            </div>
+          </Link>
+        </li>
+      )
+    } else {
+      return (
+        <li className='p-0 m-0 list-none cursor-not-allowed'>
+          <div className={'w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 ' +  (darkMode ? ' text-gray-500 ' : ' text-black ') + ( darkMode ? darkModeStyle(data.absoluteHref, data.text) : lightModeStyle(data.absoluteHref, data.text))}>
+            <i className={data.iconClass + (menuExpanded ? " ml-3" : ' mx-auto')} style={{fontSize: '20px'}}></i>
+            <span className={'text-18 font-bold inline-block ' + (menuExpanded ? '' : 'hidden')}>{data.text}</span>
+          </div>
+        </li>
+      )
+    }
+  }
+
+  return (
     <ul className='p-0 m-0 list-none flex-col justify-evenly w-full'>
-      {enabledLinks.map((link, index) => {
-        return (
-          <li key={index} className='p-0 m-0 list-none'>
-            <Link to={link.absoluteHref} className={'no-underline '  + (darkMode ? ' text-gray-500 ' : ' text-black ')}>
-              <div className={'w-full py-2 px-0 flex justify-start items-center gap-2 rounded-md border-3 ' + ( darkMode ? darkModeStyle(link.absoluteHref, link.text) : lightModeStyle(link.absoluteHref, link.text))}>
-                <i className={link.iconClass + (menuExpanded ? " ml-3" : ' mx-auto')} style={{fontSize: '20px'}}></i>
-                <span className={'text-18 font-bold inline-block ' + (menuExpanded ? '' : 'hidden')}>{link.text}</span>
-              </div>
-            </Link>
-          </li>
-        )
+      {links.map((link, index) => {
+        const enabled = (link?.adminOnly ? !!isAdmin : true)
+        return <NavLinkComponent key={index} data={link} enabled={enabled}/>
       })}
     </ul>
   )

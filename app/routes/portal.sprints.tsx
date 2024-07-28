@@ -13,6 +13,7 @@ import React from "react"
 import { PLContentLess } from "~/components/common/contentless"
 import { calculateTimeLeft } from "~/utils/date"
 import { PLConfirmModal } from "~/components/modals/confirm"
+import { PMToolIconComponent } from "~/components/common/pm-tool"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
@@ -237,6 +238,7 @@ function SprintTableRow({data, tasks: initialTasks, initiative, timezone}: {data
   const timeData = calculateTimeLeft(timezone, data.startDate!, data.endDate!, 'Past Due')
   const timeTitle = timeData.type.charAt(0).toUpperCase() + timeData.type.slice(1)
   const timeLeft = `${timeTitle} left: ${timeData.count}`
+  const tool = data?.jira_sprint_id ? 'jira' : data?.clickup_sprint_id ? 'clickup' : data?.notion_sprint_id ? 'notion' : 'none'
 
   return (
     <div className="w-full p-5 rounded-lg bg-white dark:bg-neutral-800 divide-y-2 flex flex-col gap-5">
@@ -244,7 +246,7 @@ function SprintTableRow({data, tasks: initialTasks, initiative, timezone}: {data
         <div className="w-full flex flex-row justify-between items-center">
           <div className="flex flex-row gap-3 items-center">
             <h3 className="text-black dark:text-white font-semibold">Sprint <span className="text-gray-500">#{data.id}</span></h3>
-            <PMToolIconComponent sprint={data} />
+            <PMToolIconComponent tool={tool} />
           </div>
           <div className="flex flex-row justify-between items-center gap-3">
             <button className={"text-gray-500 dark:text-white font-semibold " + (isCurrentSprint && idsChecked.length ? '' : ' hidden')} onClick={() => setRemoveItemsModalOpen(true)}>
@@ -287,21 +289,4 @@ function SprintTableRow({data, tasks: initialTasks, initiative, timezone}: {data
 function convertToDateString(date_string: string) {
   const date = new Date(date_string)
   return `${date.getMonth() + 1}/${date.getDate() + 1}/${date.getFullYear()}`
-}
-
-function PMToolIconComponent({sprint}: {sprint: ApplicationSprint}) {
-  const jiraImage = 'https://storage.googleapis.com/productlamb_project_images/jira.256x256.png'
-  const clickupImage = 'https://storage.googleapis.com/productlamb_project_images/clickup.png'
-  const notionImage = 'https://storage.googleapis.com/productlamb_project_images/notion.246x256.png'
-  const tool = sprint?.jira_sprint_id ? 'jira' : sprint?.clickup_sprint_id ? 'clickup' : sprint?.notion_sprint_id ? 'notion' : 'none'
-  switch (tool) {
-    case 'jira':
-      return <img className="w-5 h-5 shadow-xl" src={jiraImage} alt="Jira"/>
-    case 'clickup':
-      return <img className="w-7 h-7" src={clickupImage} alt="Clickup"/>
-    case 'notion':
-      return <img className="w-4 h-4 dark:bg-white dark:rounded-lg" src={notionImage} alt="Notion"/>
-    default:
-      return null
-  }
 }

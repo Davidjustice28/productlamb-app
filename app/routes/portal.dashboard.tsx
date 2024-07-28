@@ -156,7 +156,7 @@ export default function DashboardPage() {
           
         </div>
       </div>
-      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10" style={{height: "330px"}}>
+      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10 h-[330px] lg:h-[360px]">
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Current Sprint - <span className="italic text-black dark:text-neutral-500">{currentSprint ? '#' + currentSprint.id : 'No active sprint'}</span></h2>
           <div className="rounded-xl w-full md:h-1/2 flex flex-row items-center justify-evenly gap-4">
@@ -182,7 +182,7 @@ export default function DashboardPage() {
         </div>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Suggested Actions</h2>
-          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full flex flex-col px-3 py-2 lg:py-0  gap-2 lg:gap-0 lg:justify-evenly overflow-y-scroll lg:overflow-hidden">
+          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full flex flex-col px-3 py-2  gap-2 lg:justify-evenly overflow-y-scroll">
             {!suggestions.length && <p className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>There are no suggestions at this time.</p>}
             {suggestions.map(s => <PLSuggestion suggestion={s} key={s.id}/>)}
           </div>

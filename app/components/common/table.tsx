@@ -143,13 +143,13 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                     if(!index) {
                       return (
                         <th scope="row" className={"px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"} key={index} onClick={() => handleRowClick(item)}>
-                          <TableDataCellContent type={column.type} data={itemContent}/>
+                          <TableDataCellContent type={column.type} data={itemContent} capitalized={column?.capitalize}/>
                         </th>
                       )
                     } else {
                       return (
                         <td className={"px-6 py-4 "} key={index} onClick={() => handleRowClick(item)}>
-                          <TableDataCellContent type={column.type} data={itemContent}/>
+                          <TableDataCellContent type={column.type} data={itemContent} capitalized={column?.capitalize}/>
                         </td>
                       )
                     }
@@ -163,13 +163,13 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
   )
 }
 
-function TableDataCellContent({type, data}: {type: "text"| "status"|"image"| "date", data: any}) {
+function TableDataCellContent({type, data, capitalized}: {type: "text"| "status"|"image"| "date", data: any, capitalized?: boolean}) {
   if(type === 'date') {
     if (!data) return <span>N/A</span>
     const date_string = new Date(data).toDateString()
     return <span>{date_string === 'Invalid Date' ? 'N/A' : date_string}</span>
   }
-  if(type === 'text') return <span>{data}</span>
+  if(type === 'text') return <span>{capitalized && typeof data === 'string' ? data.toUpperCase() : data}</span>
   if(type === 'image') return data ? <img src={data} className="w-10 h-10 rounded-full"/> : <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-600 flex flex-row items-center justify-center"><i className="ri-user-line dark:text-gray-400 text-black text-2xl"></i></div>
   let text = ''
 
@@ -207,11 +207,13 @@ function getStatusColor(status: string) {
     case 'low':
     case 'user':
     case 'in progress':
+    case 'pending':
       return Colors.BLUE
     case 'complete':
     case 'completed':
     case 'done':
     case 'yes':
+    case 'active':
       return Colors.GREEN
     case 'medium':
     case 'under construction':
@@ -219,6 +221,9 @@ function getStatusColor(status: string) {
     case 'canceled':
     case 'high':
     case 'no':
+    case 'inactive':
+    case 'disabled':
+    case 'expired':
       return Colors.RED
     case 'admin': 
       return Colors.PURPLE

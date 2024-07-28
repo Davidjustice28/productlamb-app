@@ -30,7 +30,7 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
 
   return (
     <div className="flex">
-      <LoggedInNavbar darkMode={darkModeState} setupComplete={setupIsComplete} applicationSelected={!!(appData?.selectedApplicationName && appData?.selectedApplicationName.length)} isAdmin={isAdmin} internalPageAccess={isInternal && isAdmin}/>
+      <LoggedInNavbar darkMode={darkModeState} setupComplete={setupIsComplete} applicationSelected={!!(appData?.selectedApplicationName && appData?.selectedApplicationName.length)} isAdmin={isAdmin} internalPageAccess={isInternal}/>
       <div className={"h-screen w-full py-3 px-6 overflow-scroll " + contentBg}>
         <div className="flex justify-between items-center w-full mb-2">
           <div className="flex gap-2">
