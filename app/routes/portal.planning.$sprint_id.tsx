@@ -342,7 +342,7 @@ export default function SprintGenerationPage() {
         <input type="hidden" ref={inputRef} name="sprint_data"/>
       </Form>
       <div>
-        <PLBasicButton text={step < 3 ? 'Go to Next Step' : "Start Sprint"} onClick={handleButtonClick} icon="ri-arrow-right-line" disabled={step === 0 && !itemsSelected && !manualInitiativeSuggestions.length}/>
+        <PLBasicButton text={step < 3 ? 'Go to Next Step' : "Start Sprint"} onClick={handleButtonClick} icon="ri-arrow-right-line"/>
       </div>
       <PLConfirmModal message={confirmationMessage} open={confirmModalOpen} setOpen={setConfirmModalOpen} onConfirm={onConfirm}/>
       <PLAddTaskModal open={manualTaskModalOpen} setOpen={setManualTaskModalOpen} onSubmit={onAddTask} application_id={applicationId} authToken={authToken}/>
