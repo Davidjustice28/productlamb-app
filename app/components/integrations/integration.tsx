@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { PLIconButton } from "../buttons/icon-button";
 import { PLConfirmModal } from "../modals/confirm";
+import { PLStatusBadge } from "../common/status-badge";
+import { Colors } from "~/types/base.types";
 
-export function PLIntegrationOption({ integration, onDelete, addMode=false, onAddButtonClick = () => null, onEditButtonClick = () => null}: { integration: any, addMode?: boolean, onAddButtonClick?: (...args: any[]) => void, onEditButtonClick?: (...args: any[]) => void, onDelete?: (...args: any[]) => void}) {
+export function PLIntegrationOption({ integration, onDelete, addMode=false, onAddButtonClick = () => null, onEditButtonClick = () => null, configured}: { integration: any, addMode?: boolean, onAddButtonClick?: (...args: any[]) => void, onEditButtonClick?: (...args: any[]) => void, onDelete?: (...args: any[]) => void, configured?: boolean}) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const openDisconnectModal = () => {
@@ -23,11 +25,17 @@ export function PLIntegrationOption({ integration, onDelete, addMode=false, onAd
             <>
               <div className="flex flex-row">
                 {
-                  integration.available && (
+                  configured &&  <PLStatusBadge text="Configured" color={Colors.GREEN}/>
+                }
+                {
+                  (integration.available && !configured) && (
                     <button className="p-2 text-gray-600 rounded-full dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700" aria-label="Options" onClick={onAddButtonClick}>
                       <i className="ri ri-add-line"></i>
                     </button>
                   )
+                }
+                {
+                  (!integration.available && !configured) && <PLStatusBadge text="Coming Soon" color={Colors.ORANGE}/>
                 }
         
               </div>

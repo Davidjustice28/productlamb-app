@@ -84,5 +84,47 @@ export const availableIntegrations: Array<IntegrationOptions>= [
 
     },
     available: false,
-  }
+  },
+
+  // TODO: Add coming soon integrations and get images from gcloud
+  {
+    id: 8,
+    name: "Posthog",
+    img_url: 'https://storage.googleapis.com/productlamb_project_images/posthog-logomark-padded.png',
+    description: 'Consider session data and traffic analytics in task suggestions and prioritization.',
+    requiredFields: {
+
+    },
+    available: false,
+  },
+  {
+    id: 9,
+    name: "Plausible",
+    img_url: 'https://storage.googleapis.com/productlamb_project_images/idk4lfuNlY_1722221813472.png',
+    description: 'Incorporate user session data in task suggestions and prioritization.',
+    requiredFields: {
+
+    },
+    available: false,
+  },
+  {
+    id: 10,
+    name: "Google Drive",
+    img_url: 'https://storage.googleapis.com/productlamb-platform-images/google-drive.svg',
+    description: 'Allow productlamb to create and store documentation and reports in your Google Drive.',
+    requiredFields: {
+
+    },
+    available: false,
+  },
+  {
+    id: 11,
+    name: "Dropbox",
+    img_url: 'https://storage.googleapis.com/productlamb_project_images/dropbox%20(1).svg',
+    description: 'Enable productlamb to create and share documentation and reports in your Dropbox.',
+    requiredFields: {
+
+    },
+    available: false,
+  },
 ]

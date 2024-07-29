@@ -39,7 +39,7 @@ export const action: ActionFunction = async ({request}) => {
 
   if (data.action === 'add') {
     const {title, reason, description, category, points} = data
-    await dbClient.generatedTask.create({data: {title, description, reason, category, applicationId, backlog: true, status: 'to do', points: parseInt(points)}}).catch(err => console.log(err)) 
+    await dbClient.generatedTask.create({data: {title, description, reason, category, applicationId, backlog: true, status: 'to do', points: parseInt(points)},}).catch(err => console.log(err)) 
     const taskDbClient = new PrismaClient().generatedTask
     const backlog = await taskDbClient.findMany({where: {applicationId: applicationId, backlog: true}})
     return json({updatedTasks: backlog})
@@ -164,7 +164,7 @@ export default function BacklogPage() {
               <input type="hidden" name="action" ref={actionInputRef}/>
               <input type="hidden" name="sprint_id" ref={sprintIdInputRef}/>
             </form>
-            <PLTable data={backlog} columnsVisible checked={[]}  columns={[{key: 'title', type: 'text'}, {key: 'points', type: 'text'}, {key: 'category', type: 'status'}]} tableModalName="backlog" actionsAvailable={true} onCheck={onCheck} onRowClick={handleEdit}/>
+            <PLTable data={backlog} columnsVisible checked={[]}  columns={[{key: 'title', type: 'text'}, {key: 'points', type: 'text', sortable: true}, {key: 'category', type: 'status', sortable: true}]} tableModalName="backlog" actionsAvailable={true} onCheck={onCheck} onRowClick={handleEdit}/>
           </div>
         )
       }

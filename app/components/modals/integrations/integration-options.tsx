@@ -24,7 +24,7 @@ export function PLIntegrationOptionsModal({open, onClose, setOpen, configuredInt
         integrationSelected === null &&
         (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 my-5 p-5 overflow-scroll" style={{height: "550px"}}>
-            { availableIntegrations.filter(i => !configuredIntegrations.includes(i.id)).sort((a,b) => (a.available && !b.available ? -1 : 1 )).map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={true} onAddButtonClick={() => onAddButtonClick(integration.id)}/>) }
+            { availableIntegrations.sort((a,b) => (a.available && !b.available ? -1 : 1 )).map((integration, index) => <PLIntegrationOption key={index} integration={integration} addMode={true} onAddButtonClick={() => onAddButtonClick(integration.id)} configured={configuredIntegrations.includes(integration.id)}/>) }
           </div>
         )
       }

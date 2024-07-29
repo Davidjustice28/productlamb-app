@@ -165,7 +165,7 @@ export default function IntegrationsPage() {
 
       <PLIntegrationOptionsModal open={optionsModalOpen} setOpen={setOptionsModalOpen} configuredIntegrations={getConfiguredIntegrations()} applicationId={applicationId} hasGoogleOAuth={hasGoogleOAuth}/>
       {/* TODO: Update to not allow editing google items */}
-      <PLIntegrationEditModal open={editModalOpen} setOpen={setEditModalOpen} integration={selectedIntegration}/>
+      <PLIntegrationEditModal open={editModalOpen} setOpen={setEditModalOpen} integration={selectedIntegration} applicationId={applicationId}/>
     </div>
   )
 }
