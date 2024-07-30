@@ -1,14 +1,17 @@
 import { ApplicationClickupIntegration, ApplicationNotionIntegration, PrismaClient } from "@prisma/client"
 import { BaseResponse } from "~/types/base.types"
+import { encrypt } from "~/utils/encryption"
 
 export function wrapAddNotionConfiguration(client: PrismaClient['applicationNotionIntegration']) {
   return addNotionConfiguration
 
   async function addNotionConfiguration(api_token: string, parent_page_id: string, application_id: number): Promise<BaseResponse<ApplicationNotionIntegration>> {
+    const encryptedToken = encrypt(api_token, process.env.ENCRYPTION_KEY!, process.env.ENCRYPTION_IV!)
+
     try {
       const data = await client.create({
         data: {
-          api_token,
+          api_token: encryptedToken,
           parent_page_id,
           applicationId: application_id
         }

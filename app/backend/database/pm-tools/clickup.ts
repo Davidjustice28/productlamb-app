@@ -1,14 +1,17 @@
 import { ApplicationClickupIntegration, PrismaClient } from "@prisma/client"
 import { BaseResponse } from "~/types/base.types"
+import { encrypt } from "~/utils/encryption"
 
 export function wrapAddClickupConfiguration(client: PrismaClient['applicationClickupIntegration']) {
   return addClickupConfiguration
 
   async function addClickupConfiguration(api_token: string, parent_folder_id: number, application_id: number): Promise<BaseResponse<ApplicationClickupIntegration>> {
+    const encryptedToken = encrypt(api_token, process.env.ENCRYPTION_KEY!, process.env.ENCRYPTION_IV!)
+    
     try {
       const data = await client.create({
         data: {
-          api_token,
+          api_token: encryptedToken,
           parent_folder_id,
           applicationId: application_id
         }

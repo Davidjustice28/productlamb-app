@@ -1,15 +1,18 @@
 import { ApplicationJiraIntegration, PrismaClient } from "@prisma/client"
 import { BaseResponse } from "~/types/base.types"
+import { encrypt } from "~/utils/encryption"
 
 export function wrapAddJiraConfiguration(client: PrismaClient['applicationJiraIntegration']) {
   return addJiraConfiguration
 
   async function addJiraConfiguration(api_token: string, parent_board_id: number, email: string, project_key: string, host_url: string, application_id: number): Promise<BaseResponse<ApplicationJiraIntegration>> {
     const board_id = typeof parent_board_id === 'number' ? parent_board_id : Number(parent_board_id)
+    const encryptedToken = encrypt(api_token, process.env.ENCRYPTION_KEY!, process.env.ENCRYPTION_IV!)
+
     try {
       const data = await client.create({
         data: {
-          api_token,
+          api_token: encryptedToken,
           parent_board_id: board_id,
           email,
           project_key,
