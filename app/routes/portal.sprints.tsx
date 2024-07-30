@@ -245,7 +245,7 @@ function SprintTableRow({data, tasks: initialTasks, initiative, timezone}: {data
     {key: "points", type: "text", sortable: true},
   ]
 
-  const timeData = calculateTimeLeft(timezone, data.startDate!, data.endDate!, 'Past Due')
+  const timeData = calculateTimeLeft(timezone, undefined, data.endDate!, 'Past Due')
   const timeTitle = timeData.type.charAt(0).toUpperCase() + timeData.type.slice(1)
   const timeLeft = `${timeTitle} left: ${timeData.count}`
   const tool = data?.jira_sprint_id ? 'jira' : data?.clickup_sprint_id ? 'clickup' : data?.notion_sprint_id ? 'notion' : 'none'

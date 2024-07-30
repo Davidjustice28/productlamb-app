@@ -21,11 +21,11 @@ export function hasUnixDateExpired(date: number) {
 }
 
 export function calculateTimeLeft(timezone: string, start?: string, end?: string, pastDueMessage: 'Past Due' | 'Error' | 'Expired' = 'Past Due') {
-  if (!start || !end) {
+  if (!end) {
     return {type: 'time', count: 'N/A'}
   }
 
-  const now = moment().tz(timezone);
+  const now = moment(start).utc().tz(timezone);
   const cutoff = moment.utc(end).clone().tz(timezone);
   const daysLeft = cutoff.diff(now, 'days');
   const hoursLeft = cutoff.diff(now, 'hours');
