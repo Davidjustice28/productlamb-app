@@ -4,7 +4,7 @@ import { BillingSettings } from "~/components/settings/billing";
 import { SettingsTabGroup } from "~/types/database.types";
 import { TeamSettings } from "~/components/settings/team";
 import { ManagerSettings } from "~/components/settings/manager";
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import { ActionFunction, json, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { account } from "~/backend/cookies/account";
 import { AccountManagerSettings, PrismaClient } from "@prisma/client";
 import { useLoaderData } from "@remix-run/react";
@@ -24,6 +24,16 @@ interface ManagerSettingsUpdate extends SettingsBaseUpdate {
 }
 
 interface TeamSettingsUpdate extends SettingsBaseUpdate {}
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "ProductLamb | Settings" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Settings",
+    },
+  ];
+};
 
 export const action: ActionFunction = async ({request}) => {
   const form = await request.formData()

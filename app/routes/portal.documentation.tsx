@@ -1,3 +1,4 @@
+import { MetaFunction } from "@remix-run/node";
 import { useState } from "react";
 import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLOptionsButtonGroup } from "~/components/buttons/options-button-group";
@@ -10,6 +11,15 @@ import { UploadFeedbackTutorial } from "~/components/tutorials/upload-feedback";
 import { generalQuestions, troubleshootingQuestions, featuresQuestions } from "~/static/faq-questions";
 import { FAQQuestion } from "~/types/base.types";
 
+export const meta: MetaFunction = () => {
+  return [
+    { title: "ProductLamb | Docs" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Docs",
+    },
+  ];
+};
 
 export default function DocumentationPage() {
   const faqOptions = ["general", "troubleshoot", "features"]

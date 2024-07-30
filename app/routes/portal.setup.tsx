@@ -1,6 +1,6 @@
 import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
 import { Account, ApplicationIntegration, PrismaClient } from "@prisma/client";
-import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { useActionData, useLoaderData, useNavigate } from "@remix-run/react";
 import React, { useEffect } from "react";
 import { useState } from "react";
@@ -32,6 +32,16 @@ interface SetupFieldProps {
   buttonText: string
   isOptional?: boolean
 }
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "ProductLamb | Setup" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Setup",
+    },
+  ];
+};
 
 export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {

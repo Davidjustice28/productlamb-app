@@ -1,5 +1,5 @@
 import { GeneratedInitiative, GeneratedTask, PrismaClient } from "@prisma/client"
-import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node"
 import { Form, useLoaderData } from "@remix-run/react"
 import { useEffect, useRef, useState } from "react"
 import { account } from "~/backend/cookies/account"
@@ -75,6 +75,17 @@ export const loader: LoaderFunction = async ({request, params}) => {
     sprintId
   }) 
 }
+
+export const meta: MetaFunction<typeof loader> = ({data}) => {
+  const {sprintId} = data
+  return [
+    { title: `ProductLamb | Planning #${sprintId}` },
+    {
+      property: "og:title",
+      content: `ProductLamb | Planning #${sprintId}`,
+    },
+  ];
+};
 
 export const action: ActionFunction  = async ({request, params}) => {
   const cookies = request.headers.get('Cookie')

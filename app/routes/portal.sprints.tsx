@@ -3,7 +3,7 @@ import { Colors, TableColumn } from "~/types/base.types"
 import { useState } from "react"
 import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node"
 import { account } from "~/backend/cookies/account"
 import { ApplicationSprint, GeneratedInitiative, GeneratedTask, PrismaClient } from "@prisma/client"
 import { ApplicationSprintsClient } from "~/backend/database/sprints/client"
@@ -107,8 +107,18 @@ export const action: ActionFunction = async ({request}) => {
     taskMap,
     sprintInitiativesMap,
   })
-
 }
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "ProductLamb | Sprints" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Sprints",
+    },
+  ];
+};
+
 export default function SprintPage() {
   const {sprints: loadedSprints, taskMap, sprintInitiativesMap, timezone } = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskMap: Record<number, GeneratedTask[]>, sprintInitiativesMap: Record<number, string>, timezone: string}
   const [sprints, setSprints] = useState<Array<ApplicationSprint>>(loadedSprints || [])

@@ -1,6 +1,6 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import { ApplicationSprint, GeneratedTask, PrismaClient } from "@prisma/client";
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { useRef, useState } from "react";
 import { account } from "~/backend/cookies/account";
@@ -28,6 +28,16 @@ interface BacklogPullIntoSprintData extends BaseFormData {
   ids: string,
   sprint_id: string
 }
+
+export const meta: MetaFunction<typeof loader> = () => {
+  return [
+    { title: "ProductLamb | Backlog" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Backlog",
+    },
+  ];
+};
 
 export const action: ActionFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')

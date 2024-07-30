@@ -1,6 +1,6 @@
 import { createClerkClient } from "@clerk/remix/api.server"
 import { PrismaClient, AccountApplication, Account, AccountUser } from "@prisma/client"
-import { LoaderFunction, json } from "@remix-run/node"
+import { LoaderFunction, MetaFunction, json } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
 import { useState } from "react"
 import { PLOptionsButtonGroup } from "~/components/buttons/options-button-group"
@@ -14,6 +14,17 @@ enum InternalPortalTabGroup {
   APPLICATIONS = 'applications',
   USERS = "users",
 }
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "ProductLamb | Internal" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Internal",
+    },
+  ];
+};
+
 export const loader: LoaderFunction = async ({request}) => {
   const dbClient = new PrismaClient()
   const applications = await dbClient.accountApplication.findMany()

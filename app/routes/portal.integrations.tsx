@@ -1,5 +1,5 @@
 import { ApplicationIntegration, PrismaClient } from "@prisma/client"
-import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node"
 import { Form, useLoaderData } from "@remix-run/react"
 import React from "react"
 import { useState } from "react"
@@ -15,6 +15,17 @@ import { IntegrationOptions } from "~/types/component.types"
 import { PLAvailableIntegrationNames } from "~/types/database.types"
 import { GithubIntegrationSetupFormData, GitlabIntegrationSetupFormData, TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types"
 import { encrypt } from "~/utils/encryption"
+
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "ProductLamb | Integrations" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Integrations",
+    },
+  ];
+};
 
 function getIntegrationsByname(setupIntegrations: Array<ApplicationIntegration>, options: Array<IntegrationOptions>) {
   const configuredOptions: Array<IntegrationOptions> = []

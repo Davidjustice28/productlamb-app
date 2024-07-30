@@ -1,5 +1,5 @@
 import { AccountApplication, PrismaClient } from "@prisma/client"
-import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node"
 import { Form, Outlet, useActionData, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { useRef, useState } from "react"
 import { account } from "~/backend/cookies/account"
@@ -21,6 +21,16 @@ interface ApplicationChangeData {
   selectedAppId: string
   selectedAppName: string
 }
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "ProductLamb | Applications" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Applications",
+    },
+  ];
+};
 
 export let action: ActionFunction = async ({ request }) => {
   const form = await request.formData()

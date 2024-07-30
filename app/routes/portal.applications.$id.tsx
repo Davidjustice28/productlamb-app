@@ -1,5 +1,5 @@
 import { AccountApplication, ApplicationGoal, PrismaClient } from "@prisma/client"
-import { ActionFunction, LoaderFunction, json, redirect, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, MetaFunction, json, redirect, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
 import { useActionData, useLoaderData } from "@remix-run/react"
 import { useState, useRef } from "react"
 import { ApplicationsClient } from "~/backend/database/applications/client"
@@ -12,10 +12,43 @@ import { PLIconButton } from "~/components/buttons/icon-button"
 import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
 
 
+export const loader: LoaderFunction = async ({ request, params }) => {
+  const { id } = params
+  if (!id) {
+    return redirect('/portal/applications')
+  }
+  const dbClient = new PrismaClient()
+  const appDbClient = ApplicationsClient(dbClient.accountApplication)
+  const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
+  const appId = parseInt(id)
+  const {data:goals} = await goalDbClient.getGoals(appId)
+  const {data: application} = await appDbClient.getApplicationById(appId)
+
+  if (!application) {
+    return redirect('/portal/applications')
+  }
+
+  if (!goals) {
+    return redirect('/portal/applications')
+  }
+
+  return json({application, goals} as const)
+}
+
 interface NewGoalData {
   goal: string
   isLongTerm: boolean
 }
+export const meta: MetaFunction<typeof loader> = ({data}) => {
+  const {application} = data.application
+  return [
+    { title: `ProductLamb | App #${application.id}` },
+    {
+      property: "og:title",
+      content: `ProductLamb | App #${application.id}`,
+    },
+  ];
+};
 
 export const action: ActionFunction = async ({ request, params }) => {
   const ifMultipartForm = request.headers.get('content-type')?.includes('multipart')
@@ -79,29 +112,6 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return redirect('/portal/applications')
-}
-
-export const loader: LoaderFunction = async ({ request, params }) => {
-  const { id } = params
-  if (!id) {
-    return redirect('/portal/applications')
-  }
-  const dbClient = new PrismaClient()
-  const appDbClient = ApplicationsClient(dbClient.accountApplication)
-  const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
-  const appId = parseInt(id)
-  const {data:goals} = await goalDbClient.getGoals(appId)
-  const {data: application} = await appDbClient.getApplicationById(appId)
-
-  if (!application) {
-    return redirect('/portal/applications')
-  }
-
-  if (!goals) {
-    return redirect('/portal/applications')
-  }
-
-  return json({application, goals})
 }
 
 export default function IndividualApplicationsPage() {

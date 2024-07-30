@@ -1,6 +1,6 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import { ApplicationSprint, ApplicationSuggestion, PrismaClient } from "@prisma/client";
-import { LoaderFunction, json, redirect } from "@remix-run/node";
+import { LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
@@ -12,6 +12,16 @@ import { PLBarChart } from "~/components/charts/bar-chart";
 import { PLLineChart } from "~/components/charts/line-chart";
 import { calculateTimeLeft } from "~/utils/date";
 
+
+export const meta: MetaFunction<typeof loader> = () => {
+  return [
+    { title: "ProductLamb | Dashboard" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Dashboard",
+    },
+  ];
+};
 
 export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {    

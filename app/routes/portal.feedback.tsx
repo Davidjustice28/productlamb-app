@@ -1,5 +1,5 @@
 import { ApplicationFeedback, ApplicationIntegration, PrismaClient } from "@prisma/client";
-import { ActionFunction, LoaderFunction, json, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, MetaFunction, json, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { parse } from "papaparse";
 import { useRef, useState } from "react";
@@ -19,6 +19,16 @@ export interface NewFeedbackData {
   source: string
   date: string
 }
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "ProductLamb | Feedback" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Feedback",
+    },
+  ];
+};
 
 export const action: ActionFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')

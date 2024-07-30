@@ -2,7 +2,7 @@ import { useOrganization } from "@clerk/remix";
 import { createClerkClient } from "@clerk/remix/api.server";
 import { OrganizationMembership, getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
 import { PrismaClient } from "@prisma/client";
-import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import React, { useEffect } from "react";
 import { account } from "~/backend/cookies/account";
@@ -14,6 +14,17 @@ import { PLConfirmModal } from "~/components/modals/confirm";
 import { PLLoadingModal } from "~/components/modals/loading";
 import { TableColumn } from "~/types/base.types";
 import { generateInviteToken } from "~/utils/jwt";
+
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "ProductLamb | Team" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Team",
+    },
+  ];
+};
 
 interface TeamMember {
   id: number
