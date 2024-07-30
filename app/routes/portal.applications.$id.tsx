@@ -39,13 +39,12 @@ interface NewGoalData {
   goal: string
   isLongTerm: boolean
 }
-export const meta: MetaFunction<typeof loader> = ({data}) => {
-  const {application} = data.application
+export const meta: MetaFunction<typeof loader> = () => {
   return [
-    { title: `ProductLamb | App #${application.id}` },
+    { title: 'ProductLamb | App Settings' },
     {
       property: "og:title",
-      content: `ProductLamb | App #${application.id}`,
+      content: 'ProductLamb | App Settings',
     },
   ];
 };

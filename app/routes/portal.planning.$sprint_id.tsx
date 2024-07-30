@@ -76,13 +76,12 @@ export const loader: LoaderFunction = async ({request, params}) => {
   }) 
 }
 
-export const meta: MetaFunction<typeof loader> = ({data}) => {
-  const {sprintId} = data
+export const meta: MetaFunction<typeof loader> = () => {
   return [
-    { title: `ProductLamb | Planning #${sprintId}` },
+    { title: `ProductLamb | Sprint Planning` },
     {
       property: "og:title",
-      content: `ProductLamb | Planning #${sprintId}`,
+      content: `ProductLamb | Sprint Planning`,
     },
   ];
 };
