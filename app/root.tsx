@@ -37,11 +37,14 @@ export const loader: LoaderFunction = (args) => {
     const { userId, orgId } = request.auth;
     const isPortalRoute = request.url.includes('/portal');
     let darkMode: boolean = false;
+
+    const sharedEnv = getSharedEnvs()
+
     if (!userId) {
       if (isPortalRoute) {
         return redirect('/')
       };
-      return json({});
+      return json({ ENV: sharedEnv });
     }
 
     const dbClient = new PrismaClient();
@@ -81,7 +84,7 @@ export const loader: LoaderFunction = (args) => {
           }
         }
         const internal_account_id = process.env.INTERNAL_ACCOUNT_ID ? parseInt(process.env.INTERNAL_ACCOUNT_ID) : null;
-        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id },
+        return json({ darkMode: darkMode, ENV: sharedEnv, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id },
           { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
         );
       }
@@ -118,7 +121,7 @@ export const loader: LoaderFunction = (args) => {
           }
         }
         const internal_account_id = process.env.INTERNAL_ACCOUNT_ID ? parseInt(process.env.INTERNAL_ACCOUNT_ID) : null;
-        return json({ darkMode: darkMode, ENV: getSharedEnvs(), selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id },
+        return json({ darkMode: darkMode, ENV: sharedEnv, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id },
           { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
         );
       }
@@ -178,6 +181,8 @@ export function App() {
           }}
         />
         <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
+        {ENV?.ENVIRONMENT === 'production' ? <script defer data-domain="productlamb.com" src="https://plausible.io/js/script.js"></script> : null}
+
         {process.env.NODE_ENV === 'development' && <LiveReload />}
       </body>
     </html>

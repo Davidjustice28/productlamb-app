@@ -39,8 +39,9 @@ declare global {
  * Shared envs are used in both `entry.server.ts` and `root.tsx`.
  * Do not share sensible variables that you do not wish to be included in the client.
  */
-export function getSharedEnvs() {
+export function getSharedEnvs(): {ENVIRONMENT?: string; DEV_HOST_URL?: string; PROD_HOST_URL?: string} {
   return {
+    ENVIRONMENT: process.env.SERVER_ENVIRONMENT,
     DEV_HOST_URL: process.env.DEV_HOST_URL,
     PROD_HOST_URL: process.env.PROD_HOST_URL,
   }
