@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { PLChartProps } from '~/types/component.types';
 
 export function PLLineChart({data } : PLChartProps) {
@@ -11,6 +11,7 @@ export function PLLineChart({data } : PLChartProps) {
         data={data.slice(0,8)}
         margin={{ top: 10, bottom: 0, right: 30}}
       >
+        <Legend/>
         <CartesianGrid strokeDasharray="3 3"/>
         <XAxis dataKey="name"/>
         <YAxis/>
@@ -18,6 +19,7 @@ export function PLLineChart({data } : PLChartProps) {
         <Line type="monotone" dataKey="features" stroke="#82ca9d" strokeWidth={3}/>
         <Line type="monotone" dataKey="chores" stroke="#ffc658" activeDot={{ r: 8 }} strokeWidth={3}/>
         <Line type="monotone" dataKey="others" stroke="#6F8FAF" strokeWidth={3}/>
+
       </LineChart>
     </ResponsiveContainer>
   );  

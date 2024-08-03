@@ -86,9 +86,30 @@ export let action: ActionFunction = async ({ request }) => {
           console.error('error adding jira config', errors)
         }
 
-      }else {
+      } else {
         const {parentPageId, apiKey} = pmToolData
-        const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parentPageId, createAppResult.id)
+        let parent_id = '' 
+        // ex: PAGETITLE-aba935a7aca940cfb6605de9edd598a8 || aba935a7aca940cfb6605de9edd598a8 || aba935a7-aca9-40cf-b660-5de9edd598a8 
+        const sections = parentPageId.split('-')
+        if (sections.length === 2) {
+          // PAGETITLE-aba935a7aca940cfb6605de9edd598a8 - remove page title and turn into a valid uuid
+          const id = parentPageId.split('-')[1]
+          const parts = [id.slice(0, 8), id.slice(8, 12), id.slice(12, 16), id.slice(16, 20), id.slice(20)]
+          parent_id = parts.join('-')
+        } else if (sections.length === 5) {
+          // aba935a7-aca9-40cf-b660-5de9edd598a8 - is a valid uuid
+          parent_id = parentPageId
+        } else if (sections.length === 1) {
+          // aba935a7aca940cfb6605de9edd598a8 - turn into a valid uuid
+          const id = parentPageId
+          const parts = [id.slice(0, 8), id.slice(8, 12), id.slice(12, 16), id.slice(16, 20), id.slice(20)]
+          parent_id = parts.join('-')
+        } else {
+          // invalid id
+          console.error(`Invalid Notion Page ID: ${parentPageId}. Please update later`)
+          parent_id = parentPageId
+        }
+        const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parent_id, createAppResult.id)
         if (data) {
           pmToolConfigurationResponseId = data.id
           pmToolType = 'notion'
