@@ -82,7 +82,7 @@ export default function LandingPage() {
         </div>
         <div className="items-center hidden gap-8 md:flex">
           
-          <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'} signUpForceRedirectUrl={null} signUpFallbackRedirectUrl={null}>
+          <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'} signUpForceRedirectUrl={'/portal/setup'} signUpFallbackRedirectUrl={null}>
             <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
           </SignInButton>
           

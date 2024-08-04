@@ -51,7 +51,8 @@ export const loader: LoaderFunction = (args) => {
     let user = await dbClient.accountUser.findFirst({ where: { userId: userId }});
     const accountClient = AccountsClient(dbClient.account);
     if (!user) {
-      return redirect('/portal/setup');
+      accountCookie.setupIsComplete = false;
+      return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
     }
 
     darkMode = user.darkMode;

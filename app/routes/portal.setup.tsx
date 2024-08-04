@@ -60,7 +60,15 @@ export const loader: LoaderFunction = args => {
 
     let user = await dbClient.accountUser.findFirst({ where: { userId: userId } });
     if (!user) {
-      user = await dbClient.accountUser.create({ data: { userId: userId! } });
+      try {
+        const result = await dbClient.accountUser.createMany({ data: [{ userId: userId }] });
+        if (result.count) {
+          user = await dbClient.accountUser.findFirst({ where: { userId: userId } });
+        }
+      } catch (err) {
+        console.error('create user id db failed: ', err);
+      }
+      return redirect('/portal/setup');
     }
 
     if (accountId === undefined) {
@@ -69,9 +77,11 @@ export const loader: LoaderFunction = args => {
         const result = await accountClient.createAccount(userId, "free", SupportedTimezone.MST);
         if (result.errors.length > 0 || !result.data) return json({});
         await dbClient.accountManagerSettings.create({ data: { accountId: result.data.id } });
+        await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: result.data.id } });
         accountId = result.data.id;
         accountCookie.accountId = accountId;
         accountCookie.setupIsComplete = false;
+
         return json({ hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false, account_id: accountId, subscriptionPaid: false }, {
           headers: {
             "Set-Cookie": await account.serialize(accountCookie)
@@ -473,18 +483,18 @@ export default function SetupPage() {
 
   return (
     <div className="flex flex-col h-full items-center text-black">
-      <h1 className="text-black mt-5 font-bold text-2xl">Let's get Onboarded! 📋</h1>
-      <p className="text-black mt-2 mb-5">Complete the following steps to get started with your account.</p>
-      <div className="w-4/5 bg-white rounded-xl shadow-sm mt-5 flex flex-col divide-y-2">
+      <h1 className="text-black mt-5 font-bold text-2xl dark:text-neutral-200">Let's get Onboarded! 📋</h1>
+      <p className="text-black mt-2 mb-5 dark:text-neutral-200">Complete the following steps to get started with your account.</p>
+      <div className="w-4/5 bg-white rounded-xl shadow-sm mt-5 flex flex-col divide-y-2 dark:bg-neutral-800 dark:divide-neutral-600">
         <div className="w-full flex flex-row justify-between items-center px-10 py-5 ">
-          <h2 className="text-black text-lg font-bold">Getting Started</h2>
-          <p className="text-black text-sm">Required Steps Left: <span className="font-bold">{incompleteSteps}</span></p>
+          <h2 className="text-black text-lg font-bold dark:text-neutral-300">Getting Started</h2>
+          <p className="text-black text-sm dark:text-neutral-300">Required Steps Left: <span className="font-bold">{incompleteSteps}</span></p>
         </div>
         <div className="w-full flex flex-col gap-5 px-10 py-5">
           {fields.map((field, index) => <SetupFieldComponent key={index} fieldInfo={field} enabled={seeIfEnabled(field.id)} completed={stepsMap[field.id].completed}/>)}
         </div>
         <div className="w-full flex flex-row gap-2 justify-end py-5 px-10">
-          <PLBasicButton icon="ri-play-circle-line" text="Finish Onboarding" colorClasses={"bg-green-400 text-white hover:bg-green-400 hover:text-white"} onClick={() => finishOnboarding()} disabled={!isSetup}/>
+          <PLBasicButton icon="ri-play-circle-line" text="Finish Onboarding" colorClasses={"bg-green-400 text-white hover:bg-green-400 dark:text-white hover:text-white dark:bg-green-700"} onClick={() => finishOnboarding()} disabled={!isSetup}/>
         </div>
       </div>
       <form method="POST" ref={newAppFormRef}>
@@ -521,20 +531,20 @@ function SetupFieldComponent({fieldInfo,enabled, completed}: {fieldInfo: SetupFi
   const {title, description, onClick, buttonText, icon} = fieldInfo;
   return (
     <div className={"w-full flex items-center gap-7 "}>
-      <div className={"h-[50px] w-[50px] border-2 border-black rounded-sm flex justify-center items-center " +  (completed ? " opacity-50" : "")}>
-        <i className={icon + " text-3xl"}></i>
+      <div className={"h-[50px] w-[50px] border-2 border-black dark:border-neutral-400 rounded-sm flex justify-center items-center " +  (completed ? " opacity-50" : "")}>
+        <i className={icon + " text-3xl dark:text-neutral-400"}></i>
       </div>
       <div className="flex-1 h-full flex flex-row justify-between items-center">
         <div className={"h-full flex flex-col justify-center gap-1 " +  (completed ? " opacity-50" : "")}>
-          <h2 className="text-black text-lg font-bold">{title}</h2>
-          <p className="text-black text-sm">{description}</p>
+          <h2 className="text-black text-lg font-bold dark:text-neutral-300">{title}</h2>
+          <p className="text-black text-sm dark:text-neutral-300">{description}</p>
         </div>
         {
           completed ?
           (<div className="h-[40px] w-[40px] rounded-full flex justify-center items-center bg-green-400">
             <i className={"ri-check-line text-white text-2xl"}></i>
           </div>) :
-          <PLBasicButton text={buttonText} colorClasses={"bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600 "  + (!enabled ? 'opacity-50' : '')} onClick={onClick} useStaticWidth={true} disabled={!enabled}/>
+          <PLBasicButton text={buttonText} colorClasses={"bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600 dark:bg-orange-200 dark:text-orange-600 dark:hover:bg-orange-200 dark:hover:text-orange-600"  + (!enabled ? 'opacity-50' : '')} onClick={onClick} useStaticWidth={true} disabled={!enabled}/>
         }
       </div>
     </div>
