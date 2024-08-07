@@ -82,7 +82,7 @@ export const loader: LoaderFunction = args => {
         accountCookie.accountId = accountId;
         accountCookie.setupIsComplete = false;
 
-        return json({ hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false, account_id: accountId, subscriptionPaid: false }, {
+        return json({ hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false, account_id: accountId, subscriptionPaid: false, organizationCreated: false }, {
           headers: {
             "Set-Cookie": await account.serialize(accountCookie)
           }
@@ -99,7 +99,8 @@ export const loader: LoaderFunction = args => {
       accountCookie.setupIsComplete = isSetup;
       const subscriptionPaid = accountData.status === 'active';
       if (!isSetup) {
-        return json({ hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false, account_id: accountData.id, subscriptionPaid}, {
+        const organizationCreated = accountData ? accountData.organization_id !== '1' : false;
+        return json({ hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false, account_id: accountData.id, subscriptionPaid, organizationCreated }, {
           headers: {
             "Set-Cookie": await account.serialize(accountCookie)
           }
@@ -116,12 +117,14 @@ export const loader: LoaderFunction = args => {
       }
       if (accountData && !accountData.isSetup) {
         const subscriptionPaid = accountData.status === 'active';
-        return json({ account_id: accountData.id, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id, subscriptionPaid });
+        const organizationCreated = accountData ? accountData.organization_id !== '1' : false;
+        return json({ account_id: accountData.id, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated, subscriptionPaid });
       }
       if (accountData && accountData.isSetup) {
         return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
       }
-      return json({ account_id: accountId, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id, subscriptionPaid: false });
+      const organizationCreated = accountData ? accountData.organization_id !== '1' : false;
+      return json({ account_id: accountId, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated, subscriptionPaid: false });
     }
   });
 };
@@ -335,7 +338,7 @@ export default function SetupPage() {
   const isSetup = hasApplication && subscriptionPaid && organizationCreated
   const [paymentMade, setPaymentMade] = useState(false)
   const [stepsMap, setStepsMap] = useState<{[key: number]: {completed: boolean, enabled: boolean, required: boolean}}>({
-    0: {completed: !!organizationCreated, enabled: true, required: true},
+    0: {completed: organizationCreated, enabled: true, required: true},
     1: {completed: subscriptionPaid, enabled: organizationCreated, required: true},
     2: {completed: !!hasApplication, enabled: subscriptionPaid, required: true},
     3: {completed: !!hasIntegration, enabled: hasApplication, required: false},
