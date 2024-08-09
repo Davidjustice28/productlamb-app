@@ -31,11 +31,11 @@ interface TeamMember {
   organization_id: string
   clerk_member_id: string
   clerk_user_id: string
-  name: string,
   role: string,
   imageUrl: string
   dateJoined: number
   dateLastActive: number
+  email: string
 }
 
 export const action: ActionFunction = async (args) => {
@@ -95,12 +95,11 @@ export const action: ActionFunction = async (args) => {
             organization_id: orgId,
             clerk_member_id: member.id,
             clerk_user_id: member.publicUserData?.userId || '',
-            name: fullName?.length ? fullName : 'No Name',
             role: role,
             imageUrl,
             dateJoined: clerkUserData.createdAt,
-            dateLastActive: clerkUserData?.lastActiveAt || 0
-
+            dateLastActive: clerkUserData?.lastActiveAt || 0,
+            email: clerkUserData.emailAddresses.length ? clerkUserData.emailAddresses[0].emailAddress : ''
           }
           acc.push(data)
         }
@@ -141,10 +140,10 @@ export const loader: LoaderFunction = args => {
         const role = member.role.split(':')[1]
         const data: TeamMember = {
           id: dbUser.id,
+          email: clerkUserData.emailAddresses.length ? clerkUserData.emailAddresses[0].emailAddress : '',
           organization_id: accountData.organization_id,
           clerk_member_id: member.id,
           clerk_user_id: member.publicUserData?.userId || '',
-          name: fullName?.length ? fullName : 'No Name',
           role: role,
           imageUrl,
           dateJoined: clerkUserData.createdAt,
@@ -205,7 +204,7 @@ export default function OrganizationProfilePage() {
 
   const columns: Array<TableColumn> = [
     {type: 'image', key: 'imageUrl'},
-    {type: 'text', key: 'name'},
+    {type: 'text', key: 'email'},
     {type: 'text', key: 'clerk_member_id', label: 'member id'},
     {type: 'status', key: 'role'},
     {type: 'date', key: 'dateLastActive', label: 'Last Session'},
