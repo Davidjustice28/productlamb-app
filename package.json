@@ -30,6 +30,7 @@
     "moment-timezone": "^0.5.45",
     "node-fetch": "^3.3.2",
     "octokit": "^4.0.2",
+    "openai": "^4.55.1",
     "papaparse": "^5.4.1",
     "react": "^18.2.0",
     "react-confetti-explosion": "^2.1.2",

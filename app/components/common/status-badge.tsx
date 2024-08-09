@@ -15,7 +15,7 @@ function getStatusBadgeStyles(color: Colors = Colors.GRAY): string {
   return statusDefaultStyles + ' ' + statusStylesMap[color]
 }
 
-export function PLStatusBadge({color, text}: {color: Colors, text: string}) {
+export function PLStatusBadge({color, text, isActive=true, onClick}: {color: Colors, text: string, isActive?: boolean, onClick?: () => void}) {
   const statusStyles = getStatusBadgeStyles(color)
-  return <span className={statusStyles}>{text}</span>
+  return <span className={statusStyles + (isActive ? '' : ' opacity-50 ') + (onClick ? ' cursor-pointer' : '')} onClick={onClick}>{text}</span>
 }
