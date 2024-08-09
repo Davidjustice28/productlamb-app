@@ -125,8 +125,11 @@ export const loader: LoaderFunction = args => {
 
     const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
     const prismaClient = new PrismaClient()
-
-    const {data: members} = await clerkClient.organizations.getOrganizationMembershipList({organizationId: orgId ?? ''})
+    const accountData = await prismaClient.account.findUnique({ where: {id: accountId}})
+    if (!accountData) {
+      return redirect('/portal/dashboard')
+    }
+    const {data: members} = await clerkClient.organizations.getOrganizationMembershipList({organizationId: accountData.organization_id})
     const {data: clerkUsers} = await clerkClient.users.getUserList({ userId: members.map(member => member.publicUserData!.userId)})
     const users = await prismaClient.accountUser.findMany({ where: {accountId: accountId}})
     const teamMembers: Array<TeamMember> = members.reduce((acc: Array<TeamMember>, member) => {
@@ -138,7 +141,7 @@ export const loader: LoaderFunction = args => {
         const role = member.role.split(':')[1]
         const data: TeamMember = {
           id: dbUser.id,
-          organization_id: orgId ?? '',
+          organization_id: accountData.organization_id,
           clerk_member_id: member.id,
           clerk_user_id: member.publicUserData?.userId || '',
           name: fullName?.length ? fullName : 'No Name',
