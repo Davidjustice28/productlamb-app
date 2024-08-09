@@ -11,6 +11,8 @@ function getStatusBadgeStyles(color: Colors = Colors.GRAY): string {
     'orange': 'bg-orange-50 text-orange-700 ring-orange-700/10',
     'purple': 'bg-purple-50 text-purple-700 ring-purple-700/10',
     'pink': 'bg-pink-50 text-pink-700 ring-pink-700/10',
+    'black': 'bg-black text-neutral-200 ring-black/10',
+    'white': 'bg-white text-neutral-900 ring-black/10',
   }
   return statusDefaultStyles + ' ' + statusStylesMap[color]
 }

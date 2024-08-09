@@ -78,6 +78,7 @@ export const action: ActionFunction = async ({ request, params }) => {
               category: backlog.category,
               backlog: true,
               status: 'to do',
+              points: 1,
             }))
           })
         } catch (e) {
@@ -88,7 +89,6 @@ export const action: ActionFunction = async ({ request, params }) => {
         console.error('Invalid data type')
       }
 
-      console.log('response', response)
       return redirect('/portal/setup')
     } else {
       return json({ error: 'Please try again later' }, { status: 400 })

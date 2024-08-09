@@ -10,6 +10,7 @@ import { NewApplicationData } from "~/types/database.types"
 import { uploadToPhotoToCloudStorage } from "~/services/gcp/upload-file"
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
+import { PLApplicationContextModel } from "~/components/modals/applications/upload-context"
 
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -23,7 +24,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const appId = parseInt(id)
   const {data:goals} = await goalDbClient.getGoals(appId)
   const {data: application} = await appDbClient.getApplicationById(appId)
-
+  const backlogItems = await dbClient.generatedTask.count({where: {applicationId: appId, backlog: true}})
+  const feedbackItems = await dbClient.applicationFeedback.count({where: {applicationId: appId}})
+  const bugs = await dbClient.applicationBug.count({where: {applicationId: appId}})
+  const hasInitialContext = !!bugs || !!feedbackItems || !!backlogItems
   if (!application) {
     return redirect('/portal/applications')
   }
@@ -32,7 +36,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     return redirect('/portal/applications')
   }
 
-  return json({application, goals} as const)
+  return json({application, goals, hasInitialContext} as const)
 }
 
 interface NewGoalData {
@@ -114,7 +118,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function IndividualApplicationsPage() {
-  const {goals: currentGoals, application: currentApplicationData} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication}>()
+  const {goals: currentGoals, application: currentApplicationData, hasInitialContext} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, hasInitialContext: boolean}>()
   const { updatedApplication, updatedGoals } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null}
   const [goals, setGoals] = useState<NewGoalData[]>(updatedGoals ?? currentGoals)
   const [name, setName] = useState(updatedApplication ? updatedApplication.name :currentApplicationData.name)
@@ -122,6 +126,8 @@ export default function IndividualApplicationsPage() {
   const [siteUrl, setSiteUrl] = useState(updatedApplication ? updatedApplication.siteUrl : currentApplicationData.siteUrl)
   const [type, setType] = useState(updatedApplication ? updatedApplication.type : currentApplicationData.type)
   const [logoUrl, setLogoUrl] = useState(updatedApplication ? updatedApplication.logo_url : currentApplicationData.logo_url)
+  const [appContextModalOpen, setAppContextModalOpen] = useState(false)
+
   const [changesDetected, setChangesDetected] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
@@ -194,6 +200,7 @@ export default function IndividualApplicationsPage() {
               <PLIconButton icon="ri-delete-bin-6-line" onClick={deleteAppImg} />
             </form>
           )}
+          { !hasInitialContext ? <PLBasicButton text={'Upload Initial Context'} colorClasses={"ml-7 bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600 dark:bg-orange-200 dark:text-orange-600 dark:hover:bg-orange-200 dark:hover:text-orange-600"} onClick={() => setAppContextModalOpen(true)}/> : null}
         </div>
         <form method="post">
           <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">Application Name</label>
@@ -301,8 +308,10 @@ export default function IndividualApplicationsPage() {
             )
           })}
           <PLBasicButton text="Update Details" colorClasses={"bg-primary-300 dark:bg-primary-300 dark:text-black px-3 py-0 text-md mt-4" + (!changesDetected ? ' hover:bg-primary-300 dark:hover:bg-primary-300 dark:hover:text-black' : '')} disabled={!changesDetected}/>
+
         </form>
       </div>
+      <PLApplicationContextModel open={appContextModalOpen} setOpen={setAppContextModalOpen} applicationId={currentApplicationData.id}/>
     </div>
   )
 }

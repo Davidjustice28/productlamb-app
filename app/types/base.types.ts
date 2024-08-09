@@ -23,6 +23,8 @@ export enum Colors {
   ORANGE = 'orange',
   PURPLE = 'purple',
   PINK = 'pink',
+  BLACK = 'black',
+  WHITE = 'white'
 }
 
 export interface TableColumn {
