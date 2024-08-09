@@ -37,6 +37,7 @@ export function PLProjectManagementToolLink({onToolConfirmation}: {onToolConfirm
         {selectedToolIndex === 0 && <ClickUpToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
         {selectedToolIndex === 1 && <JiraToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
         {selectedToolIndex === 2 && <NotionToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
+        <p className="text-black dark:text-white mt-5 italic">Need help finding your credentials? Here's a simple steps-by-step <a href="https://docs.google.com/document/d/1lfK0njWuhI0eGz1hEaE82UTUwZSW_N97Zu65DwYAci8/edit?usp=sharing" target="_blank" className="text-blue-600 dark:text-blue-500 font-bold underline"> guide</a></p>
       </div>
     </div>
   )
