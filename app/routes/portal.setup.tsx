@@ -22,6 +22,7 @@ import { PLInviteMemberModal } from "~/components/modals/account/invite-member";
 import { generateInviteToken } from "~/utils/jwt";
 import { encrypt } from "~/utils/encryption";
 import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client";
+import { PLApplicationContextModel } from "~/components/modals/applications/upload-context";
 
 interface SetupFieldProps {
   id: number, 
@@ -82,7 +83,7 @@ export const loader: LoaderFunction = args => {
         accountCookie.accountId = accountId;
         accountCookie.setupIsComplete = false;
 
-        return json({ hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false, account_id: accountId, subscriptionPaid: false }, {
+        return json({ hasApplication: false, isSetup: false, hasIntegration: false, providedFeedback: false, account_id: accountId, subscriptionPaid: false, organizationCreated: false }, {
           headers: {
             "Set-Cookie": await account.serialize(accountCookie)
           }
@@ -99,7 +100,8 @@ export const loader: LoaderFunction = args => {
       accountCookie.setupIsComplete = isSetup;
       const subscriptionPaid = accountData.status === 'active';
       if (!isSetup) {
-        return json({ hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false, account_id: accountData.id, subscriptionPaid}, {
+        const organizationCreated = accountData ? accountData.organization_id !== '1' : false;
+        return json({ hasApplication: apps ? apps.length : false, isSetup: accountData.isSetup, hasIntegration: integrations ? integrations.length : false, providedFeedback: false, account_id: accountData.id, subscriptionPaid, organizationCreated }, {
           headers: {
             "Set-Cookie": await account.serialize(accountCookie)
           }
@@ -116,12 +118,14 @@ export const loader: LoaderFunction = args => {
       }
       if (accountData && !accountData.isSetup) {
         const subscriptionPaid = accountData.status === 'active';
-        return json({ account_id: accountData.id, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id, subscriptionPaid });
+        const organizationCreated = accountData ? accountData.organization_id !== '1' : false;
+        return json({ account_id: accountData.id, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated, subscriptionPaid });
       }
       if (accountData && accountData.isSetup) {
         return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
       }
-      return json({ account_id: accountId, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated: !!accountData?.organization_id, subscriptionPaid: false });
+      const organizationCreated = accountData ? accountData.organization_id !== '1' : false;
+      return json({ account_id: accountId, hasApplication: apps ? apps.length : false, isSetup: false, hasIntegration: !!integrations.length, providedFeedback: false, applicationId: apps && apps.length > 0 ? apps[0].id : null, organizationCreated, subscriptionPaid: false });
     }
   });
 };
@@ -330,16 +334,18 @@ export default function SetupPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
   const [organizationDetailsModalOpen, setOrganizationDetailsModalOpen] = useState(false)
-  const [applicationId, setApplicationId] = useState(loadedApplicationId ?? actionApplicationId)
+  const [appContextModalOpen, setAppContextModalOpen] = useState(false)
+  const [applicationId, setApplicationId] = useState(actionApplicationId ?? loadedApplicationId)
   const [organizationCreated, setOrganizationCreated] = useState(loadedOrganizationCreated ?? actionOrganizationCreated)
   const isSetup = hasApplication && subscriptionPaid && organizationCreated
   const [paymentMade, setPaymentMade] = useState(false)
   const [stepsMap, setStepsMap] = useState<{[key: number]: {completed: boolean, enabled: boolean, required: boolean}}>({
-    0: {completed: !!organizationCreated, enabled: true, required: true},
+    0: {completed: organizationCreated, enabled: true, required: true},
     1: {completed: subscriptionPaid, enabled: organizationCreated, required: true},
     2: {completed: !!hasApplication, enabled: subscriptionPaid, required: true},
     3: {completed: !!hasIntegration, enabled: hasApplication, required: false},
-    4: {completed: false, enabled: organizationCreated && hasApplication && subscriptionPaid, required: false}
+    4: {completed: false, enabled: organizationCreated && hasApplication && subscriptionPaid, required: false},
+    5: {completed: false, enabled: organizationCreated && hasApplication && subscriptionPaid, required: false}
   })
 
   const incompleteSteps = Object.values(stepsMap).filter(s => !s.completed && s.required).length
@@ -404,6 +410,15 @@ export default function SetupPage() {
       icon: "ri-team-line",
       buttonText: "Send Invite",
     },
+    {
+      id: 5,
+      title: "Upload Initial Context",
+      description: "Provide the initial data for your application like bugs or feedback.",
+      onClick: () => setAppContextModalOpen(true),
+      icon: "ri-feedback-line",
+      buttonText: "Provide Context",
+      isOptional: true
+    }
   ]
   const onAddApplication = (data: any) => {
     newAppInputRef.current!.value = JSON.stringify(data)
@@ -522,7 +537,7 @@ export default function SetupPage() {
       <PLAddApplicationModal open={addApplicationModalOpen} setOpen={setAddApplicationModalOpen} onSubmit={onAddApplication}/>
       <PLOrganizationDetailsModal isOpen={organizationDetailsModalOpen} setIsOpen={setOrganizationDetailsModalOpen} onSubmit={onOrganizationDetailsSubmit}/>
       <PLInviteMemberModal isOpen={inviteModalOpen} onSubmit={handleInviteMember} setIsOpen={setInviteModalOpen}/>
-
+      <PLApplicationContextModel open={appContextModalOpen} setOpen={setAppContextModalOpen} applicationId={applicationId}/>
     </div>
   )
 }
