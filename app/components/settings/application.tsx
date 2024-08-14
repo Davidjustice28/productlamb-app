@@ -4,7 +4,6 @@ import { PLBasicButton } from "../buttons/basic-button"
 import { PLPhotoUploader } from "../forms/photo-uploader"
 import { ApplicationGoal, AccountApplication, PrismaClient } from "@prisma/client"
 import { useLoaderData, useActionData, json, redirect } from "@remix-run/react"
-import { action } from "~/root"
 import { ActionFunction, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
 import { ApplicationsClient } from "~/backend/database/applications/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
@@ -21,7 +20,7 @@ interface NewGoalData {
 export function ApplicationSettings() {
   const [editMode, setEditMode] = useState<boolean>(false)
   const {goals: currentGoals, application: currentApplicationData} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication}>()
-  const { updatedApplication, updatedGoals, updatedRepos } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null, updateRepos: null}
+  const { updatedApplication, updatedGoals, updatedRepos } = useActionData<any>() || {updateApplication: null, updatedGoals: null, updateRepos: null}
   const [goals, setGoals] = useState<NewGoalData[]>(updatedGoals ?? currentGoals)
   const [name, setName] = useState(updatedApplication ? updatedApplication.name :currentApplicationData.name)
   const [summary, setSummary] = useState(updatedApplication ? updatedApplication.summary : currentApplicationData.summary)

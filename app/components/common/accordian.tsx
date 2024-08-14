@@ -13,6 +13,7 @@ const openIcon = iconCombo === "arrows" ? "ri-arrow-up-s-line" : "ri-subtract-li
        id="expandCollapse"
        type="checkbox"
        checked={open}
+       onChange={() => setOpen(!open)}
        className="peer sr-only"
       />
       <label

@@ -7,10 +7,14 @@ import { useUser } from "@clerk/remix"
 import { useAdmin } from "~/backend/providers/admin"
 import { PLStatusBadge } from "../common/status-badge"
 import { Colors } from "~/types/base.types"
+import { PLIconButton } from "../buttons/icon-button"
+import { PLManagerRequestModal } from "../modals/manager/make-request"
 
 export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, darkMode, isInternal}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number }, toggleDarkMode: () => void, darkMode: boolean, isInternal: boolean}) {
   const {user} = useUser()
   const [darkModeState, setDarkModeState] = useState(darkMode)
+  const [managerModalOpen, setManagerModalOpen] = useState<boolean>(false)
+
   const contentBg = darkMode ? 'bg-neutral-950' : 'bg-neutral-200'
   const switchDarkModeSetting = () => {
     setDarkModeState(!darkModeState)
@@ -44,7 +48,10 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
           </div>
           <div className="flex items-center justify-center gap-3 mr-3">
             <label className="inline-flex items-center cursor-pointer">
-              <PLSpinner />
+              <div className={setupIsComplete ? ' mr-7' : ''}>
+                <PLSpinner />
+              </div>
+              {setupIsComplete ? <PLIconButton icon="ri-speak-fill" onClick={() => setManagerModalOpen(true)}/> : null}
               <ToggleSwitch onChangeHandler={switchDarkModeSetting} darkMode={darkModeState}/>
             </label>
             <div className="flex items-center gap-3">
@@ -58,6 +65,7 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
           </div>
         </div>
         <Outlet />
+        <PLManagerRequestModal open={managerModalOpen} setOpen={setManagerModalOpen} />
       </div>
     </div>      
   );
