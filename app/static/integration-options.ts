@@ -56,9 +56,9 @@ export const availableIntegrations: Array<IntegrationOptions>= [
   },
   {
     id: 5,
-    name: "Excel",
-    img_url: 'https://storage.googleapis.com/productlamb-platform-images/file-type-excel.svg',
-    description: 'Integrate to import/export data anytime to/from excel sheets.',
+    name: "Dropbox",
+    img_url: 'https://storage.googleapis.com/productlamb_project_images/dropbox%20(1).svg',
+    description: 'Enable productlamb to create and share documentation and reports in your Dropbox.',
     requiredFields: {
 
     },
@@ -75,40 +75,10 @@ export const availableIntegrations: Array<IntegrationOptions>= [
     },
     available: true,
   },
-  {
-    id: 7,
-    name: "Jotform",
-    img_url: 'https://storage.googleapis.com/productlamb-platform-images/jotform.svg',
-    description: 'Pull user feedback and data from Jotform.',
-    requiredFields: {
-
-    },
-    available: false,
-  },
 
   // TODO: Add coming soon integrations and get images from gcloud
   {
-    id: 8,
-    name: "Posthog",
-    img_url: 'https://storage.googleapis.com/productlamb_project_images/posthog-logomark-padded.png',
-    description: 'Consider session data and traffic analytics in task suggestions and prioritization.',
-    requiredFields: {
-
-    },
-    available: false,
-  },
-  {
-    id: 9,
-    name: "Plausible",
-    img_url: 'https://storage.googleapis.com/productlamb_project_images/idk4lfuNlY_1722221813472.png',
-    description: 'Incorporate user session data in task suggestions and prioritization.',
-    requiredFields: {
-
-    },
-    available: false,
-  },
-  {
-    id: 10,
+    id: 7,
     name: "Google Drive",
     img_url: 'https://storage.googleapis.com/productlamb-platform-images/google-drive.svg',
     description: 'Allow productlamb to create and store documentation and reports in your Google Drive.',
@@ -118,10 +88,10 @@ export const availableIntegrations: Array<IntegrationOptions>= [
     available: false,
   },
   {
-    id: 11,
-    name: "Dropbox",
-    img_url: 'https://storage.googleapis.com/productlamb_project_images/dropbox%20(1).svg',
-    description: 'Enable productlamb to create and share documentation and reports in your Dropbox.',
+    id: 8,
+    name: "Plausible",
+    img_url: 'https://storage.googleapis.com/productlamb_project_images/idk4lfuNlY_1722221813472.png',
+    description: 'Incorporate user session data in task suggestions and prioritization.',
     requiredFields: {
 
     },

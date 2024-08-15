@@ -161,7 +161,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="rounded-xl w-full h-full bg-white dark:bg-neutral-800 pt-5 pb-3 px-2" style={{height: "325px"}}>
-          {(chartIndex < 2 || chartIndex > 2 ) && <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} fill={chartIndex === 1 ? "#82ca9d" : "#F28C28"}/>}
+          {(chartIndex < 2 || chartIndex > 2 ) && <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} fill={chartIndex === 1 ? "#82ca9d" : "#F28C28"} chart_type={chartIndex === 0 ? 'task-assigned' : chartIndex === 1 ? 'completed-percentage' : 'points-completed'} />}
           {(chartIndex === 2) && <PLLineChart data={chartData[chartIndex]}/>}
           
         </div>
