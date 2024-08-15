@@ -15,10 +15,10 @@ export function PLLineChart({data } : PLChartProps) {
   } , {bugs: 0, features: 0, chores: 0, others: 0})
 
   const averages = {
-    bugs: totals.bugs / data.length,
-    features: totals.features / data.length,
-    chores: totals.chores / data.length,
-    others: totals.others / data.length
+    bugs: Math.round(totals.bugs / data.length),
+    features: Math.round(totals.features / data.length),
+    chores: Math.round(totals.chores / data.length),
+    others: Math.round(totals.others / data.length)
   }
 
   const message = `Looks like you average ${averages.bugs} bug, ${averages.features} feature, ${averages.chores} chore, and ${averages.others} other tasks per sprint.`

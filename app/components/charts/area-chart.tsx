@@ -33,11 +33,11 @@ export function PLAreaChart<T=any>(props: PLAreaChartProps) {
   let message = ''
 
   if (props.chart_type === 'task-assigned') {
-    message = Number.isNaN(totals.total / data.length) ? 'Looks like you have not assigned any tasks.' : `Looks like on average, you assigned out ${totals.total / data.length} tasks per sprint.`
+    message = Number.isNaN(totals.total / data.length) ? 'Looks like you have not assigned any tasks.' : `Looks like on average, you assigned out ${Math.round(totals.total / data.length)} tasks per sprint.`
   } else if (props.chart_type === 'completed-percentage') {
-    message = Number.isNaN(totals.total / data.length) ? 'Looks like you have not completed any tasks.' : `Looks like you completed on average ${totals.total / data.length}% of your assigned work per sprint.`
+    message = Number.isNaN(totals.total / data.length) ? 'Looks like you have not completed any tasks.' : `Looks like you completed on average ${Math.round(totals.total / data.length)}% of your assigned work per sprint.`
   } else {
-    message = Number.isNaN(totals.total / data.length) ? 'Looks like you have not completed any tasks.' : `Looks like you completed on average ${totals.total / data.length} points per sprint.`
+    message = Number.isNaN(totals.total / data.length) ? 'Looks like you have not completed any tasks.' : `Looks like you completed on average ${Math.round(totals.total / data.length)} points per sprint.`
   }
   return (
     <div className='h-full group relative'>
