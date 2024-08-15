@@ -129,29 +129,30 @@ export default function LandingPage() {
 
 function FeaturesSection() {
   const imgs = [
+    "https://storage.googleapis.com/productlamb_project_images/manager_screenshot.png",
     "https://storage.googleapis.com/productlamb_project_images/clickup_screenshot.png",
-    "https://storage.googleapis.com/productlamb_project_images/dashboard_screenshot.png",
+    "https://storage.googleapis.com/productlamb_project_images/analytics_screenshot.png",
     'https://storage.googleapis.com/productlamb_project_images/screely-1720575351485.png',
     "https://storage.googleapis.com/productlamb_project_images/screely-1720590712501.png",
     "https://storage.googleapis.com/productlamb_project_images/apps_screenshot.png",
   ]
 
   const featureHeaders = [
+    "Work with your AI product manager like a regular team member",
     "Automate 60-80% of your sprint planning process",
     "Make better planning decisions with key metrics",
     "Keep your team focused",
     "Automate more with your favorite third party integrations",
     "Properly plan development across multiple projects",
-    // "Never feel locked in again",
   ]
 
   const featureDescriptions = [
+    "Through natural language, ask your product manager to do things on your behalf like add tasks to your backlog, schedule meetings, or follow up on developers progress.",
     "ProductLamb auto generates sprints in your preferred management tool by analyzing your goals, code repository issues, user feedback, self reported bugs, and more.",
     "Most startups care about a few core metrics. Understand these key metrics about your project's development, like how many points per sprint does your team average and what type of work is being prioritized.",
     "Through email and integrations like slack, ProductLamb can notify your team of recent updates, remind them of deadlines, and keep them focused on the work that matters.",
     "Connect to ProductLamb with tools you're already using to do automate more like tracking repository issues, scheduling meetings, and notifying the team of updates.",
     "Most production software has multiple code repositories. Many companies have multiple products. ProductLamb can help plan and manage work for all of your applications individually.",
-    // "Never feel locked in. Export your data at any time to CSV. ProductLamb is here to help you, not make things harder when you need to pivot."
   ]
 
   return (
@@ -163,6 +164,18 @@ function FeaturesSection() {
               <h2 className="font-bold text-4xl md:text-4xl">{featureHeaders[i]}</h2>
               <p className="font-regular text-lg md:text-xl">{featureDescriptions[i]}</p>
               {i === 0 && (
+                <div className="flex flex-col gap-7">
+                  <p className="text-lg text-orange-500 md:text-xl italic">"In a few seconds, your product manager can do things that were incrementally eating up your time."</p>
+                  <div className="flex flex-row gap-4 items-center">
+                    <img className="h-12 w-12 rounded-full" src="https://storage.googleapis.com/productlamb_project_images/IMG_7841.jpg"/>
+                    <div className="flex flex-col">
+                      <p className="font-semibold text-sm text-black">David Justice</p>
+                      <p className="font-regular text-xs text-black">Co-Founder</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {i === 1 && (
                 <div className="flex flex-row gap-5 items-center">
                   <p className="text-black font-semibold -mr-2">Tools Supported</p>
                   <div className="flex items-center gap-4">
@@ -172,7 +185,7 @@ function FeaturesSection() {
                   </div>
                 </div>
               )}
-              {i === 1 && (
+              {i === 2 && (
                 <div className="flex flex-col gap-7">
                   <p className="text-lg text-orange-500 md:text-xl italic">"We've been using ProductLamb internally and it has brought so much insight on what work we need to prioritize."</p>
                   <div className="flex flex-row gap-4 items-center">
@@ -184,7 +197,7 @@ function FeaturesSection() {
                   </div>
                 </div>
               )}
-              {i === 2 && (
+              {i === 3 && (
                 <div className="flex flex-col gap-7">
                   <p className="text-lg text-orange-500 md:text-xl italic">"ProductLamb will keep your team accountable and on track to hit your productivity goals just like a tradional Product Manager."</p>
                   <div className="flex flex-row gap-4 items-center">
@@ -197,7 +210,7 @@ function FeaturesSection() {
                 </div>
               )}
               
-              {i === 3 && (
+              {i === 4 && (
                 <div className="flex flex-row gap-5 items-center">
                   {/* <p className="text-black font-semibold">Support for</p> */}
                   <div className="flex items-center gap-4">
@@ -209,7 +222,7 @@ function FeaturesSection() {
                   </div>
                 </div>
               )}
-              {i === 4 && (
+              {i === 5 && (
                 <div className="flex flex-col gap-7">
                   <p className="text-lg text-orange-500 md:text-xl italic">"No service, product, or application should be a second thought. Make sure every portion of your product is well thought out."</p>
                   <div className="flex flex-row gap-4 items-center">
@@ -281,11 +294,16 @@ function ValueSection() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8 bo">
           <div className="sm:px-32">
             <p className="mt-2 text-left text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">We automate as much of the planning process as possible so that you can focus your time on building and growing your business.</p>
-            <p className="mt-6 text-left text-md sm:text-lg leading-8 text-gray-600">Project Managers are crucial personnel, especially in startups. But with an average salary cost of $70k - $120k, hiring one is just not an option. However, we do believe that all tech companies, whether large or small, could benefit from someone or something
-              that can keep them accountable, that really manages the lifecycle of new features, and plans a project's workload. So how do most early-staged startups manage their product's development? By winging it or with a project management software with a kanban board. We decided to start here.</p>
-            <p className="mt-6 text-md text-left sm:text-lg leading-8 text-gray-600">There are many great tools on the 
+            <p className="mt-6 text-left text-md sm:text-lg leading-8 text-gray-600">Project Managers are crucial personnel, especially in startups. But with an average salary cost of $70k - $120k, hiring one is just not an option. However, we believe that all tech companies, whether large or small, could benefit from someone or something
+              that can keep them accountable, that really manages the lifecycle of new features, and plans a project's workload. So how do most early-staged startups manage their product's development? By winging it or with a project management software with a kanban board. We decided to improve these "processes".</p>
+            <p className="mt-6 text-md text-left sm:text-lg leading-8 text-gray-600">
+              Never again do you have to waste your little time adding tasks into Jira or analyzing survey results to design features. We provide you with a virtual AI product manager, that takes away a lot of the tedious work you do and does them in seconds. 
+              Sure, adding 1 tasks to Jira may only take 5 minutes. But a bunch of these little things that you do in a day/week/month adds up to a lot of time and stress. With ProductLamb, budgeting won't prohibit you from making the hire your team needs.</p>
+            <p className="mt-6 text-md text-left sm:text-lg leading-8 text-gray-600">
+              We also provide you with a platform that helps you manage your preferred pm tools like ClickUp and Notion. There are many great tools on the 
               market, but they are too complex and bloated. They are designed for big teams and big projects. ProductLamb is designed for you, the small team with a lot to do. We're not looking to replace your favorite tool, but to manage it for you. ProductLamb automates most of the things needed to keep your project on track to hit your goals,
-              while providing the core features you care about, in the case that you want to get your hands dirty.</p>
+              while providing the core features you care about, in the case that you want to get your own hands dirty.
+            </p>
             <p className="mt-6 text-md text-left sm:text-lg leading-8 text-gray-600">Our platform gives you more time back and enables you to make data driven decisions when choosing what work to prioritize next.
               We're here to help you spend more time building your product rather than losing time planning it.
             </p>
