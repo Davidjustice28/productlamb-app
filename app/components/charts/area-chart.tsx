@@ -2,7 +2,7 @@ import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export type PLAreaChartProps = {
-  data: Array<{name: string, taskCount: number}>,
+  data: Array<{name: string, taskCount?: number, completed?: number}>,
   xKey: string,
   yKey: string,
   fill: string,
@@ -26,7 +26,7 @@ export function PLAreaChart<T=any>(props: PLAreaChartProps) {
 
   const stroke = fill
   const totals = data.reduce((acc, curr) => {
-    acc.total += curr.taskCount
+    acc.total += (props.chart_type === 'task-assigned') ? curr.taskCount! : curr.completed!
     return acc
   } , {total: 0})
 
@@ -37,7 +37,7 @@ export function PLAreaChart<T=any>(props: PLAreaChartProps) {
   } else if (props.chart_type === 'completed-percentage') {
     message = Number.isNaN(totals.total / data.length) ? 'Looks like you have not completed any tasks.' : `Looks like you completed on average ${Math.round(totals.total / data.length)}% of your assigned work per sprint.`
   } else {
-    message = Number.isNaN(totals.total / data.length) ? 'Looks like you have not completed any tasks.' : `Looks like you completed on average ${Math.round(totals.total / data.length)} points per sprint.`
+    message = Number.isNaN(totals.total / data.length) ? 'Looks like you have not completed any points.' : `Looks like you completed on average ${Math.round(totals.total / data.length)} points per sprint.`
   }
   return (
     <div className='h-full group relative'>
