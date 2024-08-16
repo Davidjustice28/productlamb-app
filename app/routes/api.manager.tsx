@@ -90,6 +90,7 @@ export const action: ActionFunction = async (args) => {
     return json({ transcript:  result.manager_response});
 
   } catch (error) {
+    console.error('transcibe audio error:', error)
     return json({ error: 'Unknown error occurred while transcribing audio' }, { status: 500 });
   }
 };
