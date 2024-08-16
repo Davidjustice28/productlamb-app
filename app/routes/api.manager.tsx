@@ -92,12 +92,12 @@ export const action: ActionFunction = async (args) => {
       return null
     })
 
-    if (!result || !result?.success) {
+    if (!result || "manager_response" in result === false) {
       console.error('### Sprint manager error: ', result)
-      return json({ error: 'Sprint manager error' }, { status: 400 });
+      return json({ error: 'Sprint manager error' }, { status: 500 });
     }
     
-    return json({ transcript:  result.manager_response});
+    return json({ transcript:  result.manager_response}, { status: 200 });
 
   } catch (error) {
     console.error('transcibe audio error:', error)
