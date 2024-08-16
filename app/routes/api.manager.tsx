@@ -32,8 +32,9 @@ export const action: ActionFunction = async (args) => {
   const { parseBuffer } = await import('music-metadata');
 
   const metadata = await parseBuffer(buffer)
-  console.log('audio file metadata: ', JSON.stringify({
-    format: metadata.format,
+  console.log('audio files metadata: ', JSON.stringify({
+    encoding: metadata.format?.codec,
+    sampleRate: metadata.format?.sampleRate,
   }, null, 2))
   try {
     // Configure the request
@@ -42,8 +43,8 @@ export const action: ActionFunction = async (args) => {
         content: audioBytes,
       },
       config: {
-        encoding: 'OPUS' as any, // Make sure this matches your audio file's encoding
-        sampleRateHertz: 48000, // Adjust this based on your audio file
+        encoding:  metadata.format?.codec || 'OPUS' as any, // Make sure this matches your audio file's encoding
+        sampleRateHertz: metadata.format?.sampleRate || 48000, // Adjust this based on your audio file
         languageCode: 'en-US', // Change as needed
       },
     };
