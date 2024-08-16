@@ -88,10 +88,14 @@ export const action: ActionFunction = async (args) => {
         account_id: accountId
       })
     }).then(res => res.json()).catch((e) => {
+      console.error('### Sprint manager catched an error: ', e)
       return null
     })
 
-    if (!result || !result?.success) return json({ error: 'Sprint manager error' }, { status: 400 });
+    if (!result || !result?.success) {
+      console.error('### Sprint manager error: ', result)
+      return json({ error: 'Sprint manager error' }, { status: 400 });
+    }
     
     return json({ transcript:  result.manager_response});
 
