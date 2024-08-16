@@ -163,7 +163,7 @@ function AudioRecorder({open}: {open: boolean}) {
           ))}
         </div>
       ) : (
-        <div className='flex flex-row items-center h-48 w-5/6 justify-center border-2 border-neutral-500 dark:border-neutral-300'>
+        <div className='flex flex-row px-3 items-center h-48 w-5/6 justify-center border-2 border-neutral-500 dark:border-neutral-300'>
           <p className='text-center text-md font-bold'>{transcript?.length ? transcript : "Give me a few seconds to process your request..."}</p>
         </div>
       )}
