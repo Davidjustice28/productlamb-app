@@ -5,6 +5,7 @@
     "target": "ES2020",
     "jsx": "react-jsx",
     "moduleResolution": "Bundler",
+    "module": "esnext",
     "strict": true,
     "isolatedModules": true,
     "esModuleInterop": true,

@@ -29,7 +29,12 @@ export const action: ActionFunction = async (args) => {
   // Convert Blob to Buffer and then to Base64 string
   const buffer = Buffer.from(await file.arrayBuffer());
   const audioBytes = buffer.toString('base64');
+  const { parseBuffer } = await import('music-metadata');
 
+  const metadata = await parseBuffer(buffer)
+  console.log('audio file metadata: ', JSON.stringify({
+    format: metadata.format,
+  }, null, 2))
   try {
     // Configure the request
     const requestConfig = {
