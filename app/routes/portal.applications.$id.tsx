@@ -1,16 +1,17 @@
 import { AccountApplication, ApplicationGoal, PrismaClient } from "@prisma/client"
 import { ActionFunction, LoaderFunction, MetaFunction, json, redirect, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
 import { useActionData, useLoaderData } from "@remix-run/react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { ApplicationsClient } from "~/backend/database/applications/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLPhotoUploader } from "~/components/forms/photo-uploader"
-import { NewApplicationData } from "~/types/database.types"
+import { NewApplicationData, SprintInterval } from "~/types/database.types"
 import { uploadToPhotoToCloudStorage } from "~/services/gcp/upload-file"
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
 import { PLApplicationContextModel } from "~/components/modals/applications/upload-context"
+import { ToggleSwitch } from "~/components/forms/toggle-switch"
 
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -100,8 +101,13 @@ export const action: ActionFunction = async ({ request, params }) => {
     } else {
       const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
       const updateData = data  as unknown as NewApplicationData
+      if ("sprint_generation_enabled" in updateData) {
+        const isEnabled = (updateData.sprint_generation_enabled as any) === 'true'
+        updateData.sprint_generation_enabled = isEnabled
+      }
+    
       const goals = updateData.goals.length ? JSON.parse(updateData.goals) as NewGoalData[] : []
-      const {data: updatedApplication} = await appDbClient.updateApplication(parseInt(id!), data)
+      const {data: updatedApplication} = await appDbClient.updateApplication(parseInt(id!), updateData)
       const {data: updatedGoals} = await goalDbClient.updateApplicationGoals(parseInt(id!), goals)
       if (!updatedApplication || !updatedGoals) {
         return json({ errors: [1] })
@@ -120,14 +126,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 export default function IndividualApplicationsPage() {
   const {goals: currentGoals, application: currentApplicationData, hasInitialContext} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, hasInitialContext: boolean}>()
   const { updatedApplication, updatedGoals } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null}
+  const [application, setApplication] = useState<AccountApplication>(updatedApplication ?? currentApplicationData)
   const [goals, setGoals] = useState<NewGoalData[]>(updatedGoals ?? currentGoals)
   const [name, setName] = useState(updatedApplication ? updatedApplication.name :currentApplicationData.name)
   const [summary, setSummary] = useState(updatedApplication ? updatedApplication.summary : currentApplicationData.summary)
   const [siteUrl, setSiteUrl] = useState(updatedApplication ? updatedApplication.siteUrl : currentApplicationData.siteUrl)
   const [type, setType] = useState(updatedApplication ? updatedApplication.type : currentApplicationData.type)
   const [logoUrl, setLogoUrl] = useState(updatedApplication ? updatedApplication.logo_url : currentApplicationData.logo_url)
+  const [generationEnabled, setGenerationEnabled] = useState(updatedApplication ? updatedApplication.sprint_generation_enabled : currentApplicationData.sprint_generation_enabled)
   const [appContextModalOpen, setAppContextModalOpen] = useState(false)
-
+  const [sprintInterval, setSprintInterval] = useState(updatedApplication ?updatedApplication.sprint_interval : currentApplicationData.sprint_interval)
   const [changesDetected, setChangesDetected] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
@@ -155,6 +163,11 @@ export default function IndividualApplicationsPage() {
       setChangesDetected(true)
       return
     }
+
+    if (sprintInterval !== currentApplicationData.sprint_interval) {
+      setChangesDetected(true)
+      return
+    }
     
     if (summary !== currentApplicationData.summary) {
       setChangesDetected(true)
@@ -165,6 +178,10 @@ export default function IndividualApplicationsPage() {
       return
     }
     if (type !== currentApplicationData.type) {
+      setChangesDetected(true)
+      return
+    }
+    if (generationEnabled !== currentApplicationData.sprint_generation_enabled) {
       setChangesDetected(true)
       return
     }
@@ -189,6 +206,15 @@ export default function IndividualApplicationsPage() {
     deleteFormRef.current?.requestSubmit()
   }
 
+  function handleGenerationToggle(e: React.ChangeEvent<HTMLInputElement>) {
+    const isEnabled = e.target.checked
+    setGenerationEnabled(isEnabled)
+  }
+
+  useEffect(() => {
+    checkForChanges()
+  }, [siteUrl, name, summary, type, sprintInterval, generationEnabled])
+
   return (
     <div>
       <div className="relative p-6 flex-auto rounded px-8 pt-6 pb-2 w-full">
@@ -207,7 +233,6 @@ export default function IndividualApplicationsPage() {
           <input value={name} 
             onChange={(v) => {
               setName(v.target.value)
-              checkForChanges()
             }} 
             placeholder="e.g., Instagram clone and todo list" 
             type="text" name="name" 
@@ -218,7 +243,6 @@ export default function IndividualApplicationsPage() {
             value={summary} 
             onChange={(v) => {
               setSummary(v.target.value)
-              checkForChanges()
             }} 
             maxLength={175} 
             name="summary" 
@@ -230,7 +254,6 @@ export default function IndividualApplicationsPage() {
             value={siteUrl || ""} 
             onChange={(v) => {
               setSiteUrl(v.target.value)
-              checkForChanges()
             }} 
             placeholder="Website or app store url" 
             type="text" 
@@ -242,7 +265,6 @@ export default function IndividualApplicationsPage() {
             name="type" 
             onChange={(v) => {
               setType(v.target.value)
-              checkForChanges()
             }}
             value={type.toLowerCase()}
             className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm"
@@ -256,6 +278,26 @@ export default function IndividualApplicationsPage() {
             <option value="cli-tool">CLI Tool</option>
             <option value="other">Other</option>
           </select>
+          <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mt-4">Sprint Cadence</label>
+          <select 
+            name="sprint_interval"
+            onChange={(v) => {
+              setSprintInterval(v.target.value)
+            }}
+            value={sprintInterval.toLowerCase()}
+            className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm"
+          >
+            <option value={SprintInterval.MONTHLY}>Monthly</option>
+            <option value={SprintInterval.BIWEEKLY}>Bi-Weekly</option>
+            <option value={SprintInterval.WEEKLY}>Weekly</option>
+            <option value={SprintInterval.DAILY}>Daily</option>
+          </select>  
+
+          <div className="flex flew-row items-center mt-4">
+            <label className="text-sm font-medium text-gray-700 dark:text-neutral-300 -mr-2">Sprint Generation Enabled</label>
+            <ToggleSwitch darkMode={generationEnabled} onChangeHandler={handleGenerationToggle}/>
+            <input type="hidden" name="sprint_generation_enabled" value={generationEnabled} />
+          </div>
           <div className="mt-4 flex flex-col gap-5 text-black dark:text-neutral-400 " >
             <input type="hidden" name="goals" value={JSON.stringify(goals)} />
             <div className="flex flex-col gap-2">
