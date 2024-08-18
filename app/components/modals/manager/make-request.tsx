@@ -102,6 +102,7 @@ function AudioRecorder({open}: {open: boolean}) {
 
   async function sendAudioFileToServer(blob?: Blob, audioURL?: string) {
     if (!blob || !audioURL || !audioURL?.length || audioURL === 'blob:' || blob?.size === 181925) {
+      console.error('Error: Unable to get audio contents');
       setTranscript('Hmm, something went wrong. Please try again.');
       return
     }

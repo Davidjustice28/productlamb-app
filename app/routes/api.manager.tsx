@@ -76,7 +76,7 @@ export const action: ActionFunction = async (args) => {
 
     // return failure if not a sentence
     if (transcript.length < 10) return json({ transcript: '' }, { status: 200 });
-    const result: {manager_response: string, success: boolean} | null = await fetch(sprintManagerUrl, {
+    const result: {result_summary: string} | null = await fetch(sprintManagerUrl, {
       method: 'POST',
       headers: {
         'Authorization': `${authToken}`,
@@ -91,13 +91,13 @@ export const action: ActionFunction = async (args) => {
       console.error('### Sprint manager catched an error: ', e)
       return null
     })
-
-    if (!result || "manager_response" in result === false) {
+    console.log('### Sprint manager request result: ', result)
+    if (!result || "result_summary" in result === false) {
       console.error('### Sprint manager error: ', result)
       return json({ error: 'Sprint manager error' }, { status: 500 });
     }
     
-    return json({ transcript:  result.manager_response}, { status: 200 });
+    return json({ transcript:  result.result_summary}, { status: 200 });
 
   } catch (error) {
     console.error('transcibe audio error:', error)
