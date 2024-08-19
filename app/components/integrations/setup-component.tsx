@@ -31,7 +31,7 @@ export function IntegrationSetupComponent({integration, onBackButtonClick, showB
   }
 
   const initializeSlackOAuthFlow = async () => {
-    window.location.href = `https://slack.com/oauth/v2/authorize?client_id=7605129512289.7592468667554&scope=chat:write,channels:history,users:read&redirect_uri=https://sprint-manager-eo3npggfra-wm.a.run.app/api/slack`
+    window.location.href = `https://slack.com/oauth/v2/authorize?client_id=7605129512289.7592468667554&scope=chat:write,channels:history,users:read&redirect_uri=https://sprint-manager-eo3npggfra-wm.a.run.app/integrations/slack/redirect`
   }
  
   return (

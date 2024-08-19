@@ -6,7 +6,7 @@ import { IntegrationClient } from "~/backend/database/integrations/ client";
 export const loader: ActionFunction = async ({ request, }) => {
   const url = new URL(request.url);
   const query = Object.fromEntries(url.searchParams.entries());
-  const token = query?.code
+  const token = query?.token
   const workspace_id = query?.workspace_id ?? ''
   if (!token) return json({ error: 'Slack OAuth flow failed' }, { status: 400 });
   const dbClient = new PrismaClient()
