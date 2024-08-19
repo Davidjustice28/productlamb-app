@@ -3,7 +3,7 @@ import { ActionFunction, json } from "@remix-run/node";
 import { account } from "~/backend/cookies/account";
 import { IntegrationClient } from "~/backend/database/integrations/ client";
 
-export const action: ActionFunction = async ({ request, }) => {
+export const loader: ActionFunction = async ({ request, }) => {
   const url = new URL(request.url);
   const query = Object.fromEntries(url.searchParams.entries());
   const token = query?.code
