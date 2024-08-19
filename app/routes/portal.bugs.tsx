@@ -101,12 +101,24 @@ export const loader: LoaderFunction = async ({request}) => {
   const bugClient = ApplicationBugsClient(dbClient.applicationBug)
   const {data: bugs} = await bugClient.getAllBugs(applicationId)
   const data: Array<ApplicationBug> = bugs ? bugs : []
-  return json({bugs: bugs ?? null, activeSprint: activeSprint})
+  const app = await dbClient.accountApplication.findFirst({where: {id: applicationId}})
+  let hasToolConfigured: boolean
+
+  if (app?.clickup_integration_id !== null) {
+    hasToolConfigured = true
+  } else if (app?.jira_integration_id !== null) {
+    hasToolConfigured = true
+  } else if (app?.notion_integration_id !== null) {
+    hasToolConfigured = true
+  } else {
+    hasToolConfigured = false
+    }
+  return json({bugs: bugs ?? null, activeSprint: activeSprint, hasToolConfigured})
 
 }
 
 export default function BugsPage() {
-  const {bugs: loadedBugs, activeSprint} = useLoaderData<typeof loader>() ?? {loadedBugs: [], activeSprint: null}
+  const {bugs: loadedBugs, activeSprint, hasToolConfigured} = useLoaderData<typeof loader>() ?? {loadedBugs: [], activeSprint: null, hasToolConfigured: false}
   const {updateBugs} = useActionData<typeof action>() ?? {updateBugs: null}
   const groups: Array<BugGroup> = Object.values(BugGroup)
   const [bugGroup, setBugGroup] = useState<BugGroup>(BugGroup.ALL)
@@ -185,7 +197,7 @@ export default function BugsPage() {
           {itemsSelected && (
             <>
               <PLIconButton icon="ri-delete-bin-line" onClick={handleDelete}/>
-              {activeSprint && <PLIconButton icon="ri-check-line" onClick={() => setPullModalOpen(true)}/>}
+              {(activeSprint && hasToolConfigured) && <PLIconButton icon="ri-check-line" onClick={() => setPullModalOpen(true)}/>}
             </>
           )}
           <PLIconButton icon="ri-add-line" onClick={() => setAddModalOpen(true)} />

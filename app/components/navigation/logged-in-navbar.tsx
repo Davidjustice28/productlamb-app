@@ -5,7 +5,7 @@ import { PLConfirmModal } from '../modals/confirm'
 import { useClerk, useOrganizationList } from '@clerk/remix'
 import { useSidebar } from '~/backend/providers/siderbar'
 
-export const LoggedInNavbar = ({darkMode, setupComplete, internalPageAccess, isAdmin}: {setupComplete: boolean, darkMode: boolean, applicationSelected: boolean, internalPageAccess: boolean, isAdmin: boolean}) => {
+export const LoggedInNavbar = ({darkMode, setupComplete, internalPageAccess, isAdmin, hasToolConfigured}: {setupComplete: boolean, darkMode: boolean, applicationSelected: boolean, internalPageAccess: boolean, isAdmin: boolean, hasToolConfigured: boolean}) => {
   const { isLoaded, setActive, userMemberships } = useOrganizationList({
     userMemberships: {infinite: true},
   })
@@ -20,7 +20,6 @@ export const LoggedInNavbar = ({darkMode, setupComplete, internalPageAccess, isA
   ]
   const links: Array<NavLink> = [
     { iconClass: "ri-dashboard-line", absoluteHref: '/portal/dashboard', text: 'Dashboard', adminOnly: false},
-    { iconClass: "ri-file-list-line", absoluteHref: '/portal/sprints', text: 'Sprints', adminOnly: false},
     { iconClass: "ri-bug-line", absoluteHref: '/portal/bugs', text: 'Bugs', adminOnly: false},
     { iconClass: "ri-feedback-line", absoluteHref: '/portal/feedback', text: 'Feedback', adminOnly: false},
     { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: false},
@@ -32,7 +31,7 @@ export const LoggedInNavbar = ({darkMode, setupComplete, internalPageAccess, isA
   ]
 
   if (internalPageAccess) links.push({ iconClass: "ri-dashboard-3-line", absoluteHref: '/portal/internal', text: 'Internal Portal'})
-  
+  if (hasToolConfigured) links.splice(1, 0, { iconClass: "ri-file-list-line", absoluteHref: '/portal/sprints', text: 'Sprints', adminOnly: false})
   const handleSigningOut = async () => {
     await signOut(() => {
       navigate('/')

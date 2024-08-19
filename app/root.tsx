@@ -84,8 +84,20 @@ export const loader: LoaderFunction = (args) => {
             return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
           }
         }
+        const app = await dbClient.accountApplication.findFirst({ where: { id: accountCookie.selectedApplicationId }});
+        if (!app) return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
+        let hasToolConfigured: boolean
+        if (app?.clickup_integration_id !== null) {
+          hasToolConfigured = true
+        } else if (app?.jira_integration_id !== null) {
+          hasToolConfigured = true
+        } else if (app?.notion_integration_id !== null) {
+          hasToolConfigured = true
+        } else {
+          hasToolConfigured = false
+        }
         const internal_account_id = process.env.INTERNAL_ACCOUNT_ID ? parseInt(process.env.INTERNAL_ACCOUNT_ID) : null;
-        return json({ darkMode: darkMode, ENV: sharedEnv, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id },
+        return json({ darkMode: darkMode, ENV: sharedEnv, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id, hasToolConfigured },
           { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
         );
       }
@@ -121,8 +133,20 @@ export const loader: LoaderFunction = (args) => {
             return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
           }
         }
+        const app = await dbClient.accountApplication.findFirst({ where: { id: accountCookie.selectedApplicationId }});
+        if (!app) return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
+        let hasToolConfigured: boolean
+        if (app?.clickup_integration_id !== null) {
+          hasToolConfigured = true
+        } else if (app?.jira_integration_id !== null) {
+          hasToolConfigured = true
+        } else if (app?.notion_integration_id !== null) {
+          hasToolConfigured = true
+        } else {
+          hasToolConfigured = false
+        }
         const internal_account_id = process.env.INTERNAL_ACCOUNT_ID ? parseInt(process.env.INTERNAL_ACCOUNT_ID) : null;
-        return json({ darkMode: darkMode, ENV: sharedEnv, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id },
+        return json({ darkMode: darkMode, ENV: sharedEnv, selectedApplicationName: accountCookie.selectedApplicationName, setupIsComplete: accountCookie.setupIsComplete, account_id: accountCookie?.accountId || null, selectedApplicationId: accountCookie.selectedApplicationId, internal_account_id, hasToolConfigured },
           { headers: { "Set-Cookie": await account.serialize(accountCookie) } }
         );
       }
@@ -132,7 +156,7 @@ export const loader: LoaderFunction = (args) => {
 
  
 export function App() {
-  const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, selectedApplicationId, account_id, internal_account_id} = useLoaderData<typeof loader>()
+  const { ENV, selectedApplicationName, setupIsComplete, darkMode: loadedDarkMode, selectedApplicationId, account_id, internal_account_id, hasToolConfigured } = useLoaderData<typeof loader>()
   const [ darkModeState, setDarkMode ] = useState<boolean>(loadedDarkMode)
   const {userId} = useAuth()
   const darkmodeFormRef = React.useRef<HTMLFormElement>(null)
@@ -171,7 +195,7 @@ export function App() {
         <form ref={darkmodeFormRef}>
           <input type="hidden" name="_darkMode" ref={inputRef}/>
         </form>
-        <RootLayout appData={{selectedApplicationName, selectedApplicationId}} setupIsComplete={setupIsComplete} toggleDarkMode={toggleDarkMode} darkMode={darkModeState} isInternal={isInternalAccount}/>
+        <RootLayout appData={{selectedApplicationName, selectedApplicationId, hasToolConfigured}} setupIsComplete={setupIsComplete} toggleDarkMode={toggleDarkMode} darkMode={darkModeState} isInternal={isInternalAccount}/>
         <ScrollRestoration />
         <Scripts />
 

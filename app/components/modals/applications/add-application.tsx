@@ -3,6 +3,7 @@ import { PLBaseModal, PLModalFooter } from "../base";
 import { useEffect, useRef, useState } from "react";
 import { PLProjectManagementToolLink } from "./link-pm-tool";
 import { SprintInterval } from "~/types/database.types";
+import { ToggleSwitch } from "~/components/forms/toggle-switch";
 
 interface NewGoalData {
   goal: string
@@ -11,6 +12,7 @@ interface NewGoalData {
 
 export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (data: any) => void, open: boolean, setOpen: (open: boolean) => void }) => {
   const [goals, setGoals] = useState<NewGoalData[]>([])
+  const [configuringATool, setIsConfiguringATool] = useState<boolean>(false)
   const [isValid, setIsValid] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
@@ -59,7 +61,7 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
     formTypeInputRef.current!.value = typeInputRef.current!.value
     formGoalInputRef.current!.value = JSON.stringify(goals)
     formPmToolRef.current!.value = pmToolRef.current!.value
-    formSprintIntervalRef.current!.value = sprintIntervalInputRef.current!.value
+    formSprintIntervalRef.current!.value = !configuringATool ? 'biweekly' : sprintIntervalInputRef.current!.value
     const form = new FormData(formRef.current!)
     const data = Object.fromEntries(form.entries())
     console.log('submitting form: ', data)
@@ -75,9 +77,9 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
     const name = nameInputRef.current?.value || ''
     const summary = summaryInputRef.current?.value || ''
     const type = typeInputRef.current?.value || ''
-    const pmToolConfigured = !!pmToolRef.current?.value?.length
-    const sprintInterval = sprintIntervalInputRef.current?.value || ''
-    const valid = (name.length && summary.length && type.length && pmToolConfigured && sprintInterval.length) ? true : false
+    const sprintInterval =  !configuringATool ? 'biweekly' : sprintIntervalInputRef.current?.value || ''
+    const toolValid = configuringATool ? !!pmToolRef.current?.value.length : true
+    const valid = (name.length && summary.length && type.length && sprintInterval.length && toolValid) ? true : false
     return valid
   
   }
@@ -90,6 +92,11 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
   const onToolConfirmation = (data: any) => {
     pmToolRef.current!.value = JSON.stringify(data)
     checkValidity()
+  }
+
+  function handleToolToggle(e: React.ChangeEvent<HTMLInputElement>) {
+    const isEnabled = e.target.checked
+    setIsConfiguringATool(isEnabled)
   }
 
   useEffect(() => {
@@ -153,21 +160,34 @@ export const PLAddApplicationModal = ({ open, setOpen, onSubmit}: { onSubmit?: (
                 <option value="desktop">Desktop</option>
                 <option value="other">Other</option>
               </select>
-              <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mt-4">Sprint Cadence</label>
-              <select 
-                ref={sprintIntervalInputRef}
-                required name="sprint_interval"
-                onChange={checkValidity}
-                className="p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm"
-              >
-                <option value={SprintInterval.MONTHLY}>Monthly</option>
-                <option value={SprintInterval.BIWEEKLY}>Bi-Weekly</option>
-                <option value={SprintInterval.WEEKLY}>Weekly</option>
-                <option value={SprintInterval.DAILY}>Daily</option>
-              </select>      
+              <div className="flex flew-row items-center mt-4">
+                <label className="text-sm font-medium text-gray-700 dark:text-neutral-300 -mr-2">Want ProductLamb to Manager your sprints?</label>
+                <ToggleSwitch darkMode={!!configuringATool} onChangeHandler={handleToolToggle}/>
+              </div>
+  
+              {
+                configuringATool ?
+                (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mt-4">Sprint Cadence</label>
+                    <select 
+                      ref={sprintIntervalInputRef}
+                      required name="sprint_interval"
+                      onChange={checkValidity}
+                      className={"p-2 text-black dark:text-neutral-400 mt-1 block w-full border-2 dark:bg-transparent dark:border-neutral-700 border-gray-300 rounded-md shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 sm:text-sm"}
+                    >
+                      <option value={SprintInterval.BIWEEKLY}>Bi-Weekly</option>
+                      <option value={SprintInterval.MONTHLY}>Monthly</option>
+                      <option value={SprintInterval.WEEKLY}>Weekly</option>
+                      <option value={SprintInterval.DAILY}>Daily</option>
+                    </select>
+                  </>
+                ) : null               
+              }
             </div>          
           </div>
-          <PLProjectManagementToolLink onToolConfirmation={onToolConfirmation}/>
+
+          <PLProjectManagementToolLink onToolConfirmation={onToolConfirmation} disabled={!configuringATool}/>
           <div className="mt-4 flex flex-col gap-5 text-black dark:text-neutral-400 " >
             <input type="hidden" name="goals" value={JSON.stringify(goals)} ref={goalInputRef}/>
             <div className="flex flex-col gap-2">

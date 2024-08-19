@@ -3,7 +3,7 @@ import { PLBasicButton } from "~/components/buttons/basic-button"
 import { ClickUpData, JiraData, NotionData, PROJECT_MANAGEMENT_TOOL } from "~/types/database.types"
 
 
-export function PLProjectManagementToolLink({onToolConfirmation}: {onToolConfirmation: (data: any) => void}) {
+export function PLProjectManagementToolLink({onToolConfirmation, disabled}: {onToolConfirmation: (data: any) => void, disabled?: boolean}) {
   const options = Object.values(PROJECT_MANAGEMENT_TOOL)
   const [selectedToolIndex, setSelectedToolIndex] = useState<number>(0)
   const [data, setData] = useState<NotionData|ClickUpData |JiraData>()
@@ -22,8 +22,10 @@ export function PLProjectManagementToolLink({onToolConfirmation}: {onToolConfirm
   }, [toolConfirmed])
 
   return (
-    <div className="flex-col flex gap-5 p-5 text-black dark:text-white border-2 rounded dark:border-neutral-400 mt-8">
-      <h2 className="text-xl font-bold">Connect to Project Management Tool</h2>
+    <div className={disabled ? 'hidden' : "flex-col flex gap-5 p-5 text-black dark:text-white border-2 rounded dark:border-neutral-400 mt-8"}>
+      <h2 className="text-xl font-bold -mb-4">Connect to Project Management Tool</h2>
+      <p className="text-neutral-500 font-medium dark:text-neutral-400">If you would like your ProductLamb manager to be able to manage sprints for you, please configure a tool below. Skip otherwise.</p> 
+      <div className="w-full border-2 mb-3 dark:border-neutral-600"></div>
       <div className="flex gap-2">
         {options.map((tool, index) => {
           return (

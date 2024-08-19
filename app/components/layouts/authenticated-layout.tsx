@@ -10,7 +10,7 @@ import { Colors } from "~/types/base.types"
 import { PLIconButton } from "../buttons/icon-button"
 import { PLManagerRequestModal } from "../modals/manager/make-request"
 
-export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, darkMode, isInternal}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number }, toggleDarkMode: () => void, darkMode: boolean, isInternal: boolean}) {
+export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, darkMode, isInternal}: {setupIsComplete: boolean, appData: {selectedApplicationName?: string, selectedApplicationId?: number, hasToolConfigured?: boolean }, toggleDarkMode: () => void, darkMode: boolean, isInternal: boolean}) {
   const {user} = useUser()
   const [darkModeState, setDarkModeState] = useState(darkMode)
   const [managerModalOpen, setManagerModalOpen] = useState<boolean>(false)
@@ -34,7 +34,7 @@ export function AuthenticatedLayout({appData, setupIsComplete, toggleDarkMode, d
 
   return (
     <div className="flex">
-      <LoggedInNavbar darkMode={darkModeState} setupComplete={setupIsComplete} applicationSelected={!!(appData?.selectedApplicationName && appData?.selectedApplicationName.length)} isAdmin={isAdmin} internalPageAccess={isInternal}/>
+      <LoggedInNavbar darkMode={darkModeState} setupComplete={setupIsComplete} applicationSelected={!!(appData?.selectedApplicationName && appData?.selectedApplicationName.length)} isAdmin={isAdmin} internalPageAccess={isInternal} hasToolConfigured={!!appData?.hasToolConfigured}/>
       <div className={"h-screen w-full py-3 px-6 overflow-scroll " + contentBg}>
         <div className="flex justify-between items-center w-full mb-2">
           <div className="flex gap-2">

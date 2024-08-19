@@ -60,71 +60,75 @@ export let action: ActionFunction = async ({ request }) => {
     if (createAppResult) {
       const goals = data.goals.length < 0 ? [] : JSON.parse(data.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)
-      const pmToolData = JSON.parse(data.projectManagementTool) as ClickUpData | NotionData | JiraData
 
-      let pmToolConfigurationResponseId: number| null = null
-      let pmToolType: 'clickup' | 'notion' | 'jira' | null = null
-      if ('parentFolderId' in pmToolData) {
-        const {parentFolderId, apiToken} = pmToolData
-        const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, createAppResult.id)
-        if (data) {
-          pmToolConfigurationResponseId = data.id
-          pmToolType = 'clickup'
-        }
-
-        if (errors) {
-          console.log('error adding clickup config', errors)
-        }
-
-      } else if ('parentBoardId' in pmToolData) {
-        const {parentBoardId, apiToken, email, hostUrl, projectKey} = pmToolData
-        const {data, errors} = await pmToolClient.jira.addConfig(apiToken, parentBoardId, email, projectKey, hostUrl, createAppResult.id)
-        if (data) {
-          pmToolConfigurationResponseId = data.id
-          pmToolType = 'jira'
+      if (data?.projectManagementTool && data.projectManagementTool.length > 2) {
+        const pmToolData = JSON.parse(data.projectManagementTool) as ClickUpData | NotionData | JiraData
+  
+        let pmToolConfigurationResponseId: number| null = null
+        let pmToolType: 'clickup' | 'notion' | 'jira' | null = null
+        if ('parentFolderId' in pmToolData) {
+          const {parentFolderId, apiToken} = pmToolData
+          const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, createAppResult.id)
+          if (data) {
+            pmToolConfigurationResponseId = data.id
+            pmToolType = 'clickup'
+          }
+  
+          if (errors) {
+            console.log('error adding clickup config', errors)
+          }
+  
+        } else if ('parentBoardId' in pmToolData) {
+          const {parentBoardId, apiToken, email, hostUrl, projectKey} = pmToolData
+          const {data, errors} = await pmToolClient.jira.addConfig(apiToken, parentBoardId, email, projectKey, hostUrl, createAppResult.id)
+          if (data) {
+            pmToolConfigurationResponseId = data.id
+            pmToolType = 'jira'
+          } else {
+            console.error('error adding jira config', errors)
+          }
+  
         } else {
-          console.error('error adding jira config', errors)
+          const {parentPageId, apiKey} = pmToolData
+          let parent_id = '' 
+          // ex: PAGETITLE-aba935a7aca940cfb6605de9edd598a8 || aba935a7aca940cfb6605de9edd598a8 || aba935a7-aca9-40cf-b660-5de9edd598a8 
+          const sections = parentPageId.split('-')
+          if (sections.length === 2) {
+            // PAGETITLE-aba935a7aca940cfb6605de9edd598a8 - remove page title and turn into a valid uuid
+            const id = parentPageId.split('-')[1]
+            const parts = [id.slice(0, 8), id.slice(8, 12), id.slice(12, 16), id.slice(16, 20), id.slice(20)]
+            parent_id = parts.join('-')
+          } else if (sections.length === 5) {
+            // aba935a7-aca9-40cf-b660-5de9edd598a8 - is a valid uuid
+            parent_id = parentPageId
+          } else if (sections.length === 1) {
+            // aba935a7aca940cfb6605de9edd598a8 - turn into a valid uuid
+            const id = parentPageId
+            const parts = [id.slice(0, 8), id.slice(8, 12), id.slice(12, 16), id.slice(16, 20), id.slice(20)]
+            parent_id = parts.join('-')
+          } else {
+            // invalid id
+            console.error(`Invalid Notion Page ID: ${parentPageId}. Please update later`)
+            parent_id = parentPageId
+          }
+          const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parent_id, createAppResult.id)
+          if (data) {
+            pmToolConfigurationResponseId = data.id
+            pmToolType = 'notion'
+          } else {
+            console.error('error adding notion config', errors)
+          }
         }
-
-      } else {
-        const {parentPageId, apiKey} = pmToolData
-        let parent_id = '' 
-        // ex: PAGETITLE-aba935a7aca940cfb6605de9edd598a8 || aba935a7aca940cfb6605de9edd598a8 || aba935a7-aca9-40cf-b660-5de9edd598a8 
-        const sections = parentPageId.split('-')
-        if (sections.length === 2) {
-          // PAGETITLE-aba935a7aca940cfb6605de9edd598a8 - remove page title and turn into a valid uuid
-          const id = parentPageId.split('-')[1]
-          const parts = [id.slice(0, 8), id.slice(8, 12), id.slice(12, 16), id.slice(16, 20), id.slice(20)]
-          parent_id = parts.join('-')
-        } else if (sections.length === 5) {
-          // aba935a7-aca9-40cf-b660-5de9edd598a8 - is a valid uuid
-          parent_id = parentPageId
-        } else if (sections.length === 1) {
-          // aba935a7aca940cfb6605de9edd598a8 - turn into a valid uuid
-          const id = parentPageId
-          const parts = [id.slice(0, 8), id.slice(8, 12), id.slice(12, 16), id.slice(16, 20), id.slice(20)]
-          parent_id = parts.join('-')
-        } else {
-          // invalid id
-          console.error(`Invalid Notion Page ID: ${parentPageId}. Please update later`)
-          parent_id = parentPageId
+        if (pmToolConfigurationResponseId && pmToolType) {
+          if (pmToolType === 'clickup') {
+            const response = await appDbClient.updateApplication(createAppResult.id, {clickup_integration_id: pmToolConfigurationResponseId})
+          } else if(pmToolType === 'jira') {
+            const response = await appDbClient.updateApplication(createAppResult.id, {jira_integration_id: pmToolConfigurationResponseId})
+          } else {
+            const response = await appDbClient.updateApplication(createAppResult.id, {notion_integration_id: pmToolConfigurationResponseId})
+          }
         }
-        const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parent_id, createAppResult.id)
-        if (data) {
-          pmToolConfigurationResponseId = data.id
-          pmToolType = 'notion'
-        } else {
-          console.error('error adding notion config', errors)
-        }
-      }
-      if (pmToolConfigurationResponseId && pmToolType) {
-        if (pmToolType === 'clickup') {
-          const response = await appDbClient.updateApplication(createAppResult.id, {clickup_integration_id: pmToolConfigurationResponseId})
-        } else if(pmToolType === 'jira') {
-          const response = await appDbClient.updateApplication(createAppResult.id, {jira_integration_id: pmToolConfigurationResponseId})
-        } else {
-          const response = await appDbClient.updateApplication(createAppResult.id, {notion_integration_id: pmToolConfigurationResponseId})
-        }
+        
       }
     }
     return json({})

@@ -187,50 +187,52 @@ export let action: ActionFunction = async (args) => {
     if (createAppResult) {
       const goals = newAppData.goals.length < 0 ? [] : JSON.parse(newAppData.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)      
+      if (newAppData?.projectManagementTool && newAppData.projectManagementTool.length > 2) {
 
-      const pmToolData = JSON.parse(newAppData.projectManagementTool) as ClickUpData | NotionData | JiraData
-
-      let pmToolConfigurationResponseId: number| null = null
-      let pmToolType: 'clickup' | 'notion' | 'jira' | null = null
-      if ('parentFolderId' in pmToolData) {
-        const {parentFolderId, apiToken} = pmToolData
-        const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, createAppResult.id)
-        if (data) {
-          pmToolConfigurationResponseId = data.id
-          pmToolType = 'clickup'
+        const pmToolData = JSON.parse(newAppData.projectManagementTool) as ClickUpData | NotionData | JiraData
+  
+        let pmToolConfigurationResponseId: number| null = null
+        let pmToolType: 'clickup' | 'notion' | 'jira' | null = null
+        if ('parentFolderId' in pmToolData) {
+          const {parentFolderId, apiToken} = pmToolData
+          const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, createAppResult.id)
+          if (data) {
+            pmToolConfigurationResponseId = data.id
+            pmToolType = 'clickup'
+          }
+  
+          if (errors) {
+            console.log('error adding clickup config', errors)
+          }
+  
+        } else if ('parentBoardId' in pmToolData) {
+          const {parentBoardId, apiToken, email, hostUrl, projectKey} = pmToolData
+          const {data, errors} = await pmToolClient.jira.addConfig(apiToken, parentBoardId, email, projectKey, hostUrl, createAppResult.id)
+          if (data) {
+            pmToolConfigurationResponseId = data.id
+            pmToolType = 'jira'
+          } else {
+            console.error('error adding jira config', errors)
+          }
+  
+        }else {
+          const {parentPageId, apiKey} = pmToolData
+          const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parentPageId, createAppResult.id)
+          if (data) {
+            pmToolConfigurationResponseId = data.id
+            pmToolType = 'notion'
+          } else {
+            console.error('error adding notion config', errors)
+          }
         }
-
-        if (errors) {
-          console.log('error adding clickup config', errors)
-        }
-
-      } else if ('parentBoardId' in pmToolData) {
-        const {parentBoardId, apiToken, email, hostUrl, projectKey} = pmToolData
-        const {data, errors} = await pmToolClient.jira.addConfig(apiToken, parentBoardId, email, projectKey, hostUrl, createAppResult.id)
-        if (data) {
-          pmToolConfigurationResponseId = data.id
-          pmToolType = 'jira'
-        } else {
-          console.error('error adding jira config', errors)
-        }
-
-      }else {
-        const {parentPageId, apiKey} = pmToolData
-        const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parentPageId, createAppResult.id)
-        if (data) {
-          pmToolConfigurationResponseId = data.id
-          pmToolType = 'notion'
-        } else {
-          console.error('error adding notion config', errors)
-        }
-      }
-      if (pmToolConfigurationResponseId && pmToolType) {
-        if (pmToolType === 'clickup') {
-          const response = await appDbClient.updateApplication(createAppResult.id, {clickup_integration_id: pmToolConfigurationResponseId})
-        } else if(pmToolType === 'jira') {
-          const response = await appDbClient.updateApplication(createAppResult.id, {jira_integration_id: pmToolConfigurationResponseId})
-        } else {
-          const response = await appDbClient.updateApplication(createAppResult.id, {notion_integration_id: pmToolConfigurationResponseId})
+        if (pmToolConfigurationResponseId && pmToolType) {
+          if (pmToolType === 'clickup') {
+            const response = await appDbClient.updateApplication(createAppResult.id, {clickup_integration_id: pmToolConfigurationResponseId})
+          } else if(pmToolType === 'jira') {
+            const response = await appDbClient.updateApplication(createAppResult.id, {jira_integration_id: pmToolConfigurationResponseId})
+          } else {
+            const response = await appDbClient.updateApplication(createAppResult.id, {notion_integration_id: pmToolConfigurationResponseId})
+          }
         }
       }
     }

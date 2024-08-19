@@ -102,12 +102,25 @@ export const loader: LoaderFunction = args => {
     const iv = process.env.ENCRYPTION_IV as string
     const key = process.env.ENCRYPTION_KEY as string
     const authToken = encrypt(process.env.SPRINT_GENERATION_SECRET as string, key, iv)
-    return json({backlog, activeSprint, application_id: selectedApplicationId, authToken})
+    const app = await dbClient.accountApplication.findFirst({where: {id: selectedApplicationId}})
+    let hasToolConfigured: boolean
+
+    if (app?.clickup_integration_id !== null) {
+      hasToolConfigured = true
+    } else if (app?.jira_integration_id !== null) {
+      hasToolConfigured = true
+    } else if (app?.notion_integration_id !== null) {
+      hasToolConfigured = true
+    } else {
+      hasToolConfigured = false
+    }
+
+    return json({backlog, activeSprint, application_id: selectedApplicationId, authToken, hasToolConfigured})
   })
 }
 
 export default function BacklogPage() {
-  const { backlog: loadedBacklog, activeSprint, application_id, authToken } = useLoaderData() as {backlog: GeneratedTask[], activeSprint: ApplicationSprint | null, application_id: number, authToken: string}
+  const { backlog: loadedBacklog, activeSprint, application_id, authToken, hasToolConfigured } = useLoaderData() as {backlog: GeneratedTask[], activeSprint: ApplicationSprint | null, application_id: number, authToken: string, hasToolConfigured: boolean}
   const { updatedTasks } = useActionData<typeof action>() ?? {updatedTasks: null}
   const [backlog, setBacklog] = useState<GeneratedTask[]>(updatedTasks ?? loadedBacklog ?? [])
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false)
@@ -129,6 +142,10 @@ export default function BacklogPage() {
 
   function onCheck(ids:Array<number>) {
     const itemsChecked = ids.length > 0
+    console.log({
+      itemsChecked,
+      ids
+    })
     setItemsSelected(itemsChecked)
     setIdsChecked(ids)
   }
@@ -157,7 +174,7 @@ export default function BacklogPage() {
           {itemsSelected && (
             <>
               <PLIconButton icon="ri-delete-bin-line" onClick={handleDelete}/>
-              {activeSprint && <PLIconButton icon="ri-check-line" onClick={() => setPullModalOpen(true)}/>}
+              {(activeSprint && hasToolConfigured) && <PLIconButton icon="ri-check-line" onClick={() => setPullModalOpen(true)}/>}
             </>
           )}
           <PLIconButton icon="ri-add-line" onClick={() => setAddModalOpen(true)} />
