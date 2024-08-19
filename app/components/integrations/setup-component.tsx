@@ -29,6 +29,10 @@ export function IntegrationSetupComponent({integration, onBackButtonClick, showB
     const data = Object.fromEntries(formData.entries())
     googleFormRef.current?.submit()
   }
+
+  const initializeSlackOAuthFlow = async () => {
+    window.location.href = `https://slack.com/oauth/v2/authorize?client_id=7605129512289.7592468667554&scope=chat:write,channels:history,users:read&redirect_uri=https://sprint-manager-eo3npggfra-wm.a.run.app/integrations/slack/redirect`
+  }
  
   return (
     <div className="p-5 text-black dark:text-white" style={{height: "550px"}}>
@@ -61,7 +65,10 @@ export function IntegrationSetupComponent({integration, onBackButtonClick, showB
             </form>
             <PLBasicButton text={hasGoogleOAuth ? 'Enable' : "Connect with Google"} colorClasses="bg-orange-400 hover:bg-orange-500 text-white w-52 mt-5" rounded={true} onClick={connectGoogleAccount} noDefaultDarkModeStyles/> 
           </>
-        ) : 
+        ) : integration.name.includes('Slack') ? (
+          <PLBasicButton text='Enable App' colorClasses="bg-orange-400 hover:bg-orange-500 text-white w-52 mt-5" rounded={true} onClick={initializeSlackOAuthFlow} noDefaultDarkModeStyles/> 
+
+        ) :
         (
           <>
           <form className="flex flex-col mt-5 justify-between h-5/6" ref={formRef} method="POST">

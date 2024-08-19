@@ -32,7 +32,7 @@ export const availableIntegrations: Array<IntegrationOptions>= [
     requiredFields: {
       
     },
-    available: false,
+    available: true,
   },
   {
     id: 3,
