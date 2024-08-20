@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { ActionFunction, json } from "@remix-run/node";
+import { ActionFunction, json, redirect } from "@remix-run/node";
 import { account } from "~/backend/cookies/account";
 import { IntegrationClient } from "~/backend/database/integrations/ client";
 
@@ -15,7 +15,5 @@ export const loader: ActionFunction = async ({ request, }) => {
   const applicationId = accountCookies.selectedApplicationId as number
   const integrationClient = IntegrationClient(dbClient.applicationIntegration)
   await integrationClient.addIntegration(applicationId, 'slack', token, { workspace_id })
-  const {data: updatedIntegrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
-  console.log('successfully added slack integration')
-  return json({ updatedIntegrations })
+  return redirect('/portal/integrations')
 }
