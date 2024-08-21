@@ -30,9 +30,10 @@ export enum Colors {
 export interface TableColumn {
   key: string,
   label?: string,
-  type: "text" | "status" | "image" | "date",
+  type: "text" | "status" | "image" | "date" | "link",
   sortable?: boolean
   capitalize?: boolean
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export interface FAQQuestion {

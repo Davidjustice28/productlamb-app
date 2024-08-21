@@ -43,6 +43,7 @@ model AccountApplication {
   ApplicationJiraIntegration    ApplicationJiraIntegration?    @relation(fields: [jira_integration_id], references: [id], onDelete: Cascade)
   ApplicationNotionIntegration  ApplicationNotionIntegration?  @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
   ApplicationBug                ApplicationBug[]
+  ApplicationDocuments          ApplicationDocuments[]
   ApplicationFeedback           ApplicationFeedback[]
   ApplicationGoal               ApplicationGoal[]
   ApplicationIntegration        ApplicationIntegration[]
@@ -198,4 +199,14 @@ model ApplicationJiraIntegration {
   host_url           String
   email              String
   AccountApplication AccountApplication?
+}
+
+model ApplicationDocuments {
+  id                 Int                @id @default(autoincrement())
+  applicationId      Int
+  document_url       String             @db.VarChar(255)
+  name               String             @default("") @db.VarChar(255)
+  date_created       String             @default("") @db.VarChar(255)
+  type               String             @default("") @db.VarChar(255)
+  AccountApplication AccountApplication @relation(fields: [applicationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

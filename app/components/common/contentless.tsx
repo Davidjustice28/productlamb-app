@@ -1,4 +1,4 @@
-type ListItemType = 'application' | 'sprint' | 'task' | 'goals' | 'bugs' | 'backlog' | 'integration' | 'feedback'
+type ListItemType = 'application' | 'sprint' | 'task' | 'goals' | 'bugs' | 'backlog' | 'integration' | 'feedback' | 'document'
 
 export function PLContentLess({additionMessage, itemType}: {itemType: ListItemType, additionMessage?: string}) {
   return (
@@ -24,6 +24,8 @@ function getDefaultNoContentMessage(itemType: string) {
       return 'If there are bugs in your application, create a new bug item.'
     case 'backlog':
       return 'If you have any tasks that you would like to work on in the future, add them to your backlog.'
+    case 'document':
+      return 'If you have any documents that you would like to keep track of, add them to your documents.'
     default:
       return 'Create a new item to get started'
   }

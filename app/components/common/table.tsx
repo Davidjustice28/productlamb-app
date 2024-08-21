@@ -137,18 +137,20 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
                   </td>
                   
                   {columns.map((column, index) => {
+                    // no size expands to full width available
+                    const sizeClass = !column?.size ? '' : column.size === 'sm' ? 'w-[100px]' : column.size === 'md' ? 'w-[200px]' : 'w-[300px]'
                     const key = typeof column === "string" ? column : column.key
                     const itemContent = item[key]
                     const roundingClass = index === (columns.length - 1) ? "rounded-r-lg" : ""
                     if(!index) {
                       return (
-                        <th scope="row" className={"px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"} key={index} onClick={() => handleRowClick(item)}>
+                        <th scope="row" className={"px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white " + sizeClass} key={index} onClick={() => handleRowClick(item)}>
                           <TableDataCellContent type={column.type} data={itemContent} capitalized={column?.capitalize}/>
                         </th>
                       )
                     } else {
                       return (
-                        <td className={"px-6 py-4 "} key={index} onClick={() => handleRowClick(item)}>
+                        <td className={"px-6 py-4 " + sizeClass} key={index} onClick={() => handleRowClick(item)}>
                           <TableDataCellContent type={column.type} data={itemContent} capitalized={column?.capitalize}/>
                         </td>
                       )
@@ -163,12 +165,13 @@ export function PLTable<T extends {[key:string]: any, id: number}>({data, column
   )
 }
 
-function TableDataCellContent({type, data, capitalized}: {type: "text"| "status"|"image"| "date", data: any, capitalized?: boolean}) {
+function TableDataCellContent({type, data, capitalized}: {type: "text"| "status"|"image"| "date" | 'link', data: any, capitalized?: boolean}) {
   if(type === 'date') {
     if (!data) return <span>N/A</span>
     const date_string = new Date(data).toDateString()
     return <span>{date_string === 'Invalid Date' ? 'N/A' : date_string}</span>
   }
+  if(type === 'link') return data ? <a href={data} className="text-blue-500" download target="_blank">View Document</a> : <span>N/A</span>
   if(type === 'text') return <span>{capitalized && typeof data === 'string' ? data.toUpperCase() : data}</span>
   if(type === 'image') return data ? <img src={data} className="w-10 h-10 rounded-full"/> : <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-600 flex flex-row items-center justify-center"><i className="ri-user-line dark:text-gray-400 text-black text-2xl"></i></div>
   let text = ''
