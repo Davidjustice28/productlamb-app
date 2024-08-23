@@ -73,10 +73,17 @@ export const action: ActionFunction = async (args) => {
     };
 
     // Initialize the Speech-to-Text client
-    console.log('### GCP_CREDENTIALS: ', process.env.GCP_CREDENTIALS)
-    const client = new SpeechClient({
-      credentials: JSON.parse(process.env.GCP_CREDENTIALS || "{}"),
-    });
+    let client: SpeechClient
+    try {
+      const speechConfig = JSON.parse(process.env.GCP_CREDENTIALS!)
+      const config = {
+        credentials: speechConfig,
+      }
+      client = new SpeechClient(config);
+    } catch (e) {
+      console.error('### SpeechClient setup error: ', e)
+      return json({ error: 'Unable to process audio.' }, { status: 500 });
+    }
 
     // Call the Speech-to-Text API
     const [response] = await client.recognize(requestConfig);
