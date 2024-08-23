@@ -4,6 +4,7 @@ import { account } from '~/backend/cookies/account';
 import { encrypt } from '~/utils/encryption';
 import { createClerkClient } from '@clerk/remix/api.server';
 import { getAuth } from '@clerk/remix/ssr.server';
+import { IAudioMetadata } from 'music-metadata';
 
 export const action: ActionFunction = async (args) => {
   const request = args.request
@@ -27,15 +28,25 @@ export const action: ActionFunction = async (args) => {
   }
 
   // Convert Blob to Buffer and then to Base64 string
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const audioBytes = buffer.toString('base64');
-  const { parseBuffer } = await import('music-metadata');
+  let buffer: Buffer
+  let audioBytes: string
+  let metadata: IAudioMetadata
+  try {
+    buffer = Buffer.from(await file.arrayBuffer());
+    audioBytes = buffer.toString('base64');
+    
+    const { parseBuffer } = await import('music-metadata');
+    metadata = await parseBuffer(buffer)
+    console.log('audio files metadata: ', JSON.stringify({
+      encoding: metadata.format?.codec,
+      sampleRate: metadata.format?.sampleRate,
+    }, null, 2))
+    
+  } catch (e) {
+    console.error('Error converting audio file to base64:', e);
+    return json({ message: 'Looks like I was unable to analyze your request. Pleast try again.' }, { status: 500 });
+  }
 
-  const metadata = await parseBuffer(buffer)
-  console.log('audio files metadata: ', JSON.stringify({
-    encoding: metadata.format?.codec,
-    sampleRate: metadata.format?.sampleRate,
-  }, null, 2))
   try {
     // Configure the request
     const requestConfig = {
