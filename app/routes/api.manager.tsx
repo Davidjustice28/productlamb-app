@@ -43,11 +43,6 @@ export const action: ActionFunction = async (args) => {
     audioBytes = convertedAudioBytes;
     const { parseBuffer } = await import('music-metadata');
     metadata = await parseBuffer(buffer)
-    console.log('audio files metadata: ', JSON.stringify({
-      encoding: metadata.format?.codec,
-      sampleRate: metadata.format?.sampleRate,
-      container: metadata.format?.container
-    }, null, 2))
     
   } catch (e) {
     console.error('Error converting audio file to base64:', e);
@@ -56,9 +51,9 @@ export const action: ActionFunction = async (args) => {
 
   function calculateEncoding(codec?: string) {
     if (!codec) return 'OGG_OPUS'
-    if (codec.toLowerCase().includes('opus') && metadata?.format?.container === 'OGG') return 'OGG_OPUS'
-    if (codec.toLowerCase().includes('opus') && metadata?.format?.container !== 'OGG'){
-
+    if (codec.toLowerCase().includes('opus')) {
+      console.log('### codec: ', codec)
+      return 'OGG_OPUS'
     }
     if (codec === 'MP3') return 'MP3'
     if (codec === 'MPEG') return 'MP3'
