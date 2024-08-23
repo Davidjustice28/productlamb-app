@@ -39,11 +39,9 @@ export const action: ActionFunction = async (args) => {
   try {
     buffer = Buffer.from(await file.arrayBuffer());
     // audioBytes = buffer.toString('base64');
-    const { audioBytes: convertedAudioBytes } = await processAudioFile(buffer);
+    const { audioBytes: convertedAudioBytes, metadata: parsedMetadata } = await processAudioFile(buffer);
     audioBytes = convertedAudioBytes;
-    const { parseBuffer } = await import('music-metadata');
-    metadata = await parseBuffer(buffer)
-    
+    metadata = parsedMetadata;
   } catch (e) {
     console.error('Error converting audio file to base64:', e);
     return json({ message: 'Looks like I was unable to analyze your request. Pleast try again.' }, { status: 500 });
@@ -59,7 +57,8 @@ export const action: ActionFunction = async (args) => {
     if (codec === 'MPEG') return 'MP3'
     return 'OGG_OPUS'
   }
-
+  const updatedEncoding = calculateEncoding(metadata.format?.codec)
+  console.log('### updatedEncoding: ', updatedEncoding)
   try {
     // Configure the request
     const requestConfig = {
@@ -67,7 +66,7 @@ export const action: ActionFunction = async (args) => {
         content: audioBytes,
       },
       config: {
-        encoding:  calculateEncoding(metadata.format?.codec) as any, // Make sure this matches your audio file's encoding
+        encoding: updatedEncoding as any, // Make sure this matches your audio file's encoding
         sampleRateHertz: metadata.format?.sampleRate || 48000, // Adjust this based on your audio file
         languageCode: 'en-US', // Change as needed
       },
@@ -90,7 +89,6 @@ export const action: ActionFunction = async (args) => {
     const transcript = response.results
       .map(result => {
         if (!result.alternatives) return '';
-        console.log('### result: ', result)
         return result.alternatives[0].transcript;
       })
       .filter(v => v?.length)
