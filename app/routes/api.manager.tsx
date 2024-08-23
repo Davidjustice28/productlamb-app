@@ -4,7 +4,7 @@ import { account } from '~/backend/cookies/account';
 import { encrypt } from '~/utils/encryption';
 import { createClerkClient } from '@clerk/remix/api.server';
 import { getAuth } from '@clerk/remix/ssr.server';
-import { IAudioMetadata, parseBuffer } from 'music-metadata';
+import { IAudioMetadata } from 'music-metadata';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import { writeFile, unlink, readFile } from 'fs/promises'
@@ -173,6 +173,7 @@ async function convertWebmToOgg(inputBuffer: Buffer): Promise<Buffer>  {
 };
 
 async function processAudioFile(buffer: Buffer): Promise<{ audioBytes: string; metadata: IAudioMetadata }> {
+  const { parseBuffer } = await import('music-metadata');
   const metadata = await parseBuffer(buffer);
   if (!metadata.format || !metadata.format?.codec || !metadata.format?.container || !metadata.format?.sampleRate) {
     throw new Error('No audio metadata found');
