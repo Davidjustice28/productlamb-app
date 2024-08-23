@@ -73,6 +73,7 @@ export const action: ActionFunction = async (args) => {
     };
 
     // Initialize the Speech-to-Text client
+    console.log('### GCP_CREDENTIALS: ', process.env.GCP_CREDENTIALS)
     const client = new SpeechClient({
       credentials: JSON.parse(process.env.GCP_CREDENTIALS || "{}"),
     });
