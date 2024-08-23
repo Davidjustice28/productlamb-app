@@ -4,7 +4,12 @@ import { account } from '~/backend/cookies/account';
 import { encrypt } from '~/utils/encryption';
 import { createClerkClient } from '@clerk/remix/api.server';
 import { getAuth } from '@clerk/remix/ssr.server';
-import { IAudioMetadata } from 'music-metadata';
+import { IAudioMetadata, parseBuffer } from 'music-metadata';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegPath from 'ffmpeg-static';
+import { writeFile, unlink, readFile } from 'fs/promises'
+ffmpeg.setFfmpegPath(ffmpegPath!);
+
 
 export const action: ActionFunction = async (args) => {
   const request = args.request
@@ -33,18 +38,31 @@ export const action: ActionFunction = async (args) => {
   let metadata: IAudioMetadata
   try {
     buffer = Buffer.from(await file.arrayBuffer());
-    audioBytes = buffer.toString('base64');
-    
+    // audioBytes = buffer.toString('base64');
+    const { audioBytes: convertedAudioBytes } = await processAudioFile(buffer);
+    audioBytes = convertedAudioBytes;
     const { parseBuffer } = await import('music-metadata');
     metadata = await parseBuffer(buffer)
     console.log('audio files metadata: ', JSON.stringify({
       encoding: metadata.format?.codec,
       sampleRate: metadata.format?.sampleRate,
+      container: metadata.format?.container
     }, null, 2))
     
   } catch (e) {
     console.error('Error converting audio file to base64:', e);
     return json({ message: 'Looks like I was unable to analyze your request. Pleast try again.' }, { status: 500 });
+  }
+
+  function calculateEncoding(codec?: string) {
+    if (!codec) return 'OGG_OPUS'
+    if (codec.toLowerCase().includes('opus') && metadata?.format?.container === 'OGG') return 'OGG_OPUS'
+    if (codec.toLowerCase().includes('opus') && metadata?.format?.container !== 'OGG'){
+
+    }
+    if (codec === 'MP3') return 'MP3'
+    if (codec === 'MPEG') return 'MP3'
+    return 'OGG_OPUS'
   }
 
   try {
@@ -54,7 +72,7 @@ export const action: ActionFunction = async (args) => {
         content: audioBytes,
       },
       config: {
-        encoding:  metadata.format?.codec || 'OPUS' as any, // Make sure this matches your audio file's encoding
+        encoding:  calculateEncoding(metadata.format?.codec) as any, // Make sure this matches your audio file's encoding
         sampleRateHertz: metadata.format?.sampleRate || 48000, // Adjust this based on your audio file
         languageCode: 'en-US', // Change as needed
       },
@@ -70,12 +88,14 @@ export const action: ActionFunction = async (args) => {
 
     // Check and handle the response
     if (!response.results || response.results.length === 0) {
+      console.error('No transcription results found: ', response);
       return json({ error: 'No transcription results found' }, { status: 400 });
     }
 
     const transcript = response.results
       .map(result => {
         if (!result.alternatives) return '';
+        console.log('### result: ', result)
         return result.alternatives[0].transcript;
       })
       .filter(v => v?.length)
@@ -114,4 +134,68 @@ export const action: ActionFunction = async (args) => {
     console.error('transcibe audio error:', error)
     return json({ error: 'Unknown error occurred while transcribing audio' }, { status: 500 });
   }
+};
+
+
+async function convertWebmToOgg(inputBuffer: Buffer): Promise<Buffer>  {
+  return new Promise((resolve, reject) => {
+    const inputPath = 'input.webm';
+    const outputPath = 'output.ogg';
+
+    // Write the input buffer to a temporary file
+    writeFile(inputPath, inputBuffer)
+      .then(() => {
+        ffmpeg(inputPath)
+          .output(outputPath)
+          .audioCodec('libopus')
+          .on('end', async () => {
+            try {
+              // Read the output file into a buffer
+              const outputBuffer = await readFile(outputPath);
+              // Clean up temporary files
+              await unlink(inputPath);
+              await unlink(outputPath);
+              resolve(outputBuffer);
+            } catch (error) {
+              reject(error);
+            }
+          })
+          .on('error', async (err) => {
+            // Clean up temporary files on error
+            await unlink(inputPath);
+            await unlink(outputPath);
+            reject(err);
+          })
+          .run();
+      })
+      .catch(reject);
+  });
+};
+
+async function processAudioFile(buffer: Buffer): Promise<{ audioBytes: string; metadata: IAudioMetadata }> {
+  const metadata = await parseBuffer(buffer);
+  if (!metadata.format || !metadata.format?.codec || !metadata.format?.container || !metadata.format?.sampleRate) {
+    throw new Error('No audio metadata found');
+  }
+  console.log('Audio files metadata:', JSON.stringify({
+    encoding: metadata.format?.codec,
+    sampleRate: metadata.format?.sampleRate,
+    container: metadata.format?.container,
+  }, null, 2));
+
+  let audioBytes: string;
+
+  // Check the format and convert if necessary
+  if (metadata.format?.container?.toLowerCase() === 'ebml/webm') {
+    console.log('File is in EBML/webm container, converting to OGG_OPUS.');
+    const oggBuffer = await convertWebmToOgg(buffer);
+    audioBytes = oggBuffer.toString('base64');
+  } else if (metadata.format?.codec?.toLowerCase() === 'opus' && metadata.format?.container?.toLowerCase() === 'ogg') {
+    console.log('File is already in OGG_OPUS format.');
+    audioBytes = buffer.toString('base64');
+  } else {
+    audioBytes = buffer.toString('base64');
+  }
+
+  return { audioBytes, metadata };
 };
