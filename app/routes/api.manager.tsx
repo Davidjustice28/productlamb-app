@@ -1,13 +1,13 @@
-import { ActionFunction, json, redirect } from '@remix-run/node';
+import { ActionFunction, json } from '@remix-run/node';
 import { SpeechClient } from '@google-cloud/speech';
 import { account } from '~/backend/cookies/account';
 import { encrypt } from '~/utils/encryption';
-import { createClerkClient } from '@clerk/remix/api.server';
 import { getAuth } from '@clerk/remix/ssr.server';
 import { IAudioMetadata } from 'music-metadata';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import { writeFile, unlink, readFile } from 'fs/promises'
+import { GCP_CONFIG } from '~/services/gcp/config';
 ffmpeg.setFfmpegPath(ffmpegPath!);
 
 
@@ -31,6 +31,7 @@ export const action: ActionFunction = async (args) => {
     console.error('No file uploaded');
     return json({ message: 'No file uploaded.' }, { status: 400 });
   }
+  const {speech} = new GCP_CONFIG();
 
   // Convert Blob to Buffer and then to Base64 string
   let buffer: Buffer
@@ -75,18 +76,14 @@ export const action: ActionFunction = async (args) => {
     // Initialize the Speech-to-Text client
     let client: SpeechClient
     try {
-      const speechConfig = JSON.parse(process.env.GCP_CREDENTIALS!)
-      const config = {
-        credentials: speechConfig,
-      }
-      client = new SpeechClient(config);
+      
     } catch (e) {
       console.error('### SpeechClient setup error: ', e)
       return json({ error: 'Unable to process audio.' }, { status: 500 });
     }
 
     // Call the Speech-to-Text API
-    const [response] = await client.recognize(requestConfig);
+    const [response] = await speech.recognize(requestConfig);
 
     // Check and handle the response
     if (!response.results || response.results.length === 0) {
