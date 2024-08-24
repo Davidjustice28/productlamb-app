@@ -25,6 +25,7 @@ export const action: ActionFunction = async (args) => {
     client_x509_cert_url: process.env.GCP_CLIENT_X509_CERT_URL,
     universe_domain: "googleapis.com"
   }
+  console.log('### config: ', config)
   try {
     speech = new SpeechClient({
       credentials: config,
