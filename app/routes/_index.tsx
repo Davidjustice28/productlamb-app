@@ -1,8 +1,11 @@
-import { SignInButton, useAuth, useUser } from "@clerk/remix";
+import { SignInButton, SignUpButton, useAuth, useUser } from "@clerk/remix";
 import { ActionFunction, LinksFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { PLBasicButton } from "~/components/buttons/basic-button";
+import { PLStatusBadge } from "~/components/common/status-badge";
+import { ToggleSwitch } from "~/components/forms/toggle-switch";
+import { Colors } from "~/types/base.types";
 
 export const links: LinksFunction = () => {
   return [
@@ -119,6 +122,7 @@ export default function LandingPage() {
             <h1 className="font-bold text-xl text-center md:text-4xl mb-2 text-orange-600">What makes us <span className="text-black">different</span>?<br className="md:hidden"/> What do we <span className="text-black">offer</span> ?</h1>
           </div>
           <ValueSection />
+          <PricingSection />
           {/* <ValidationSection /> */}
           <ContactUsSection />
         </div>
@@ -311,5 +315,79 @@ function ValueSection() {
         </div>
       </div>
     </div>
+  )
+}
+
+function PricingSection() {
+  const offerings = [
+    "Communicate with your manager via audio and Slack. (email coming soon)",
+    "Spring planning automation for your Project Management tools. (ClickUp, Notion, Jira)",
+    "Manage up to 10 applications",
+    "Key analytics and metric summaries",
+    "Agile tools like point estimators",
+    "Integrate with several 3rd party tools",
+    "Manually and bulk upload user feedback",
+    "Invite up to 4 team members",
+    "Dark mode for late night work",
+    "Discord access for support",
+  ]
+
+  const [isMonthly, setIsMonthly] = useState(true)
+
+  const toggleSubscription = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsMonthly((prev) => !prev)
+  }
+
+  return (
+    <div className="w-full" id="pricing">
+      <div className="bg-white sm:pt-28">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl sm:text-center">
+            <h2 className="text-2xl text-center font-bold tracking-tight text-gray-900 sm:text-4xl">Simple pricing. One plan for all.</h2>
+            <p className="mt-4 md:mt-6 text-lg leading-8 text-gray-600">Why discriminate on feature access. We make things simple. Choose between monthly or annual subscription and get access to everything.</p>
+          </div>
+          <div className="mx-auto mt-8 md:mt-16 max-w-2xl rounded-3xl ring-1 ring-gray-200 sm:mt-20 lg:mx-0 lg:flex lg:max-w-none">
+            <div className="p-8 sm:p-10 lg:flex-auto">
+              <h3 className="text-2xl font-bold tracking-tight text-gray-900">Standard Subscription</h3>
+              <p className="mt-6 text-base leading-7 text-gray-600">Access all features so that you can build and manage better software products.</p>
+              <div className="mt-10 flex items-center gap-x-4">
+                <h4 className="flex-none text-sm font-semibold leading-6 text-[#F28C28]">What’s included</h4>
+                <div className="h-px flex-auto bg-gray-100"></div>
+              </div>
+              <ul role="list" className="mt-8 grid grid-cols-1 gap-4 leading-6 text-gray-600 sm:grid-cols-2 sm:gap-6">
+                {offerings.map((offering, i) => {
+                  return (
+                    <li key={i} className="flex gap-x-3 items-center">
+                      <i className="ri-check-fill text-xl text-green-600"/>
+                      <span className="text-sm">{offering}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+            <div className="-mt-2 p-2 lg:mt-0 lg:w-full lg:max-w-md lg:flex-shrink-0">
+              <div className="rounded-2xl bg-gray-50 py-10 text-center ring-1 ring-inset ring-gray-900/5 lg:flex lg:flex-col lg:justify-center lg:py-16 h-full">
+                <div className="mx-auto max-w-xs px-8">
+                  <p className="text-base font-semibold text-gray-600">Affordable pricing for all</p>
+                  <p className="mt-6 flex items-baseline justify-center gap-x-2 mb-6">
+                    <span className="text-5xl font-bold tracking-tight text-gray-900">${isMonthly ? 20 : 180}</span>
+                    <span className="text-sm font-semibold leading-6 tracking-wide text-gray-600">USD</span>
+                  </p>
+                  {/* <PLBasicButton text="Coming July 2024" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-200 hover:text-orange-600"/> */}
+                  <p className="mt-2 text-xs leading-5 text-gray-600">For the first 20 users</p>
+                  <div className="mt-3 mb-4 flex items-center justify-center gap-2 -ml-8">
+                    <ToggleSwitch onChangeHandler={toggleSubscription} darkMode={!isMonthly} />
+                    <PLStatusBadge text={isMonthly ? 'Monthly' : 'Annually'} color={(isMonthly ? Colors.PINK: Colors.PURPLE)}/>
+                  </div>
+                  <p className={"text-xs leading-5 font-semibold text-gray-600 visible " + (isMonthly ? 'invisible' : '')}>That's 25% off!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
   )
 }
