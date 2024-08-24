@@ -9,11 +9,30 @@ import ffmpegPath from 'ffmpeg-static';
 import { writeFile, unlink, readFile } from 'fs/promises'
 ffmpeg.setFfmpegPath(ffmpegPath!);
 
-const speech = new SpeechClient({
-  credentials: JSON.parse(process.env.GCP_CREDENTIALS || "")
-});
 
 export const action: ActionFunction = async (args) => {
+  let speech: SpeechClient
+  const config = {
+    type: "service_account",
+    project_id: "product-lamb",
+    private_key_id: process.env.GCP_PRIVATE_KEY_ID,
+    private_key: process.env.GCP_PRIVATE_KEY,
+    client_email: process.env.GCP_CLIENT_EMAIL,
+    client_id: process.env.GCP_CLIENT_ID,
+    auth_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_uri: "https://oauth2.googleapis.com/token",
+    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+    client_x509_cert_url: process.env.GCP_CLIENT_X509_CERT_URL,
+    universe_domain: "googleapis.com"
+  }
+  try {
+    speech = new SpeechClient({
+      credentials: config,
+    });
+  } catch (e) {
+    console.error('### SpeechClient setup error: ', e)
+    return json({ error: 'Unable to process audio.' }, { status: 500 });
+  }
   const request = args.request
   const baseUrl = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
   const cookies = request.headers.get('Cookie')
