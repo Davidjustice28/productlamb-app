@@ -1,4 +1,4 @@
-import { ApplicationIntegration, PrismaClient } from "@prisma/client"
+import { ApplicationIntegration } from "@prisma/client"
 import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node"
 import { Form, useLoaderData } from "@remix-run/react"
 import React from "react"
@@ -10,6 +10,7 @@ import { PLContentLess } from "~/components/common/contentless"
 import { PLIntegrationOption } from "~/components/integrations/integration"
 import { PLIntegrationEditModal } from "~/components/modals/integrations/edit-integration"
 import { PLIntegrationOptionsModal } from "~/components/modals/integrations/integration-options"
+import { DB_CLIENT } from "~/services/prismaClient"
 import { availableIntegrations } from "~/static/integration-options"
 import { IntegrationOptions } from "~/types/component.types"
 import { PLAvailableIntegrationNames } from "~/types/database.types"
@@ -44,8 +45,7 @@ export const action: ActionFunction = async ({ request }) => {
   const formData = Object.fromEntries(form) as unknown as TypeformIntegrationSetupFormData | GithubIntegrationSetupFormData | GitlabIntegrationSetupFormData | { action: string, integration_id: string } | { google_type: string, application_id: string, form_id?: string }
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
-  const prisma = new PrismaClient()
-  const dbClient = new PrismaClient().applicationIntegration
+  const dbClient = DB_CLIENT.applicationIntegration
   const integrationClient = IntegrationClient(dbClient)
   if ('google_type' in formData) {
     const type = formData.google_type.toLowerCase().includes('calendar') ? 'calendar' : 'forms'
@@ -103,7 +103,7 @@ export const action: ActionFunction = async ({ request }) => {
     const {data: integration} = await integrationClient.getIntegration(Number(formData.integration_id))
     const googleIntegrations = await dbClient.count({where: {name: { contains: 'google'}, applicationId}})
     if (integration?.name.toLowerCase().includes('google') && googleIntegrations < 2) {
-      await prisma.applicationGoogleIntegration.deleteMany({where: {applicationId}})
+      await DB_CLIENT.applicationGoogleIntegration.deleteMany({where: {applicationId}})
     }
     await integrationClient.deleteIntegration(Number(formData.integration_id))
     const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
@@ -118,10 +118,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
-  const dbClient = new PrismaClient()
-  const integrationClient = IntegrationClient(dbClient.applicationIntegration) 
+  const integrationClient = IntegrationClient(DB_CLIENT.applicationIntegration) 
   const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId) 
-  const hasGoogleOAuth = !!(await dbClient.applicationGoogleIntegration.count({where: {applicationId}}))
+  const hasGoogleOAuth = !!(await DB_CLIENT.applicationGoogleIntegration.count({where: {applicationId}}))
   return json({ integrations: integrations || [], applicationId, hasGoogleOAuth})
 }
 

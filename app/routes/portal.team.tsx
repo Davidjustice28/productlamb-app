@@ -1,17 +1,15 @@
-import { useOrganization } from "@clerk/remix";
 import { createClerkClient } from "@clerk/remix/api.server";
-import { OrganizationMembership, getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
-import { PrismaClient } from "@prisma/client";
+import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
 import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
-import React, { useEffect } from "react";
+import React from "react";
 import { account } from "~/backend/cookies/account";
-import { PLBasicButton } from "~/components/buttons/basic-button";
 import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLTable } from "~/components/common/table";
 import { PLInviteMemberModal } from "~/components/modals/account/invite-member";
 import { PLConfirmModal } from "~/components/modals/confirm";
 import { PLLoadingModal } from "~/components/modals/loading";
+import { DB_CLIENT } from "~/services/prismaClient";
 import { TableColumn } from "~/types/base.types";
 import { generateInviteToken } from "~/utils/jwt";
 
@@ -73,17 +71,16 @@ export const action: ActionFunction = async (args) => {
 
   if (action === 'remove') {
     const { members } = JSON.parse(actionData) as { members: Array<TeamMember>}
-    const dbClient = new PrismaClient()
     if (!members.length) return json({success: false})
     try {
-      await dbClient.accountUser.deleteMany({ where: { id: { in: members.map(m => m.id)}}})
+      await DB_CLIENT.accountUser.deleteMany({ where: { id: { in: members.map(m => m.id)}}})
       await Promise.all(members.map(async member => {
         await clerkClient.users.deleteUser(member.clerk_user_id)
         await clerkClient.organizations.deleteOrganizationMembership({organizationId: member.organization_id, userId: member.clerk_user_id})
       }))
       const {data: updatedMembers} = await clerkClient.organizations.getOrganizationMembershipList({organizationId: orgId})
       const {data: clerkUsers} = await clerkClient.users.getUserList({ userId: updatedMembers.map(member => member.publicUserData!.userId)})
-      const users = await dbClient.accountUser.findMany({ where: {accountId: account_id}})
+      const users = await DB_CLIENT.accountUser.findMany({ where: {accountId: account_id}})
       const teamMembers: Array<TeamMember> = updatedMembers.reduce((acc: Array<TeamMember>, member) => {
         const dbUser = users.find(user => user.userId === member.publicUserData?.userId)
         const clerkUserData = clerkUsers.find(user => user.id === member.publicUserData?.userId)
@@ -123,14 +120,13 @@ export const loader: LoaderFunction = args => {
     const { orgId } = request.auth
 
     const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
-    const prismaClient = new PrismaClient()
-    const accountData = await prismaClient.account.findUnique({ where: {id: accountId}})
+    const accountData = await DB_CLIENT.account.findUnique({ where: {id: accountId}})
     if (!accountData) {
       return redirect('/portal/dashboard')
     }
     const {data: members} = await clerkClient.organizations.getOrganizationMembershipList({organizationId: accountData.organization_id})
     const {data: clerkUsers} = await clerkClient.users.getUserList({ userId: members.map(member => member.publicUserData!.userId)})
-    const users = await prismaClient.accountUser.findMany({ where: {accountId: accountId}})
+    const users = await DB_CLIENT.accountUser.findMany({ where: {accountId: accountId}})
     const teamMembers: Array<TeamMember> = members.reduce((acc: Array<TeamMember>, member) => {
       const dbUser = users.find(user => user.userId === member.publicUserData?.userId)
       const clerkUserData = clerkUsers.find(user => user.id === member.publicUserData?.userId)

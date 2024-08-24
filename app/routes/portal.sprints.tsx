@@ -5,7 +5,7 @@ import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/reac
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { ActionFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node"
 import { account } from "~/backend/cookies/account"
-import { ApplicationSprint, GeneratedInitiative, GeneratedTask, PrismaClient } from "@prisma/client"
+import { ApplicationSprint, GeneratedInitiative, GeneratedTask } from "@prisma/client"
 import { ApplicationSprintsClient } from "~/backend/database/sprints/client"
 import { PLTable } from "~/components/common/table"
 import { ApplicationsClient } from "~/backend/database/applications/client"
@@ -14,13 +14,13 @@ import { PLContentLess } from "~/components/common/contentless"
 import { calculateTimeLeft } from "~/utils/date"
 import { PLConfirmModal } from "~/components/modals/confirm"
 import { PMToolIconComponent } from "~/components/common/pm-tool"
+import { DB_CLIENT } from "~/services/prismaClient"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = await account.parse(cookies)
-  const dbClient = new PrismaClient()
-  const sprintsClient = ApplicationSprintsClient(dbClient['applicationSprint'])
-  const accountData = await dbClient['account'].findFirst({ where: { id: accountCookie.accountId } })
+  const sprintsClient = ApplicationSprintsClient(DB_CLIENT['applicationSprint'])
+  const accountData = await DB_CLIENT['account'].findFirst({ where: { id: accountCookie.accountId } })
   const {data: sprints, errors} = await sprintsClient.getApplicationSprints(accountCookie.selectedApplicationId)
   let sprintInitiativeIds: Array<number> = []
   if ( sprints && sprints.length > 0) {
@@ -29,7 +29,7 @@ export const loader: LoaderFunction = async ({request}) => {
 
   let initiatives: Array<GeneratedInitiative> = []
   if (sprintInitiativeIds.length) {
-    initiatives = await dbClient['generatedInitiative'].findMany({
+    initiatives = await DB_CLIENT['generatedInitiative'].findMany({
       where: {
         applicationId: accountCookie.selectedApplicationId,
         id: {
@@ -61,20 +61,19 @@ export const action: ActionFunction = async ({request}) => {
   const accountCookie = await account.parse(cookies)
   const accountId = accountCookie.accountId
   const application_id = accountCookie.selectedApplicationId
-  const dbClient = new PrismaClient()
-  const usersAccount = await dbClient['account'].findUnique({ where: { id: accountId } })
+  const usersAccount = await DB_CLIENT['account'].findUnique({ where: { id: accountId } })
   if (!usersAccount || !application_id) {
     console.error('No account or application found to generate sprints for.')
     return json({})
   } 
 
-  const applicationClient = ApplicationsClient(dbClient.accountApplication)
+  const applicationClient = ApplicationsClient(DB_CLIENT.accountApplication)
 
   await applicationClient.updateApplication(application_id, {sprint_generation_enabled: true})
  
   const url = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
   const response = await fetch(`${url}/sprints/suggest/${application_id}`, { method: 'POST', headers: { 'Authorization': `${process.env.SPRINT_GENERATION_SECRET}` } })
-  const sprintsClient = ApplicationSprintsClient(dbClient['applicationSprint'])
+  const sprintsClient = ApplicationSprintsClient(DB_CLIENT['applicationSprint'])
   const {data: sprints, errors} = await sprintsClient.getApplicationSprints(accountCookie.selectedApplicationId)
   let sprintInitiativeIds: Array<number> = []
   if ( sprints && sprints.length > 0) {
@@ -83,7 +82,7 @@ export const action: ActionFunction = async ({request}) => {
 
   let initiatives: Array<GeneratedInitiative> = []
   if (sprintInitiativeIds.length) {
-    initiatives = await dbClient['generatedInitiative'].findMany({
+    initiatives = await DB_CLIENT['generatedInitiative'].findMany({
       where: {
         applicationId: accountCookie.selectedApplicationId,
         id: {

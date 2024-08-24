@@ -1,4 +1,4 @@
-import type { ActionFunction, LinksFunction, LoaderFunction } from '@remix-run/node'
+import type { LinksFunction, LoaderFunction } from '@remix-run/node'
 import {
   Links,
   LiveReload,
@@ -16,11 +16,12 @@ import { ClerkApp, useAuth } from '@clerk/remix'
 import { getSharedEnvs } from './utils/envs';
 import { account } from './backend/cookies/account';
 import { AccountsClient } from './backend/database/accounts/client';
-import { Account, PrismaClient } from '@prisma/client';
-import { useEffect, useState } from 'react';
+import { Account } from '@prisma/client';
+import { useState } from 'react';
 import React from 'react';
 import { ApplicationsClient } from './backend/database/applications/client';
 import { createClerkClient } from '@clerk/remix/api.server';
+import { DB_CLIENT } from './services/prismaClient';
 
 
 export const links: LinksFunction = () => {
@@ -47,9 +48,8 @@ export const loader: LoaderFunction = (args) => {
       return json({ ENV: sharedEnv });
     }
 
-    const dbClient = new PrismaClient();
-    let user = await dbClient.accountUser.findFirst({ where: { userId: userId }});
-    const accountClient = AccountsClient(dbClient.account);
+    let user = await DB_CLIENT.accountUser.findFirst({ where: { userId: userId }});
+    const accountClient = AccountsClient(DB_CLIENT.account);
     if (!user) {
       accountCookie.setupIsComplete = false;
       return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
@@ -59,7 +59,7 @@ export const loader: LoaderFunction = (args) => {
     let organizationAccount: Account | null = null;
     if (accountCookie.accountId) {
       if (!user?.accountId) {
-        user = await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: accountCookie.accountId }});
+        user = await DB_CLIENT.accountUser.update({ where: { id: user.id }, data: { accountId: accountCookie.accountId }});
       }
       if (accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) {
         const { data: accountData } = await accountClient.getAccountById(accountCookie.accountId);
@@ -73,7 +73,7 @@ export const loader: LoaderFunction = (args) => {
         return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
       } else {
         if (!accountCookie.selectedApplicationId) {
-          const appClient = ApplicationsClient(dbClient.accountApplication);
+          const appClient = ApplicationsClient(DB_CLIENT.accountApplication);
           const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId);
           if (apps && apps.length) {
             accountCookie.selectedApplicationId = apps[0].id;
@@ -84,7 +84,7 @@ export const loader: LoaderFunction = (args) => {
             return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
           }
         }
-        const app = await dbClient.accountApplication.findFirst({ where: { id: accountCookie.selectedApplicationId }});
+        const app = await DB_CLIENT.accountApplication.findFirst({ where: { id: accountCookie.selectedApplicationId }});
         if (!app) return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
         let hasToolConfigured: boolean
         if (app?.clickup_integration_id !== null) {
@@ -104,9 +104,9 @@ export const loader: LoaderFunction = (args) => {
     } else {
       const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
       const organizations = (await clerkClient.users.getOrganizationMembershipList({ userId: userId! })).data;
-      organizationAccount = await dbClient.account.findFirst({ where: { organization_id: organizations[0].organization.id }});
+      organizationAccount = await DB_CLIENT.account.findFirst({ where: { organization_id: organizations[0].organization.id }});
       if (!user?.accountId && organizationAccount) {
-        user = await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: organizationAccount.id }});
+        user = await DB_CLIENT.accountUser.update({ where: { id: user.id }, data: { accountId: organizationAccount.id }});
         accountCookie.accountId = organizationAccount.id;
       } else if (!user?.accountId && !organizationAccount) {
         return redirect('/portal/setup');
@@ -124,7 +124,7 @@ export const loader: LoaderFunction = (args) => {
         return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
       } else {
         if (!accountCookie.selectedApplicationId) {
-          const appClient = ApplicationsClient(dbClient.accountApplication);
+          const appClient = ApplicationsClient(DB_CLIENT.accountApplication);
           const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId);
           if (apps && apps.length) {
             accountCookie.selectedApplicationId = apps[0].id;
@@ -133,7 +133,7 @@ export const loader: LoaderFunction = (args) => {
             return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
           }
         }
-        const app = await dbClient.accountApplication.findFirst({ where: { id: accountCookie.selectedApplicationId }});
+        const app = await DB_CLIENT.accountApplication.findFirst({ where: { id: accountCookie.selectedApplicationId }});
         if (!app) return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
         let hasToolConfigured: boolean
         if (app?.clickup_integration_id !== null) {

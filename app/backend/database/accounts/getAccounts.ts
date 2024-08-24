@@ -5,7 +5,6 @@ export function wrapGetAllAccounts(accountsClient: PrismaClient['account']) {
   return getAllAccounts
   
   async function getAllAccounts(): Promise<BaseResponse<Array<Account>>> {
-    const prisma = new PrismaClient()
     try {
       const accounts = await accountsClient.findMany()
       return {data: accounts, errors: []}

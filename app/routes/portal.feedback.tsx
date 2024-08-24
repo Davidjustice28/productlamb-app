@@ -1,4 +1,4 @@
-import { ApplicationFeedback, ApplicationIntegration, PrismaClient } from "@prisma/client";
+import { ApplicationFeedback, ApplicationIntegration } from "@prisma/client";
 import { ActionFunction, LoaderFunction, MetaFunction, json, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { parse } from "papaparse";
@@ -11,6 +11,7 @@ import { PLContentLess } from "~/components/common/contentless";
 import { PLConfirmModal } from "~/components/modals/confirm";
 import { PLAddFeedbackModal } from "~/components/modals/feedback/add-feedback";
 import { PLBulkUploadFeedbackModal } from "~/components/modals/feedback/bulk-upload/bulk-upload";
+import { DB_CLIENT } from "~/services/prismaClient";
 import { FeedbackIntegrations } from "~/types/component.types";
 import { FeedbackSource } from "~/types/database.types";
 
@@ -34,8 +35,7 @@ export const action: ActionFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
-  const dbClient = new PrismaClient()
-  const feedbackDbClient = FeedbackClient(new PrismaClient().applicationFeedback)
+  const feedbackDbClient = FeedbackClient(DB_CLIENT.applicationFeedback)
   if (request.headers.get('content-type')?.includes('multipart')) {
     const uploadHandler = unstable_composeUploadHandlers(
       unstable_createFileUploadHandler({
@@ -70,12 +70,12 @@ export const action: ActionFunction = async ({request}) => {
       return json({updatedFeedback: allFeedback ?? null})
     } else if (formData.action === 'delete') {
       const selectedIds = (formData.selectedIds as string).split(',').map((id: string) => parseInt(id))
-      await dbClient.applicationFeedback.deleteMany({where: {id: {in: selectedIds}}})
+      await DB_CLIENT.applicationFeedback.deleteMany({where: {id: {in: selectedIds}}})
       const {data: allFeedback} = await feedbackDbClient.getApplicationFeedback(applicationId)
       return json({updatedFeedback: allFeedback ?? null})
     } else if (formData.action === 'ignore') {
       const selectedIds = (formData.selectedIds as string).split(',').map((id: string) => parseInt(id))
-      await dbClient.applicationFeedback.updateMany({where: {id: {in: selectedIds}}, data: {ignored: true}})
+      await DB_CLIENT.applicationFeedback.updateMany({where: {id: {in: selectedIds}}, data: {ignored: true}})
       const {data: allFeedback} = await feedbackDbClient.getApplicationFeedback(applicationId)
       return json({updatedFeedback: allFeedback ?? null})
     }
@@ -90,11 +90,11 @@ export const loader: LoaderFunction = async ({request}) => {
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
   
-  const dbClient = new PrismaClient().applicationIntegration
+  const dbClient = DB_CLIENT.applicationIntegration
   const integrationClient = IntegrationClient(dbClient) 
   const {data: integrations} = await integrationClient.getAllApplicationIntegrations(applicationId)
 
-  const feedbackDbClient = FeedbackClient(new PrismaClient().applicationFeedback)
+  const feedbackDbClient = FeedbackClient(DB_CLIENT.applicationFeedback)
   const {data: feedback} = await feedbackDbClient.getApplicationFeedback(applicationId)
   return json({feedback: feedback || [], integrations: integrations ? integrations : []})
 }

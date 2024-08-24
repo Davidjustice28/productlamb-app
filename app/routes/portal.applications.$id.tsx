@@ -1,4 +1,4 @@
-import { AccountApplication, ApplicationGoal, PrismaClient } from "@prisma/client"
+import { AccountApplication, ApplicationGoal } from "@prisma/client"
 import { ActionFunction, LoaderFunction, MetaFunction, json, redirect, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
 import { useActionData, useLoaderData } from "@remix-run/react"
 import { useState, useRef, useEffect } from "react"
@@ -12,6 +12,7 @@ import { PLIconButton } from "~/components/buttons/icon-button"
 import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
 import { PLApplicationContextModel } from "~/components/modals/applications/upload-context"
 import { ToggleSwitch } from "~/components/forms/toggle-switch"
+import { DB_CLIENT } from "~/services/prismaClient"
 
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -19,15 +20,14 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   if (!id) {
     return redirect('/portal/applications')
   }
-  const dbClient = new PrismaClient()
-  const appDbClient = ApplicationsClient(dbClient.accountApplication)
-  const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
+  const appDbClient = ApplicationsClient(DB_CLIENT.accountApplication)
+  const goalDbClient = ApplicationGoalsClient(DB_CLIENT.applicationGoal)
   const appId = parseInt(id)
   const {data:goals} = await goalDbClient.getGoals(appId)
   const {data: application} = await appDbClient.getApplicationById(appId)
-  const backlogItems = await dbClient.generatedTask.count({where: {applicationId: appId, backlog: true}})
-  const feedbackItems = await dbClient.applicationFeedback.count({where: {applicationId: appId}})
-  const bugs = await dbClient.applicationBug.count({where: {applicationId: appId}})
+  const backlogItems = await DB_CLIENT.generatedTask.count({where: {applicationId: appId, backlog: true}})
+  const feedbackItems = await DB_CLIENT.applicationFeedback.count({where: {applicationId: appId}})
+  const bugs = await DB_CLIENT.applicationBug.count({where: {applicationId: appId}})
   const hasInitialContext = !!bugs || !!feedbackItems || !!backlogItems
   if (!application) {
     return redirect('/portal/applications')
@@ -56,8 +56,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 
 export const action: ActionFunction = async ({ request, params }) => {
   const ifMultipartForm = request.headers.get('content-type')?.includes('multipart')
-  const dbClient = new PrismaClient()
-  const appDbClient = ApplicationsClient(dbClient.accountApplication)
+  const appDbClient = ApplicationsClient(DB_CLIENT.accountApplication)
   if (ifMultipartForm) {
     const uploadHandler = unstable_composeUploadHandlers(
       unstable_createFileUploadHandler({
@@ -99,7 +98,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         return json({ updatedApplication: appAfterImageDeletion })
       }
     } else {
-      const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
+      const goalDbClient = ApplicationGoalsClient(DB_CLIENT.applicationGoal)
       const updateData = data  as unknown as NewApplicationData
       if ("sprint_generation_enabled" in updateData) {
         const isEnabled = (updateData.sprint_generation_enabled as any) === 'true'

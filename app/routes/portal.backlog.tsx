@@ -1,5 +1,5 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import { ApplicationSprint, GeneratedTask, PrismaClient } from "@prisma/client";
+import { ApplicationSprint, GeneratedTask } from "@prisma/client";
 import { ActionFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { useRef, useState } from "react";
@@ -10,6 +10,7 @@ import { PLTable } from "~/components/common/table";
 import { PLConfirmModal } from "~/components/modals/confirm";
 import { PLAddTaskModal } from "~/components/modals/tasks/add-task-modal";
 import { PLEditTaskModal } from "~/components/modals/tasks/edit-task-modal";
+import { DB_CLIENT } from "~/services/prismaClient";
 import { ManualTaskData } from "~/types/component.types";
 import { encrypt } from "~/utils/encryption";
 
@@ -45,20 +46,19 @@ export const action: ActionFunction = async ({request}) => {
   const applicationId = accountCookie.selectedApplicationId as number
   const form = await request.formData()
   const data = Object.fromEntries(form) as unknown as NewBackLogItemData | DeleteBugData | BacklogPullIntoSprintData
-  const dbClient = new PrismaClient()
 
   if (data.action === 'add') {
     const {title, reason, description, category, points} = data
-    await dbClient.generatedTask.create({data: {title, description, reason, category, applicationId, backlog: true, status: 'to do', points: parseInt(points)},}).catch(err => console.log(err)) 
-    const taskDbClient = new PrismaClient().generatedTask
+    await DB_CLIENT.generatedTask.create({data: {title, description, reason, category, applicationId, backlog: true, status: 'to do', points: parseInt(points)},}).catch(err => console.log(err)) 
+    const taskDbClient = DB_CLIENT.generatedTask
     const backlog = await taskDbClient.findMany({where: {applicationId: applicationId, backlog: true}})
     return json({updatedTasks: backlog})
   }
 
   if (data.action === 'delete') {
     const ids = data.ids.split(',').map(id => parseInt(id))
-    await dbClient.generatedTask.deleteMany({where: {id: {in: ids}}})
-    const taskDbClient = new PrismaClient().generatedTask
+    await DB_CLIENT.generatedTask.deleteMany({where: {id: {in: ids}}})
+    const taskDbClient = DB_CLIENT.generatedTask
     const backlog = await taskDbClient.findMany({where: {applicationId: applicationId, backlog: true}})
     return json({updatedTasks: backlog})
   }
@@ -69,7 +69,7 @@ export const action: ActionFunction = async ({request}) => {
     if (!sprintId) {
       return json({updatedTasks: null})
     }
-    const sprint = await dbClient.applicationSprint.findFirst({where: {id: sprintId}})
+    const sprint = await DB_CLIENT.applicationSprint.findFirst({where: {id: sprintId}})
     if (!sprint) {
       return json({updatedTasks: null})
     }
@@ -82,7 +82,7 @@ export const action: ActionFunction = async ({request}) => {
       body: JSON.stringify({ids, type: 'backlog'})
     })
 
-    const taskDbClient = new PrismaClient().generatedTask
+    const taskDbClient = DB_CLIENT.generatedTask
     const tasks = await taskDbClient.findMany({where: {applicationId: applicationId, backlog: true}})
     return json({updatedTasks: tasks ?? null})
   }
@@ -96,13 +96,12 @@ export const loader: LoaderFunction = args => {
     const cookieHeader = request.headers.get("Cookie");
     const accountCookie = (await account.parse(cookieHeader) || {});
     let selectedApplicationId: number = accountCookie.selectedApplicationId
-    const dbClient = new PrismaClient()
-    const backlog = await dbClient['generatedTask'].findMany({where: {applicationId: selectedApplicationId, backlog: true}})
-    const activeSprint = await dbClient.applicationSprint.findFirst({ where: { applicationId: selectedApplicationId, status: 'In Progress'}})
+    const backlog = await DB_CLIENT['generatedTask'].findMany({where: {applicationId: selectedApplicationId, backlog: true}})
+    const activeSprint = await DB_CLIENT.applicationSprint.findFirst({ where: { applicationId: selectedApplicationId, status: 'In Progress'}})
     const iv = process.env.ENCRYPTION_IV as string
     const key = process.env.ENCRYPTION_KEY as string
     const authToken = encrypt(process.env.SPRINT_GENERATION_SECRET as string, key, iv)
-    const app = await dbClient.accountApplication.findFirst({where: {id: selectedApplicationId}})
+    const app = await DB_CLIENT.accountApplication.findFirst({where: {id: selectedApplicationId}})
     let hasToolConfigured: boolean
 
     if (app?.clickup_integration_id !== null) {

@@ -4,9 +4,9 @@ import { verifyInviteToken } from '~/utils/jwt';
 import { createClerkClient } from '@clerk/remix/api.server';
 import React, { useEffect } from 'react';
 import { PLErrorModal } from '~/components/modals/error';
-import { PrismaClient } from '@prisma/client';
 import { PLLoadingModal } from '~/components/modals/loading';
 import { wrapEmailSdk } from '~/services/resend/email';
+import { DB_CLIENT } from '~/services/prismaClient';
 
 export let loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -28,7 +28,6 @@ export const action: ActionFunction = async ({ request }) => {
   const data = Object.fromEntries(form) as unknown as { email: string; organizationId: string; password: string; firstName: string, lastName: string, accountId: string};
   const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
   const { email, organizationId, password, firstName, lastName, accountId } = data;
-  const dbClient = new PrismaClient()
 
   try {
     const user = await clerkClient.users.createUser({
@@ -37,8 +36,8 @@ export const action: ActionFunction = async ({ request }) => {
       firstName,
       lastName,
     })
-    const account = await dbClient.account.findUnique({ where: { id: Number(accountId) }})!
-    await dbClient.accountUser.create({ data: { userId: user.id, accountId: Number(accountId)} })
+    const account = await DB_CLIENT.account.findUnique({ where: { id: Number(accountId) }})!
+    await DB_CLIENT.accountUser.create({ data: { userId: user.id, accountId: Number(accountId)} })
     await clerkClient.organizations.createOrganizationMembership({organizationId, userId: user.id, role: 'org:member'}).then(async () => {
       const admin = (await clerkClient.organizations.getOrganizationMembershipList({organizationId: organizationId})).data.filter((member) => member.role === 'org:admin')
       if(admin.length) {

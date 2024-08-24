@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { ActionFunction, json } from "@remix-run/node";
+import { DB_CLIENT } from "~/services/prismaClient";
 
 export const action: ActionFunction = async ({ request, params, response }) => {
   const { user_id } = params
@@ -12,7 +12,7 @@ export const action: ActionFunction = async ({ request, params, response }) => {
   if (invalidKeys.length) return json({ errors: [12], data: false })
 
   try {
-    await new PrismaClient().accountUser.updateMany({ data: {darkMode: body.darkMode}, where: {userId: user_id} })
+    await DB_CLIENT.accountUser.updateMany({ data: {darkMode: body.darkMode}, where: {userId: user_id} })
     return json({ errors: [], data: true })
   } catch (error) {
     console.error('Error caught updating account: ', error)

@@ -1,7 +1,7 @@
-import { GeneratedInitiative, GeneratedTask, PrismaClient } from "@prisma/client"
+import { GeneratedInitiative, GeneratedTask } from "@prisma/client"
 import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node"
 import { Form, useLoaderData } from "@remix-run/react"
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { account } from "~/backend/cookies/account"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLIconButton } from "~/components/buttons/icon-button"
@@ -10,6 +10,7 @@ import { PLConfirmModal } from "~/components/modals/confirm"
 import { PLLoadingModal } from "~/components/modals/loading"
 import { PLManualInitiativeModal } from "~/components/modals/planning/manual-initiative"
 import { PLAddTaskModal } from "~/components/modals/tasks/add-task-modal"
+import { DB_CLIENT } from "~/services/prismaClient"
 import { TableColumn } from "~/types/base.types"
 import { ManualTaskData, TaskSuggestions } from "~/types/component.types"
 import { encrypt } from "~/utils/encryption"
@@ -26,7 +27,6 @@ interface SprintPlanningResult {
 }
 
 export const loader: LoaderFunction = async ({request, params}) => {
-  const dbClient = new PrismaClient()
   const taskMap: Record<number, Array<GeneratedTask>> = {}
   const sprintId = parseInt(params.sprint_id || "-1")
   const cookies = request.headers.get('Cookie')
@@ -45,7 +45,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
       sprintId
     })
   }
-  const initiatives = await dbClient.generatedInitiative.findMany({where: {sprintId}})
+  const initiatives = await DB_CLIENT.generatedInitiative.findMany({where: {sprintId}})
   if(initiatives.length === 0) {
     return json({
       initiatives: [],
@@ -56,11 +56,11 @@ export const loader: LoaderFunction = async ({request, params}) => {
     })
   }
   const responses = await Promise.all(initiatives.map(async initiative => {
-    const tasks = await dbClient.generatedTask.findMany({where: {initiativeId: initiative.id}})
+    const tasks = await DB_CLIENT.generatedTask.findMany({where: {initiativeId: initiative.id}})
     return {initiative_id: initiative.id, tasks}
   }))
 
-  const backlog = await dbClient.generatedTask.findMany({where: {applicationId, backlog: true}})
+  const backlog = await DB_CLIENT.generatedTask.findMany({where: {applicationId, backlog: true}})
 
   responses.forEach(response => {
     taskMap[response.initiative_id] = response.tasks
@@ -92,19 +92,18 @@ export const action: ActionFunction  = async ({request, params}) => {
   const form = await request.formData()
   const sprintData = JSON.parse(form.get('sprint_data') as string) as SprintPlanningResult
   const sprint_id = sprintData.sprint_id
-  const dbClient = new PrismaClient()
   
   const selected_ids = sprintData.task_ids.concat(sprintData.backlog_ids_used)
   let initiative_id: number
   if (typeof sprintData.initiative_id === 'string') { 
-    const initiative = await dbClient.generatedInitiative.create({ data: {description: sprintData.initiative_id, sprintId: sprint_id, applicationId: accountCookie.selectedApplicationId}})
+    const initiative = await DB_CLIENT.generatedInitiative.create({ data: {description: sprintData.initiative_id, sprintId: sprint_id, applicationId: accountCookie.selectedApplicationId}})
     initiative_id = initiative.id
   } else {
     initiative_id = sprintData.initiative_id
   }
 
   if (sprintData.manualInitiativeSuggestions.length) {
-    await dbClient.generatedTask.createMany({data: sprintData.manualInitiativeSuggestions.map((task: TaskSuggestions) => {
+    await DB_CLIENT.generatedTask.createMany({data: sprintData.manualInitiativeSuggestions.map((task: TaskSuggestions) => {
       return {
         title: task.title,
         description: task.description,
@@ -119,11 +118,11 @@ export const action: ActionFunction  = async ({request, params}) => {
     })})
   }
   if (selected_ids.length) {
-    await dbClient.generatedTask.updateMany({where: {id: {in: selected_ids}}, data: {sprintId: sprint_id, backlog: false, initiativeId: initiative_id}})
+    await DB_CLIENT.generatedTask.updateMany({where: {id: {in: selected_ids}}, data: {sprintId: sprint_id, backlog: false, initiativeId: initiative_id}})
   }
 
   if (sprintData.new_tasks.length) {
-    await dbClient.generatedTask.createMany({data: sprintData.new_tasks.map((task: ManualTaskData) => {
+    await DB_CLIENT.generatedTask.createMany({data: sprintData.new_tasks.map((task: ManualTaskData) => {
       return {
         title: task.title,
         description: task.description,
@@ -139,14 +138,14 @@ export const action: ActionFunction  = async ({request, params}) => {
   }
     
   if (sprintData.task_backlogged_ids.length) {
-    await dbClient.generatedTask.updateMany({where: {id: {in: sprintData.task_backlogged_ids}}, data: {sprintId: null, backlog: true}})
+    await DB_CLIENT.generatedTask.updateMany({where: {id: {in: sprintData.task_backlogged_ids}}, data: {sprintId: null, backlog: true}})
   }
 
   if (sprintData.deleted_task_ids.length) {
-    await dbClient.generatedTask.deleteMany({where: {id: {in: sprintData.deleted_task_ids}}})
+    await DB_CLIENT.generatedTask.deleteMany({where: {id: {in: sprintData.deleted_task_ids}}})
   }
 
-  await dbClient.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: initiative_id, is_generating: true}})
+  await DB_CLIENT.applicationSprint.update({where: {id: sprint_id}, data: {selectedInitiative: initiative_id, is_generating: true}})
   const url = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
   fetch(`${url}/sprints/${sprint_id}/generate`, { method: 'POST', headers: { 'Authorization': `${process.env.SPRINT_GENERATION_SECRET}` } })
   return redirect(`/portal/sprints`)

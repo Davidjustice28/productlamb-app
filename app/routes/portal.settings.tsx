@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PLOptionsButtonGroup } from "~/components/buttons/options-button-group";
 import { BillingSettings } from "~/components/settings/billing";
 import { SettingsTabGroup } from "~/types/database.types";
@@ -6,8 +6,9 @@ import { TeamSettings } from "~/components/settings/team";
 import { ManagerSettings } from "~/components/settings/manager";
 import { ActionFunction, json, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { account } from "~/backend/cookies/account";
-import { AccountManagerSettings, PrismaClient } from "@prisma/client";
+import { AccountManagerSettings } from "@prisma/client";
 import { useLoaderData } from "@remix-run/react";
+import { DB_CLIENT } from "~/services/prismaClient";
 
 interface SettingsBaseUpdate {
   account_id: string
@@ -41,7 +42,6 @@ export const action: ActionFunction = async ({request}) => {
   if (!('type' in formData)) return json({}, {status: 400})
   if (formData.type === 'manager') {
     const { account_id, incomplete_tasks_action, timezone } = formData as ManagerSettingsUpdate
-    const prisma = new PrismaClient()
     const data: Partial<AccountManagerSettings> = {
       incomplete_tasks_action,
       timezone,
@@ -50,8 +50,8 @@ export const action: ActionFunction = async ({request}) => {
       notify_on_sprint_ready: 'sprint_started' in formData,
       notify_on_task_added: 'task_added' in formData
     }
-    await prisma.accountManagerSettings.updateMany({where: {accountId: Number(account_id)}, data})
-    const updatedSettings = await prisma.accountManagerSettings.findFirst({where: {accountId: Number(account_id)}})
+    await DB_CLIENT.accountManagerSettings.updateMany({where: {accountId: Number(account_id)}, data})
+    const updatedSettings = await DB_CLIENT.accountManagerSettings.findFirst({where: {accountId: Number(account_id)}})
     return json({updatedManagerSettings: updatedSettings})
   } else {
     return json({})
@@ -62,7 +62,7 @@ export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies)) || {};
   let accountId: number = accountCookie.accountId;
-  const managerSettings = await new PrismaClient().accountManagerSettings.findFirst({where: {accountId: accountId}})
+  const managerSettings = await DB_CLIENT.accountManagerSettings.findFirst({where: {accountId: accountId}})
   return json({managerSettings})
 }
 

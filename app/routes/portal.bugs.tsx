@@ -1,4 +1,4 @@
-import { ApplicationBug, PrismaClient } from "@prisma/client";
+import { ApplicationBug } from "@prisma/client";
 import { ActionFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { useRef, useState } from "react";
@@ -10,8 +10,9 @@ import { PLTable } from "~/components/common/table";
 import { PLAddBugModal } from "~/components/modals/bugs/add-bug";
 import { PLEditBugModal } from "~/components/modals/bugs/edit-bug";
 import { PLConfirmModal } from "~/components/modals/confirm";
+import { DB_CLIENT } from "~/services/prismaClient";
 import { TableColumn } from "~/types/base.types";
-import { BugGroup, BugPriority, BugSource, BugStatus } from "~/types/database.types";
+import { BugGroup, BugPriority, BugSource } from "~/types/database.types";
 
 interface BaseFormData {
   action: 'delete' | 'add' | 'edit' | 'pull',
@@ -51,8 +52,7 @@ export const action: ActionFunction = async ({request}) => {
   const applicationId = accountCookie.selectedApplicationId as number
   const form = await request.formData()
   const data = Object.fromEntries(form) as unknown as NewOrEditBugData | DeleteBugData | BugPullIntoSprintData
-  const dbClient = new PrismaClient()
-  const bugClient = ApplicationBugsClient(dbClient.applicationBug)
+  const bugClient = ApplicationBugsClient(DB_CLIENT.applicationBug)
   if (data.action === 'add') {
     const {title, source, description, priority} = data
     await bugClient.createBug(applicationId, title, description, source, priority)
@@ -73,7 +73,7 @@ export const action: ActionFunction = async ({request}) => {
     if (!sprintId) {
       return json({updateBugs: null})
     }
-    const sprint = await dbClient.applicationSprint.findFirst({where: {id: sprintId}})
+    const sprint = await DB_CLIENT.applicationSprint.findFirst({where: {id: sprintId}})
     if (!sprint) {
       return json({updateBugs: null})
     }
@@ -96,12 +96,12 @@ export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
-  const dbClient = new PrismaClient()
-  const activeSprint = await dbClient.applicationSprint.findFirst({ where: { applicationId, status: 'In Progress'}})
-  const bugClient = ApplicationBugsClient(dbClient.applicationBug)
+  
+  const activeSprint = await DB_CLIENT.applicationSprint.findFirst({ where: { applicationId, status: 'In Progress'}})
+  const bugClient = ApplicationBugsClient(DB_CLIENT.applicationBug)
   const {data: bugs} = await bugClient.getAllBugs(applicationId)
   const data: Array<ApplicationBug> = bugs ? bugs : []
-  const app = await dbClient.accountApplication.findFirst({where: {id: applicationId}})
+  const app = await DB_CLIENT.accountApplication.findFirst({where: {id: applicationId}})
   let hasToolConfigured: boolean
 
   if (app?.clickup_integration_id !== null) {

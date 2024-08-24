@@ -1,4 +1,4 @@
-import { AccountApplication, PrismaClient } from "@prisma/client"
+import { AccountApplication } from "@prisma/client"
 import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node"
 import { Form, Outlet, useActionData, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { useRef, useState } from "react"
@@ -11,6 +11,7 @@ import { PLIconButton } from "~/components/buttons/icon-button"
 import { PLContentLess } from "~/components/common/contentless"
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application"
 import { PLConfirmModal } from "~/components/modals/confirm"
+import { DB_CLIENT } from "~/services/prismaClient"
 import { ClickUpData, JiraData, NewApplicationData, NotionData } from "~/types/database.types"
 
 interface ApplicationDeleteData {
@@ -38,9 +39,8 @@ export let action: ActionFunction = async ({ request }) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const accountId = accountCookie.accountId
-  const dbClient = new PrismaClient()
-  const appDbClient = ApplicationsClient(dbClient.accountApplication)
-  const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
+  const appDbClient = ApplicationsClient(DB_CLIENT.accountApplication)
+  const goalDbClient = ApplicationGoalsClient(DB_CLIENT.applicationGoal)
   if ('applicationId' in data) {
     await appDbClient.deleteApplication(parseInt(data.applicationId))
     return json({})
@@ -56,7 +56,7 @@ export let action: ActionFunction = async ({ request }) => {
     })
   } else if ('name' in data) {
     const {data: createAppResult } = await appDbClient.addApplication(accountId, data)
-    const pmToolClient = ApplicationPMToolClient(dbClient)
+    const pmToolClient = ApplicationPMToolClient(DB_CLIENT)
     if (createAppResult) {
       const goals = data.goals.length < 0 ? [] : JSON.parse(data.goals).map((goal: {goal: string, isLongTerm: boolean}) => ({goal: goal.goal, isLongTerm: goal.isLongTerm}))
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)
@@ -139,7 +139,7 @@ export let action: ActionFunction = async ({ request }) => {
 export const loader: LoaderFunction = async ({ request }) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
-  const client = ApplicationsClient(new PrismaClient().accountApplication)
+  const client = ApplicationsClient(DB_CLIENT.accountApplication)
   const {data: apps} = await client.getAccountApplications(Number(accountCookie.accountId))
   return json({apps: apps ?? [], activeIdOnLoad: accountCookie.selectedApplicationId})
 }

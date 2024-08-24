@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { ActionFunction, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData, json, redirect } from "@remix-run/node";
-import { ConvertedDataResponse, wrapOpenAIClient } from "~/services/openai/performChat";
+import { wrapOpenAIClient } from "~/services/openai/performChat";
+import { DB_CLIENT } from "~/services/prismaClient";
 
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -32,12 +32,11 @@ export const action: ActionFunction = async ({ request, params }) => {
       if (!response) {
         return json({ error: 'Please try again later' }, { status: 500 })
       }
-      const prismaClient = new PrismaClient()
       
       if ('bugs' in response) {
         const { bugs } = response
         try {
-          await prismaClient.applicationBug.createMany({
+          await DB_CLIENT.applicationBug.createMany({
             data: bugs.map(bug => ({
               applicationId: parseInt(application_id),
               title: bug.title,
@@ -54,7 +53,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       } else if ('feedback' in response) {
         const { feedback } = response
         try {
-          await prismaClient.applicationFeedback.createMany({
+          await DB_CLIENT.applicationFeedback.createMany({
             data: feedback.map(feedback => ({
               applicationId: parseInt(application_id),
               feedback: feedback.feedback,
@@ -69,7 +68,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       } else if ('backlog' in response) {
         const { backlog } = response
         try {
-          await prismaClient.generatedTask.createMany({
+          await DB_CLIENT.generatedTask.createMany({
             data: backlog.map(backlog => ({
               applicationId: parseInt(application_id),
               title: backlog.title,

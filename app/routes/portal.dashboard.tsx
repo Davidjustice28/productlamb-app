@@ -1,5 +1,5 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import { ApplicationSprint, ApplicationSuggestion, PrismaClient } from "@prisma/client";
+import { ApplicationSprint, ApplicationSuggestion } from "@prisma/client";
 import { LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
@@ -10,6 +10,7 @@ import { createCurrentSprintChartsData, createSprintPointsChartData, createSprin
 import { PLAreaChart } from "~/components/charts/area-chart";
 import { PLBarChart } from "~/components/charts/bar-chart";
 import { PLLineChart } from "~/components/charts/line-chart";
+import { DB_CLIENT } from "~/services/prismaClient";
 import { calculateTimeLeft } from "~/utils/date";
 
 
@@ -32,22 +33,21 @@ export const loader: LoaderFunction = args => {
     let accountId: number| undefined = accountCookie.accountId
     let selectedApplicationId: number| undefined = accountCookie.selectedApplicationId
     let selectedApplicationName: string| undefined = accountCookie.selectedApplicationName
-    const dbClient = new PrismaClient()
     if (!userId) {
       return redirect("/")
     }
     if (!accountId || !setupIsComplete) {
-      const accountClient = AccountsClient(dbClient.account)
-      const user = await dbClient.accountUser.findFirst({ where: { userId: userId }})
+      const accountClient = AccountsClient(DB_CLIENT.account)
+      const user = await DB_CLIENT.accountUser.findFirst({ where: { userId: userId }})
       if (!user) return redirect("/portal/setup")
-      const accountData = user.accountId ? await dbClient.account.findUnique({ where: { id: user.accountId }}) : null
+      const accountData = user.accountId ? await DB_CLIENT.account.findUnique({ where: { id: user.accountId }}) : null
       
       if (!accountData || !accountData.isSetup) {
         return redirect("/portal/setup")
       } 
       accountCookie.accountId = accountData?.id || undefined
       accountId = accountCookie.accountId
-      const applicationClient = ApplicationsClient(dbClient.accountApplication)
+      const applicationClient = ApplicationsClient(DB_CLIENT.accountApplication)
       const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
       accountCookie.setupIsComplete = true
       setupIsComplete = accountCookie.setupIsComplete
@@ -62,10 +62,10 @@ export const loader: LoaderFunction = args => {
     } else {
       setupIsComplete = true
       accountId = accountCookie.accountId
-      const account = await dbClient.account.findFirst({ where: { id: accountId }})
+      const account = await DB_CLIENT.account.findFirst({ where: { id: accountId }})
       
       if (selectedApplicationId === undefined) {
-        const applicationClient = ApplicationsClient(dbClient.accountApplication)
+        const applicationClient = ApplicationsClient(DB_CLIENT.accountApplication)
         const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
         if (applications && applications.length > 0) {
           accountCookie.selectedApplicationId = applications[0].id
@@ -74,8 +74,8 @@ export const loader: LoaderFunction = args => {
           selectedApplicationName = accountCookie.selectedApplicationName
         }
       }
-      const suggestions = await dbClient.applicationSuggestion.findMany({ where: { applicationId: selectedApplicationId }})
-      const sprints = (await dbClient.applicationSprint.findMany({
+      const suggestions = await DB_CLIENT.applicationSuggestion.findMany({ where: { applicationId: selectedApplicationId }})
+      const sprints = (await DB_CLIENT.applicationSprint.findMany({
         where: {
           applicationId: selectedApplicationId,
           status: { in: ['In Progress', 'Completed'] }
@@ -85,7 +85,7 @@ export const loader: LoaderFunction = args => {
         },
         take: 8
       })).sort((a,b) => (new Date(a.startDate!).getTime()) - (new Date(b.startDate!).getTime()))
-      const tasks = await dbClient.generatedTask.findMany({ where: { sprintId: { in: sprints.map(s => s.id) } }})
+      const tasks = await DB_CLIENT.generatedTask.findMany({ where: { sprintId: { in: sprints.map(s => s.id) } }})
       const completedStatuses = ['done', 'complete', 'completed', 'finished']
 
       const taskTotalsChartData = createSprintTaskTotalsChartData(

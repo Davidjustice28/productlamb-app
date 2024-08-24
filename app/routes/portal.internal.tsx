@@ -1,11 +1,12 @@
 import { createClerkClient } from "@clerk/remix/api.server"
-import { PrismaClient, AccountApplication, Account, AccountUser } from "@prisma/client"
+import { AccountApplication, Account, AccountUser } from "@prisma/client"
 import { LoaderFunction, MetaFunction, json } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
 import { useState } from "react"
 import { PLOptionsButtonGroup } from "~/components/buttons/options-button-group"
 import { PMToolIconComponent } from "~/components/common/pm-tool"
 import { PLTable } from "~/components/common/table"
+import { DB_CLIENT } from "~/services/prismaClient"
 import { TableColumn } from "~/types/base.types"
 
 
@@ -26,14 +27,13 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader: LoaderFunction = async ({request}) => {
-  const dbClient = new PrismaClient()
-  const applications = await dbClient.accountApplication.findMany()
-  const accounts = await dbClient.account.findMany()
-  const users = await dbClient.accountUser.findMany()
+  const applications = await DB_CLIENT.accountApplication.findMany()
+  const accounts = await DB_CLIENT.account.findMany()
+  const users = await DB_CLIENT.accountUser.findMany()
   const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
   const prismaUsers = (await clerkClient.users.getUserList()).data
   const prismaAccounts = (await clerkClient.organizations.getOrganizationList()).data
-  const sprints = await dbClient.applicationSprint.findMany({where: {status: { in: ['Completed', 'In Progress']}}})
+  const sprints = await DB_CLIENT.applicationSprint.findMany({where: {status: { in: ['Completed', 'In Progress']}}})
   const totalSprints = sprints.length
   const toolCounts = sprints.reduce((acc, sprint) => {
     if (sprint?.clickup_sprint_id) {
@@ -51,7 +51,7 @@ export const loader: LoaderFunction = async ({request}) => {
     return acc
   }, {tool: 'none', count: 0}).tool
 
-  const tasksCompleted = await dbClient.generatedTask.count({where: {status: { in: ['Done', 'complete', 'completed', 'finished'] }}})
+  const tasksCompleted = await DB_CLIENT.generatedTask.count({where: {status: { in: ['Done', 'complete', 'completed', 'finished'] }}})
   const data = {
     applications, 
     accounts: accounts.map(account => ({...account, status: account.status === 'active' ? 'Active' : 'Inactive', name: prismaAccounts.find(org => org.id === account.organization_id)?.name || 'N/A'})),

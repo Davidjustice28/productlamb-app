@@ -2,7 +2,7 @@ import { useRef, useState } from "react"
 import { PLIconButton } from "../buttons/icon-button"
 import { PLBasicButton } from "../buttons/basic-button"
 import { PLPhotoUploader } from "../forms/photo-uploader"
-import { ApplicationGoal, AccountApplication, PrismaClient } from "@prisma/client"
+import { ApplicationGoal, AccountApplication } from "@prisma/client"
 import { useLoaderData, useActionData, json, redirect } from "@remix-run/react"
 import { ActionFunction, unstable_composeUploadHandlers, unstable_createFileUploadHandler, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
 import { ApplicationsClient } from "~/backend/database/applications/client"
@@ -11,6 +11,7 @@ import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
 import { uploadToPhotoToCloudStorage } from "~/services/gcp/upload-file"
 import { NewApplicationData } from "~/types/database.types"
 import { account } from "~/backend/cookies/account"
+import { DB_CLIENT } from "~/services/prismaClient"
 
 interface NewGoalData {
   goal: string
@@ -243,8 +244,7 @@ export const applicationSettingActionFunction: (request: Request) => ActionFunct
   const accountCookie = (await account.parse(cookies))
   const applicationId = accountCookie.selectedApplicationId as number
   const ifMultipartForm = request.headers.get('content-type')?.includes('multipart')
-  const dbClient = new PrismaClient()
-  const appDbClient = ApplicationsClient(dbClient.accountApplication)
+  const appDbClient = ApplicationsClient(DB_CLIENT.accountApplication)
   if (ifMultipartForm) {
     const uploadHandler = unstable_composeUploadHandlers(
       unstable_createFileUploadHandler({
@@ -284,7 +284,7 @@ export const applicationSettingActionFunction: (request: Request) => ActionFunct
         return json({ updatedApplication: appAfterImageDeletion })
       }
     } else {
-      const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
+      const goalDbClient = ApplicationGoalsClient(DB_CLIENT.applicationGoal)
       const updateData = data  as unknown as NewApplicationData
       const goals = updateData.goals.length ? JSON.parse(updateData.goals) as NewGoalData[] : []
       const {data: updatedApplication} = await appDbClient.updateApplication(applicationId, data)

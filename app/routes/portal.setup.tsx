@@ -1,7 +1,7 @@
 import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
-import { Account, ApplicationIntegration, PrismaClient } from "@prisma/client";
+import { ApplicationIntegration } from "@prisma/client";
 import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
-import { useActionData, useLoaderData, useNavigate } from "@remix-run/react";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
@@ -23,6 +23,7 @@ import { generateInviteToken } from "~/utils/jwt";
 import { encrypt } from "~/utils/encryption";
 import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client";
 import { PLApplicationContextModel } from "~/components/modals/applications/upload-context";
+import { DB_CLIENT } from "~/services/prismaClient";
 
 interface SetupFieldProps {
   id: number, 
@@ -47,10 +48,9 @@ export const meta: MetaFunction = () => {
 export const loader: LoaderFunction = args => {
   return rootAuthLoader(args, async ({ request }) => {
     const { userId, orgId } = request.auth;
-    const dbClient = new PrismaClient();
-    const appClient = ApplicationsClient(dbClient.accountApplication);
-    const integrationClient = IntegrationClient(dbClient.applicationIntegration);
-    const accountClient = AccountsClient(dbClient.account);
+    const appClient = ApplicationsClient(DB_CLIENT.accountApplication);
+    const integrationClient = IntegrationClient(DB_CLIENT.applicationIntegration);
+    const accountClient = AccountsClient(DB_CLIENT.account);
     const cookieHeader = request.headers.get("Cookie");
     const accountCookie = (await account.parse(cookieHeader)) || {};
     let accountId: number | undefined = accountCookie.accountId;
@@ -59,12 +59,12 @@ export const loader: LoaderFunction = args => {
       return redirect('/');
     }
 
-    let user = await dbClient.accountUser.findFirst({ where: { userId: userId } });
+    let user = await DB_CLIENT.accountUser.findFirst({ where: { userId: userId } });
     if (!user) {
       try {
-        const result = await dbClient.accountUser.createMany({ data: [{ userId: userId }] });
+        const result = await DB_CLIENT.accountUser.createMany({ data: [{ userId: userId }] });
         if (result.count) {
-          user = await dbClient.accountUser.findFirst({ where: { userId: userId } });
+          user = await DB_CLIENT.accountUser.findFirst({ where: { userId: userId } });
         }
       } catch (err) {
         console.error('create user id db failed: ', err);
@@ -73,12 +73,12 @@ export const loader: LoaderFunction = args => {
     }
 
     if (accountId === undefined) {
-      const accountData = await dbClient.account.findFirst({ where: { user_prisma_id: userId! } });
+      const accountData = await DB_CLIENT.account.findFirst({ where: { user_prisma_id: userId! } });
       if (!accountData) {
         const result = await accountClient.createAccount(userId, "free", SupportedTimezone.MST);
         if (result.errors.length > 0 || !result.data) return json({});
-        await dbClient.accountManagerSettings.create({ data: { accountId: result.data.id } });
-        await dbClient.accountUser.update({ where: { id: user.id }, data: { accountId: result.data.id } });
+        await DB_CLIENT.accountManagerSettings.create({ data: { accountId: result.data.id } });
+        await DB_CLIENT.accountUser.update({ where: { id: user.id }, data: { accountId: result.data.id } });
         accountId = result.data.id;
         accountCookie.accountId = accountId;
         accountCookie.setupIsComplete = false;
@@ -140,11 +140,10 @@ export let action: ActionFunction = async (args) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = (await account.parse(cookies))
   const accountId = accountCookie.accountId
-  const dbClient = new PrismaClient()
-  const appDbClient = ApplicationsClient(dbClient.accountApplication)
-  const goalDbClient = ApplicationGoalsClient(dbClient.applicationGoal)
-  const accountClient = AccountsClient(dbClient.account)
-  const integrationClient = IntegrationClient(dbClient.applicationIntegration)
+  const appDbClient = ApplicationsClient(DB_CLIENT.accountApplication)
+  const goalDbClient = ApplicationGoalsClient(DB_CLIENT.applicationGoal)
+  const accountClient = AccountsClient(DB_CLIENT.account)
+  const integrationClient = IntegrationClient(DB_CLIENT.applicationIntegration)
   if ('setup_complete' in data) {
     await accountClient.updateAccount(accountId, {isSetup: true})
     await appDbClient.getAccountApplications(accountId)
@@ -181,7 +180,7 @@ export let action: ActionFunction = async (args) => {
     }
   } else if ('new_application' in data) {
     const newAppData = JSON.parse(data.new_application as string) as NewApplicationData 
-    const pmToolClient = ApplicationPMToolClient(dbClient)
+    const pmToolClient = ApplicationPMToolClient(DB_CLIENT)
 
     const {data: createAppResult } = await appDbClient.addApplication(accountId, newAppData)
     if (createAppResult) {

@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import { ActionFunction, json } from "@remix-run/node";
 import { account } from "~/backend/cookies/account";
+import { DB_CLIENT } from "~/services/prismaClient";
 import { ManualTaskData } from "~/types/component.types";
 import { encrypt } from "~/utils/encryption";
 
@@ -36,7 +36,7 @@ export const action: ActionFunction = async ({request}) => {
       return json({error: 'Failed to get backlog suggestions'}, {status: 500})
     }
   } else {
-    const prismaClient = new PrismaClient().generatedTask
+    const prismaClient = DB_CLIENT.generatedTask
     await prismaClient.update({
       where: {id: Number(body.id)},
       data: {

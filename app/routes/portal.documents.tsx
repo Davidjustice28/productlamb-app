@@ -1,24 +1,22 @@
-import { ApplicationDocuments, PrismaClient } from "@prisma/client";
+import { ApplicationDocuments } from "@prisma/client";
 import { json, LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState, useRef } from "react";
 import { account } from "~/backend/cookies/account";
-import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLContentLess } from "~/components/common/contentless";
 import { PLTable } from "~/components/common/table";
-import { PLConfirmModal } from "~/components/modals/confirm";
+import { DB_CLIENT } from "~/services/prismaClient";
 
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookieHeader = request.headers.get("Cookie");
   const accountCookie = (await account.parse(cookieHeader) || {});
   let selectedApplicationId: number = accountCookie.selectedApplicationId
-  const dbClient = new PrismaClient()
-  const documents = await dbClient.applicationDocuments.findMany({where: {applicationId: selectedApplicationId}})
+  const documents = await DB_CLIENT.applicationDocuments.findMany({where: {applicationId: selectedApplicationId}})
   return json({documents})
 }
 
-export default function BacklogPage() {
+export default function DocumentsPage() {
   const { documents: loadedDocuments} = useLoaderData() as {documents: ApplicationDocuments[]}
   const [documents, setDocuments] = useState<ApplicationDocuments[]>(loadedDocuments ?? [])
   const [itemsSelected, setItemsSelected] = useState<boolean>(false)

@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { ActionFunction, json } from "@remix-run/node";
 import { account } from "~/backend/cookies/account";
+import { DB_CLIENT } from "~/services/prismaClient";
 import { EditBugData } from "~/types/component.types";
 
 export const action: ActionFunction = async ({request}) => {
@@ -8,7 +8,7 @@ export const action: ActionFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
   const accountCookie = await account.parse(cookies)
   const applicationId = accountCookie.selectedApplicationId
-  const prismaClient = new PrismaClient().applicationBug
+  const prismaClient = DB_CLIENT.applicationBug
   await prismaClient.update({
     where: {id: parseInt(body.id)},
     data: {

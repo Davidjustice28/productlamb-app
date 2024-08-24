@@ -7,9 +7,11 @@ import { IAudioMetadata } from 'music-metadata';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import { writeFile, unlink, readFile } from 'fs/promises'
-import { GCP_CONFIG } from '~/services/gcp/config';
 ffmpeg.setFfmpegPath(ffmpegPath!);
 
+const speech = new SpeechClient({
+  credentials: JSON.parse(process.env.GCP_CREDENTIALS || "")
+});
 
 export const action: ActionFunction = async (args) => {
   const request = args.request
@@ -31,7 +33,6 @@ export const action: ActionFunction = async (args) => {
     console.error('No file uploaded');
     return json({ message: 'No file uploaded.' }, { status: 400 });
   }
-  const {speech} = new GCP_CONFIG();
 
   // Convert Blob to Buffer and then to Base64 string
   let buffer: Buffer
