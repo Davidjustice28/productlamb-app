@@ -1,25 +1,29 @@
 import { ActionFunction, json } from '@remix-run/node';
-// import { SpeechClient } from '@google-cloud/speech';
 import { account } from '~/backend/cookies/account';
 import { encrypt } from '~/utils/encryption';
 import { getAuth } from '@clerk/remix/ssr.server';
-// import fs from "fs";
-
-
 
 export const action: ActionFunction = async (args) => {
-  const request = args.request
-  const baseUrl = process.env.SERVER_ENVIRONMENT === 'production' ? process.env.SPRINT_MANAGER_URL_PROD : process.env.SPRINT_MANAGER_URL_DEV
-  const cookies = request.headers.get('Cookie')
-  const accountCookie = (await account.parse(cookies))
-  const applicationId = accountCookie?.selectedApplicationId as number| undefined
-  const accountId = accountCookie?.accountId as number| undefined
+  const request = args.request;
+  const baseUrl = process.env.SERVER_ENVIRONMENT === 'production'
+    ? process.env.SPRINT_MANAGER_URL_PROD
+    : process.env.SPRINT_MANAGER_URL_DEV;
+  const cookies = request.headers.get('Cookie');
+  const accountCookie = await account.parse(cookies);
+  const applicationId = accountCookie?.selectedApplicationId as number | undefined;
+  const accountId = accountCookie?.accountId as number | undefined;
 
-  if (!applicationId || !accountId) return json({ message: 'No file uploaded.' }, { status: 401 });
-  const sprintManagerUrl = `${baseUrl}/manager/request/${applicationId}`
+  if (!applicationId || !accountId) {
+    return json({ message: 'No file uploaded.' }, { status: 401 });
+  }
 
-  const {userId} = await getAuth(args)
-  if (!userId) return json({ message: 'not logged in' }, { status: 403 });
+  const sprintManagerUrl = `${baseUrl}/manager/request/${applicationId}`;
+
+  const { userId } = await getAuth(args);
+  if (!userId) {
+    return json({ message: 'Not logged in' }, { status: 403 });
+  }
+
   const formData = await request.formData();
   const file = formData.get('audio') as Blob;
 
@@ -28,17 +32,13 @@ export const action: ActionFunction = async (args) => {
     return json({ message: 'No file uploaded.' }, { status: 400 });
   }
 
-  // Convert Blob to Buffer and then to Base64 string
-  // const buffer = Buffer.from(await file.arrayBuffer());
-  // const audioBytes = buffer.toString('base64');
-  // const { parseBuffer } = await import('music-metadata');
-  // const metadata = await parseBuffer(buffer)
-  // console.log('audio files metadata: ', JSON.stringify({
-  //   encoding: metadata.format?.codec,
-  //   sampleRate: metadata.format?.sampleRate,
-  // }, null, 2))
+  // Prepare FormData for OpenAI request
+  const uploadFormData = new FormData();
+  uploadFormData.append('file', file, 'audio.mp3'); // Append file with a name
+  uploadFormData.append('model', 'whisper-1'); // Append the model parameter
 
   let transcript = '';
+
   try {
     // Send the FormData to OpenAI using fetch
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -46,7 +46,7 @@ export const action: ActionFunction = async (args) => {
       headers: {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
-      body: formData,
+      body: uploadFormData,
     });
 
     if (!response.ok) {
@@ -57,73 +57,48 @@ export const action: ActionFunction = async (args) => {
 
     const result = await response.json();
     transcript = result.text || '';
-    console.log('Transcription result: ', result);
+    console.log('Transcription result:', result);
   } catch (error) {
     console.error('Error during transcription:', error);
     return json({ message: 'Failed to transcribe audio.' }, { status: 500 });
   }
 
- try {
-  //  // Configure the request
-  //  const requestConfig = {
-  //    audio: {
-  //      content: audioBytes,
-  //    },
-  //    config: {
-  //      encoding:  metadata.format?.codec || 'OPUS' as any, // Make sure this matches your audio file's encoding
-  //      sampleRateHertz: metadata.format?.sampleRate || 48000, // Adjust this based on your audio file
-  //      languageCode: 'en-US', // Change as needed
-  //    },
-  //  };
-  //  // Initialize the Speech-to-Text client
-  //  const client = new SpeechClient({
-  //    credentials: JSON.parse(process.env.GCP_CREDENTIALS || "{}"),
-  //  });
-  //  // Call the Speech-to-Text API
-  //  const [response] = await client.recognize(requestConfig);
-  //  // Check and handle the response
-  //  if (!response.results || response.results.length === 0) {
-  //    return json({ error: 'No transcription results found' }, { status: 400 });
-  //  }
-  //  const transcript = response.results
-  //    .map(result => {
-  //      if (!result.alternatives) return '';
-  //      return result.alternatives[0].transcript;
-  //    })
-  //    .filter(v => v?.length)
-  //    .join('\n');  
+  try {
+    const iv = process.env.ENCRYPTION_IV as string;
+    const key = process.env.ENCRYPTION_KEY as string;
+    const authToken = encrypt(process.env.SPRINT_GENERATION_SECRET as string, key, iv);
 
-    const iv = process.env.ENCRYPTION_IV as string
-    const key = process.env.ENCRYPTION_KEY as string
-    const authToken = encrypt(process.env.SPRINT_GENERATION_SECRET as string, key, iv)
+    // Return failure if not a sentence
+    if (transcript.length < 10) {
+      return json({ transcript: '' }, { status: 200 });
+    }
 
-    // return failure if not a sentence
-    if (transcript.length < 10) return json({ transcript: '' }, { status: 200 });
-    const result: {result_summary: string} | null = await fetch(sprintManagerUrl, {
+    const result: { result_summary: string } | null = await fetch(sprintManagerUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `${authToken}`,
+        'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         user_request: transcript,
         clerk_user_id: userId,
-        account_id: accountId
-      })
+        account_id: accountId,
+      }),
     }).then(res => res.json()).catch((e) => {
-      console.error('### Sprint manager catched an error: ', e)
-      return null
-    })
-    console.log('### Sprint manager request result: ', result)
-    if (!result || "result_summary" in result === false) {
-      console.error('### Sprint manager error: ', result)
+      console.error('### Sprint manager caught an error: ', e);
+      return null;
+    });
+
+    console.log('### Sprint manager request result:', result);
+
+    if (!result || !("result_summary" in result)) {
+      console.error('### Sprint manager error: ', result);
       return json({ error: 'Sprint manager error' }, { status: 500 });
     }
-    
-    return json({ transcript:  result.result_summary}, { status: 200 });
 
+    return json({ transcript: result.result_summary }, { status: 200 });
   } catch (error) {
-    console.error('transcibe audio error:', error)
+    console.error('Transcribe audio error:', error);
     return json({ error: 'Unknown error occurred while transcribing audio' }, { status: 500 });
   }
 };

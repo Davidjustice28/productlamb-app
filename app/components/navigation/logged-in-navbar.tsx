@@ -25,9 +25,8 @@ export const LoggedInNavbar = ({darkMode, setupComplete, internalPageAccess, isA
     { iconClass: "ri-webhook-line", absoluteHref: '/portal/integrations', text: 'Integrations', adminOnly: false},
     { iconClass: "ri-window-line", absoluteHref: '/portal/applications', text: 'Applications', adminOnly: false},
     { iconClass: "ri-file-list-line", absoluteHref: '/portal/backlog', text: 'Backlog', adminOnly: false},
-    { iconClass: "ri-organization-chart", absoluteHref: '/portal/team', text: 'Organization', adminOnly: true},
     { iconClass: "ri-file-pdf-2-line", absoluteHref: '/portal/documents', text: 'Documents', adminOnly: true},
-    { iconClass: "ri-booklet-line" , absoluteHref: '/portal/help', text: 'Help Desk', adminOnly: false},
+    { iconClass: "ri-customer-service-line" , absoluteHref: '/portal/help', text: 'Help Desk', adminOnly: false},
     { iconClass: "ri-settings-3-line", absoluteHref: '/portal/settings', text: 'Account', adminOnly: true},
   ]
 
