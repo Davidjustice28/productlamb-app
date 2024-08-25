@@ -47,11 +47,11 @@ export const LoggedInNavbar = ({darkMode, setupComplete, internalPageAccess, isA
 
   return (
     <nav className={'h-screen px-5 bg-neutral-50 dark:bg-neutral-900 flex flex-col py-6 items-start' + (isExpanded ? ' w-80' : ' w-20')}>
-      <div className='mb-10 w-full h-27'>
+      <div className='mb-10 w-full h-27 border-2 border-transparent overflow-hidden'>
         <img 
-          src={isExpanded ? (darkMode ? 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_white.svg' : 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png') : 'https://storage.googleapis.com/product-lamb-images/productlamb_logo_icon.png'} 
+          src={(darkMode ? 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_white.svg' : 'https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png')} 
           alt="Logo" 
-          className={'h-auto object-contain object-center ml-3' + (!isExpanded ? ' max-w-5' : ' max-w-40')}
+          className={'h-auto max-w-40' + (!isExpanded ? ' ml-2' : '  ml-3 object-contain object-center ')}
         />
       </div>
       <NavOptionsComponent links={setupComplete ? links : notSetupLinks} menuExpanded={isExpanded} darkMode={darkMode} isAdmin={isAdmin} hasInternalAccess={internalPageAccess}/>

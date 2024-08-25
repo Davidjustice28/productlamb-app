@@ -192,7 +192,7 @@ export default function DashboardPage() {
         </div>
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Suggested Actions</h2>
-          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full flex flex-col px-3 py-2  gap-2 lg:justify-evenly overflow-y-scroll">
+          <div className="rounded-xl bg-white dark:bg-neutral-800 w-full h-52 md:h-full flex flex-col px-3 py-3  gap-2 overflow-y-scroll">
             {!suggestions.length && <p className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>There are no suggestions at this time.</p>}
             {suggestions.map(s => <PLSuggestion suggestion={s} key={s.id}/>)}
           </div>
