@@ -1,11 +1,22 @@
 import { ApplicationDocuments } from "@prisma/client";
-import { json, LoaderFunction } from "@remix-run/node";
+import { json, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState, useRef } from "react";
 import { account } from "~/backend/cookies/account";
 import { PLContentLess } from "~/components/common/contentless";
 import { PLTable } from "~/components/common/table";
 import { DB_CLIENT } from "~/services/prismaClient";
+
+
+export const meta: MetaFunction<typeof loader> = () => {
+  return [
+    { title: "ProductLamb | Documents" },
+    {
+      property: "og:title",
+      content: "ProductLamb | Documents",
+    },
+  ];
+};
 
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -40,7 +51,7 @@ export default function DocumentsPage() {
   return (
     <div className="w-full flex flex-col text-black">
       <div className="w-full flex justify-between items-center">
-        <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and edit your backlog of tasks</p>
+        <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">View documents created by your manager</p>
       </div>
       {
         documents.length === 0 && <PLContentLess itemType="document"/>

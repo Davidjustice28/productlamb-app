@@ -31,7 +31,7 @@ export const LoggedInNavbar = ({darkMode, setupComplete, internalPageAccess, isA
   ]
 
   if (internalPageAccess) links.push({ iconClass: "ri-dashboard-3-line", absoluteHref: '/portal/internal', text: 'Internal Portal'})
-  if (hasToolConfigured) links.splice(1, 0, { iconClass: "ri-file-list-line", absoluteHref: '/portal/sprints', text: 'Sprints', adminOnly: false})
+  if (hasToolConfigured) links.splice(1, 0, { iconClass: "ri-run-line", absoluteHref: '/portal/sprints', text: 'Sprints', adminOnly: false})
   const handleSigningOut = async () => {
     await signOut(() => {
       navigate('/')
