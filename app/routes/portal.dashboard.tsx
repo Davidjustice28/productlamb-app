@@ -65,12 +65,14 @@ export const loader: LoaderFunction = args => {
       const account = await DB_CLIENT.account.findFirst({ where: { id: accountId }})
       
       if (selectedApplicationId === undefined) {
+
         const applicationClient = ApplicationsClient(DB_CLIENT.accountApplication)
         const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
         if (applications && applications.length > 0) {
-          accountCookie.selectedApplicationId = applications[0].id
+          const selectedApp = applications.find(a => a.id === (account?.default_application_id !== null ? account?.default_application_id : applications[0].id))!
+          accountCookie.selectedApplicationId = selectedApp.id
           selectedApplicationId = accountCookie.selectedApplicationId
-          accountCookie.selectedApplicationName = applications[0].name
+          accountCookie.selectedApplicationName = selectedApp.name
           selectedApplicationName = accountCookie.selectedApplicationName
         }
       }
