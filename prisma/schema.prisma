@@ -17,6 +17,7 @@ model Account {
   move_incomplete_to_backlog Boolean              @default(true)
   organization_id            String               @default("1")
   timezone                   String               @default("America/Denver")
+  default_application_id     Int?
   AccountApplication         AccountApplication[]
   AccountUser                AccountUser[]
 }

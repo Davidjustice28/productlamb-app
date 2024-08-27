@@ -4,7 +4,7 @@ import { SupportedTimezone } from "~/types/database.types"
 import { PLBasicButton } from "../buttons/basic-button"
 import { PLCheckbox } from "../forms/checkbox";
 
-export function ManagerSettings({incomplete_tasks_action, timezone, account_id, notificationSettings}: {account_id: number, timezone: string, incomplete_tasks_action: string, notificationSettings: {
+export function ManagerSettings({incomplete_tasks_action, timezone, account_id, notificationSettings, defaultApplicationId, applications}: {account_id: number, applications: {name: string, id: number}[], defaultApplicationId: number, timezone: string, incomplete_tasks_action: string, notificationSettings: {
   planning_ready: boolean;
   sprint_started: boolean;
   team_member: boolean;
@@ -48,6 +48,18 @@ export function ManagerSettings({incomplete_tasks_action, timezone, account_id, 
             {Object.entries(SupportedTimezone).map(([abbreviation, timezone], index) => 
               <option key={index} value={timezone}>{abbreviation}</option>
             )}
+          </select>
+        </div>
+        <div className="">
+          <h5 className="text-sm font-semibold text-gray-700 dark:text-neutral-400">Default Application</h5>
+          <select 
+            defaultValue={defaultApplicationId}
+            className="form-select mt-2 block w-44 text-gray-700 dark:text-neutral-100 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            name="default_application_id"
+          >
+            {applications.map((application, index) => {
+              return <option key={index} value={application.id}>{application.name}</option>
+            })}
           </select>
         </div>
         <div className="flex flex-col gap-2">

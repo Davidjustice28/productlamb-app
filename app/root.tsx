@@ -58,12 +58,15 @@ export const loader: LoaderFunction = (args) => {
     darkMode = user.darkMode;
     let organizationAccount: Account | null = null;
     if (accountCookie.accountId) {
+      const { data: accountData } = await accountClient.getAccountById(accountCookie.accountId);
+      if (!accountData) {
+        return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
+      }
       if (!user?.accountId) {
         user = await DB_CLIENT.accountUser.update({ where: { id: user.id }, data: { accountId: accountCookie.accountId }});
       }
       if (accountCookie.setupIsComplete === undefined || accountCookie.setupIsComplete === null) {
-        const { data: accountData } = await accountClient.getAccountById(accountCookie.accountId);
-        if (accountData) accountCookie.setupIsComplete = accountData.isSetup;
+        accountCookie.setupIsComplete = accountData.isSetup;
       }
 
       if (!accountCookie.setupIsComplete && (!request.url.includes('/portal/setup') || !request.url.includes('/portal'))) {
@@ -76,8 +79,13 @@ export const loader: LoaderFunction = (args) => {
           const appClient = ApplicationsClient(DB_CLIENT.accountApplication);
           const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId);
           if (apps && apps.length) {
-            accountCookie.selectedApplicationId = apps[0].id;
-            accountCookie.selectedApplicationName = apps[0].name;
+            if (accountData?.default_application_id !== null) {
+              accountCookie.selectedApplicationId = accountData.default_application_id;
+              accountCookie.selectedApplicationName = apps.find(app => app.id === accountData.default_application_id)?.name ?? '';
+            } else {
+              accountCookie.selectedApplicationId = apps[0].id;
+              accountCookie.selectedApplicationName = apps[0].name;
+            }
           }  
           
           if ((!apps || !apps.length) && !request.url.includes('/portal/setup')){
@@ -123,12 +131,19 @@ export const loader: LoaderFunction = (args) => {
       if (!isPortalRoute) {
         return redirect('/portal/dashboard', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
       } else {
+        const { data: accountData } = await accountClient.getAccountById(accountCookie.accountId);
+        
         if (!accountCookie.selectedApplicationId) {
           const appClient = ApplicationsClient(DB_CLIENT.accountApplication);
           const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId);
           if (apps && apps.length) {
-            accountCookie.selectedApplicationId = apps[0].id;
-            accountCookie.selectedApplicationName = apps[0].name;
+            if (accountData?.default_application_id !== null) {
+              accountCookie.selectedApplicationId = accountData!.default_application_id;
+              accountCookie.selectedApplicationName = apps.find(app => app.id === accountData!.default_application_id)?.name ?? '';
+            } else {
+              accountCookie.selectedApplicationId = apps[0].id;
+              accountCookie.selectedApplicationName = apps[0].name;
+            }
           } else {
             return redirect('/portal/setup', { headers: { "Set-Cookie": await account.serialize(accountCookie) } });
           }

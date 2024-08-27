@@ -25,6 +25,7 @@ interface ManagerSettingsUpdate extends SettingsBaseUpdate {
   sprint_started?: string
   team_member?: string
   task_added?: string
+  default_application_id?: string
 }
 
 interface TeamMember {
@@ -71,9 +72,16 @@ export const action: ActionFunction = async (args) => {
       notify_on_sprint_ready: 'sprint_started' in formData,
       notify_on_task_added: 'task_added' in formData
     }
+    
     await DB_CLIENT.accountManagerSettings.updateMany({where: {accountId: Number(account_id)}, data})
+    if ('default_application_id' in formData) {
+      const { default_application_id } = formData
+      await DB_CLIENT.account.update({where: {id: Number(account_id)}, data: {default_application_id: Number(default_application_id)}})
+    }
+
     const updatedSettings = await DB_CLIENT.accountManagerSettings.findFirst({where: {accountId: Number(account_id)}})
-    return json({updatedManagerSettings: updatedSettings})
+    const updatedAccount = await DB_CLIENT.account.findFirst({where: {id: Number(account_id)}})
+    return json({updatedManagerSettings: updatedSettings, defaultApplicationId: updatedAccount?.default_application_id})
   } else if (formData.type === 'team') {
     const data = formData as unknown as  { action: 'invite' | 'remove', data: string }  
     const { action, data: actionData } = data
@@ -157,7 +165,7 @@ export const loader: LoaderFunction = args => {
     const managerSettings = await DB_CLIENT.accountManagerSettings.findFirst({where: {accountId: accountId}})
 
     const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY!})
-    const accountData = await DB_CLIENT.account.findUnique({ where: {id: accountId}})
+    const accountData = await DB_CLIENT.account.findUnique({ where: {id: accountId}, include: {AccountApplication: true}})
     if (!accountData) {
       return redirect('/portal/dashboard')
     }
@@ -187,12 +195,12 @@ export const loader: LoaderFunction = args => {
       }
       return acc
     }, [] as any)
-    return {members: teamMembers, managerSettings}
+    return {members: teamMembers, managerSettings, defaultApplicationId: accountData.default_application_id, applications: accountData.AccountApplication.map(app => ({name: app.name, id: app.id}))}
    })
 }
 
 export default function SettingsPage() {
-  const {managerSettings: loadedManagerSettings} = useLoaderData<{managerSettings: AccountManagerSettings}>()
+  const {managerSettings: loadedManagerSettings, applications, defaultApplicationId} = useLoaderData<{managerSettings: AccountManagerSettings, defaultApplicationId: number, applications: {name: string, id: number}[]}>()
   const {updatedManagerSettings} = useLoaderData<{updatedManagerSettings: AccountManagerSettings| null}>() || {updatedManagerSettings: null}
   const userSettingsGroups = Object.values(SettingsTabGroup)
   const managerSettings = updatedManagerSettings || loadedManagerSettings
@@ -217,7 +225,7 @@ export default function SettingsPage() {
         </div>
         <div className="w-full border-2 rounded-lg border-black mt-5">
           {
-            userSettingsGroup === SettingsTabGroup.MANAGER && <ManagerSettings timezone={managerSettings.timezone} incomplete_tasks_action={managerSettings.incomplete_tasks_action} account_id={managerSettings.accountId} notificationSettings={notificationSettings}/>
+            userSettingsGroup === SettingsTabGroup.MANAGER && <ManagerSettings timezone={managerSettings.timezone} incomplete_tasks_action={managerSettings.incomplete_tasks_action} account_id={managerSettings.accountId} notificationSettings={notificationSettings} applications={applications} defaultApplicationId={defaultApplicationId}/>
           }
           {
             userSettingsGroup === SettingsTabGroup.TEAM && <TeamSettings/>
