@@ -52,8 +52,10 @@ export const loader: LoaderFunction = args => {
       accountCookie.setupIsComplete = true
       setupIsComplete = accountCookie.setupIsComplete
       if (selectedApplicationId === undefined && applications && applications.length > 0) {
-        accountCookie.selectedApplicationId = applications[0].id
-        accountCookie.selectedApplicationName = applications[0].name
+        const id = accountData?.default_application_id !== null ? accountData?.default_application_id : applications[0].id
+        const selectedApp = applications.find(a => a.id === id)!
+        accountCookie.selectedApplicationId = selectedApp.id
+        accountCookie.selectedApplicationName = selectedApp.name
         selectedApplicationId = accountCookie.selectedApplicationId
         selectedApplicationName = accountCookie.selectedApplicationName
       }
