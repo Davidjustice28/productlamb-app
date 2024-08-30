@@ -533,7 +533,7 @@ export default function SetupPage() {
       <form method="POST" ref={paymentFormRef}>
         <input type="hidden" name="payment_account_id" ref={paymentAccountIdRef}/>
       </form>
-      <a href={`https://productlamb.lemonsqueezy.com/buy/70d85f32-6fd0-4d35-8224-7460db09ffcc?checkout[custom][pl_account_id]=${account_id}&embed=1`} className="lemonsqueezy-button" ref={paymentLinkRef}></a>
+      <a href={`https://productlamb.lemonsqueezy.com/buy/b2e0c8da-60fb-4c6b-b277-18a413819be1?checkout[custom][pl_account_id]=${account_id}&embed=1`} className="lemonsqueezy-button" ref={paymentLinkRef}></a>
       <PLIntegrationOptionsModal configuredIntegrations={[]} open={integrationModalOpen} setOpen={setIntegrationModalOpen} onSubmit={onIntegrationSubmit} applicationId={applicationId ?? 0}/>
       <PLAddApplicationModal open={addApplicationModalOpen} setOpen={setAddApplicationModalOpen} onSubmit={onAddApplication}/>
       <PLOrganizationDetailsModal isOpen={organizationDetailsModalOpen} setIsOpen={setOrganizationDetailsModalOpen} onSubmit={onOrganizationDetailsSubmit}/>
