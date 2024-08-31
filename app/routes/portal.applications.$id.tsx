@@ -144,7 +144,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       if ("sprint_generation_enabled" in updateData) {
         const application = await DB_CLIENT.accountApplication.findFirst({where: {id: parseInt(id!)}})
         const hasToolConfigured = !!application?.clickup_integration_id || !!application?.jira_integration_id || !!application?.notion_integration_id
-        const isEnabled = (updateData.sprint_generation_enabled as any) === 'true' && hasToolConfigured
+        const isEnabled = (updateData?.sprint_generation_enabled as any) === 'true' && hasToolConfigured
         updateData.sprint_generation_enabled = isEnabled
       }
     
@@ -176,11 +176,11 @@ export default function IndividualApplicationsPage() {
   const [siteUrl, setSiteUrl] = useState(updatedApplication ? updatedApplication.siteUrl : currentApplicationData.siteUrl)
   const [type, setType] = useState(updatedApplication ? updatedApplication.type : currentApplicationData.type)
   const [logoUrl, setLogoUrl] = useState(updatedApplication ? updatedApplication.logo_url : currentApplicationData.logo_url)
-  const [generationEnabled, setGenerationEnabled] = useState(updatedApplication ? updatedApplication.sprint_generation_enabled : currentApplicationData.sprint_generation_enabled)
+  const [generationEnabled, setGenerationEnabled] = useState(updatedApplication && 'sprint_generation_enabled' in updatedApplication ? updatedApplication.sprint_generation_enabled : currentApplicationData.sprint_generation_enabled)
   const [appContextModalOpen, setAppContextModalOpen] = useState(false)
   const [sprintInterval, setSprintInterval] = useState(updatedApplication ?updatedApplication.sprint_interval : currentApplicationData.sprint_interval)
   const [changesDetected, setChangesDetected] = useState(false)
-  const [configuringATool, setConfiguringATool] = useState(application.sprint_generation_enabled)
+  const [configuringATool, setConfiguringATool] = useState(application && 'sprint_generation_enabled' in application ? application.sprint_generation_enabled : false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
   const deleteFormRef = useRef<HTMLFormElement>(null)
