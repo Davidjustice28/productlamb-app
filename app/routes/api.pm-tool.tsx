@@ -93,8 +93,49 @@ export const action: ActionFunction = async ({ request }) => {
         const response = await appDbClient.updateApplication(application_id, {notion_integration_id: pmToolConfigurationResponseId})
       }
       const updatedApp = await appDbClient.getApplicationById(application_id)
-      if (updatedApp) {
-        return json(updatedApp)
+      if (updatedApp?.data) {
+        const application = updatedApp.data
+        let data: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null = null
+        if (application?.clickup_integration_id) {
+          const result = await DB_CLIENT.applicationClickupIntegration.findFirst({where: {id: application.clickup_integration_id}})
+          if (result) {
+            data = {
+              type: 'clickup', 
+              data: {
+                apiToken: result.api_token,
+                parentFolderId: Number(result.parent_folder_id)
+              }
+            }
+          }
+        }
+        if (application?.jira_integration_id) {
+          const result = await DB_CLIENT.applicationJiraIntegration.findFirst({where: {id: application.jira_integration_id}})
+          if (result) {
+            data = {
+              type: 'jira',
+              data: {
+                apiToken: result.api_token,
+                parentBoardId: Number(result.parent_board_id),
+                email: result.email,
+                hostUrl: result.host_url,
+                projectKey: result.project_key
+              }
+            }
+          }
+        }
+        if (application?.notion_integration_id) {
+          const result = await DB_CLIENT.applicationNotionIntegration.findFirst({where: {id: application.notion_integration_id}})
+          if (result) {
+            data = {
+              type: 'notion',
+              data: {
+                apiKey: result.api_token,
+                parentPageId: result.parent_page_id
+              }
+            }
+          }
+        }
+        return json({application, toolConfigured: data})
       } else {
         return json({}, {status: 500})
       }

@@ -164,11 +164,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function IndividualApplicationsPage() {
-  const {goals: currentGoals, application: currentApplicationData, hasInitialContext, toolConfigured} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, hasInitialContext: boolean, toolConfigured: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null}>()
+  const {goals: currentGoals, application: currentApplicationData, hasInitialContext, toolConfigured: loadedToolConfigured} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, hasInitialContext: boolean, toolConfigured: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null}>()
   const { updatedApplication, updatedGoals } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null}
   const [application, setApplication] = useState<AccountApplication>(updatedApplication ?? currentApplicationData)
   const [goals, setGoals] = useState<NewGoalData[]>(updatedGoals ?? currentGoals)
   const [name, setName] = useState(updatedApplication ? updatedApplication.name :currentApplicationData.name)
+  const [toolConfigured, setToolConfigured] = useState(loadedToolConfigured ?? null)
   const [summary, setSummary] = useState(updatedApplication ? updatedApplication.summary : currentApplicationData.summary)
   const [siteUrl, setSiteUrl] = useState(updatedApplication ? updatedApplication.siteUrl : currentApplicationData.siteUrl)
   const [type, setType] = useState(updatedApplication ? updatedApplication.type : currentApplicationData.type)
@@ -266,7 +267,9 @@ export default function IndividualApplicationsPage() {
       }
     }).then(res => res.json()).catch(e => null)
     if (updatedAppData) {
-      setApplication(updatedAppData)
+      const {application, toolConfigured} = updatedAppData
+      setApplication(application)
+      setToolConfigured(toolConfigured)
     }
   }
 
