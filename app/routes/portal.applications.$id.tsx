@@ -79,7 +79,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     }
   }
   const result = {application, goals, hasInitialContext, toolConfigured: data}
-  console.log('page data', result)
   return json(result)
 }
 
@@ -259,7 +258,6 @@ export default function IndividualApplicationsPage() {
   }
 
   const onToolConfirmation = async (data: ClickUpData | NotionData | JiraData) => {
-    console.log(data)
     const updatedAppData = await fetch('/api/pm-tool', {
       method: 'POST',
       body: JSON.stringify({
@@ -281,9 +279,6 @@ export default function IndividualApplicationsPage() {
     checkForChanges()
   }, [siteUrl, name, summary, type, sprintInterval, generationEnabled])
 
-  useEffect(() => {
-    console.log('application: ', application)
-  }, [])
   return (
     <div>
       <div className="relative p-6 flex-auto rounded px-8 pt-6 pb-2 w-full">
@@ -367,7 +362,7 @@ export default function IndividualApplicationsPage() {
             <ToggleSwitch darkMode={generationEnabled} onChangeHandler={handleGenerationToggle}/>
             <input type="hidden" name="sprint_generation_enabled" value={generationEnabled} />
           </div>
-          <PLProjectManagementToolLink onToolConfirmation={onToolConfirmation} disabled={!configuringATool} toolConfigured={toolConfigured} application_id={toolConfigured ? application.id : -1}/>
+          <PLProjectManagementToolLink onToolConfirmation={onToolConfirmation} disabled={!configuringATool} toolConfigured={toolConfigured} application_id={toolConfigured && application ? application.id : -1}/>
 
           <div className="mt-4 flex flex-col gap-5 text-black dark:text-neutral-400 " >
             <input type="hidden" name="goals" value={JSON.stringify(goals)} />
