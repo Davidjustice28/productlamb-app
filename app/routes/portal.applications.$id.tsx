@@ -281,6 +281,9 @@ export default function IndividualApplicationsPage() {
     checkForChanges()
   }, [siteUrl, name, summary, type, sprintInterval, generationEnabled])
 
+  useEffect(() => {
+    console.log('application: ', application)
+  }, [])
   return (
     <div>
       <div className="relative p-6 flex-auto rounded px-8 pt-6 pb-2 w-full">
@@ -421,7 +424,7 @@ export default function IndividualApplicationsPage() {
 
         </form>
       </div>
-      <PLApplicationContextModel open={appContextModalOpen} setOpen={setAppContextModalOpen} applicationId={application.id}/>
+      <PLApplicationContextModel open={appContextModalOpen} setOpen={setAppContextModalOpen} applicationId={application?.id}/>
     </div>
   )
 }
