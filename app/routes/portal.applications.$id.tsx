@@ -78,7 +78,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       }
     }
   }
-  return json({application, goals, hasInitialContext, toolConfigured: data} as const)
+  const result = {application, goals, hasInitialContext, toolConfigured: data}
+  console.log('page data', result)
+  return json(result)
 }
 
 interface NewGoalData {
