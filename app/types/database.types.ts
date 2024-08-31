@@ -80,3 +80,17 @@ export enum SupportedTimezone {
   JST = "Asia/Tokyo",            // Japan Standard Time
   AET = "Australia/Sydney"  // Australian Eastern Time
 }
+
+export interface Roadmap {
+  id: number;
+  items: RoadmapItem[];
+}
+export interface RoadmapItem {
+  id: number;
+  order: number;
+  roadmap_id: number;
+  initiative: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+}

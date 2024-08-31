@@ -10,7 +10,7 @@ export const action: ActionFunction = async ({ request }) => {
     return json({}, {status: 400});
   }
 
-  if (!('tool_data' in body) || !('remove_config' in body)) {
+  if (!('tool_data' in body) && !('remove_config' in body)) {
     return json({}, {status: 400});
   }
 

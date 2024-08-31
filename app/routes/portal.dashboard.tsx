@@ -4,15 +4,20 @@ import { LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { account } from "~/backend/cookies/account";
-import { AccountsClient } from "~/backend/database/accounts/client";
 import { ApplicationsClient } from "~/backend/database/applications/client";
 import { createCurrentSprintChartsData, createSprintPointsChartData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts";
-import { PLAreaChart } from "~/components/charts/area-chart";
 import { PLBarChart } from "~/components/charts/bar-chart";
-import { PLLineChart } from "~/components/charts/line-chart";
+import { PLRoadmapItemModal } from "~/components/modals/roadmaps/roadmap-view";
 import { DB_CLIENT } from "~/services/prismaClient";
+import { RoadmapItem } from "~/types/database.types";
 import { calculateTimeLeft } from "~/utils/date";
 
+
+const productLambRoadMap: RoadmapItem[] = [
+  {id: 0, roadmap_id: 0, order: 0, initiative: "Increase AI manager's capabilites and improve onboarding experience", start_date: "2024-09-01T00:00:00.000Z", end_date: "2024-09-30T00:00:00.000Z", description: 'The goal of this phase is to expand the abilities of AI managers and what they can automate. Some of the features include: creating multiple types of documents, scanning codebase for context, & managing roadmaps.'},
+  {id: 1, roadmap_id: 0, order: 1, initiative: "Expand supported third-party integrations & task management tools", start_date: "2024-10-01T00:00:00.000Z", end_date: "2024-10-31T00:00:00.000Z", description: 'The goal of this phase is to expand the number of third-party integrations and task management tools that can be used with ProductLamb. Integrations to be added include: Trello, Plausible, Google Drive, Excel, and more.'},
+  {id: 2, roadmap_id: 0, order: 2, initiative: "Improve platform performance, reliability, and available analytics", start_date: "2024-11-01T00:00:00.000Z", end_date: "2024-11-30T00:00:00.000Z", description: 'Now that we have a solid user base, we will focus on improving the performance and reliability of the platform. We will also add more analytics to help users understand how they are using the platform.'},
+]
 
 export const meta: MetaFunction<typeof loader> = () => {
   return [
@@ -116,61 +121,44 @@ export const loader: LoaderFunction = args => {
 
 
 export default function DashboardPage() {
-  const { taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint: loadedCurrentSprint, taskTypesData, suggestions, sprintPointsChartData } = useLoaderData<{ selectedApplicationName: string| undefined, taskTotalsChartData: any, currentSprintTasksData: any[], sprintPointsChartData: any[], taskPercentagesChartData: any, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, currentSprint: ApplicationSprint|null, taskTypesData: any[], suggestions: ApplicationSuggestion[]}>();
+  const { currentSprintSummary, currentSprint: loadedCurrentSprint, suggestions, currentSprintTasksData } = useLoaderData<{ currentSprintTasksData: any[], selectedApplicationName: string| undefined, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, currentSprint: ApplicationSprint|null, suggestions: ApplicationSuggestion[]}>();
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
-  const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || []), (taskTypesData || []), (sprintPointsChartData || [])])
-  const [chartIndex, setChartIndex] = useState<number>(0)
   const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(loadedCurrentSprint)
-  const yKey = chartIndex == 0 ? "taskCount" : "completed"
-
-  const handleChartChange = (goingForward: boolean) => {
-    
-    if(chartData === null) return 
-    if (goingForward) {
-      if (chartIndex == chartData.length - 1) {
-        setChartIndex(0)
-      } else {
-        setChartIndex(chartIndex + 1)
-      }
-    } else {
-      if (chartIndex <= 0) {
-        setChartIndex(chartData.length - 1)
-      } else {
-        setChartIndex(chartIndex - 1)
-      }
-    }
-  }
+  const [roadMapModalOpen, setRoadMapModalOpen] = useState(false)
+  const [selectedRoadMapItem, setSelectedRoadMapItem] = useState<RoadmapItem|null>(null)
   const timeLeftTitle = (currentSprintSummary && currentSprintSummary.time_left ? currentSprintSummary.time_left.type : 'time')
-
+  // list of features and date ranges for feature/development to take place. dates are iso strings
+  
   return (
-    <div className="flex flex-col items-center gap-5 justify-start">
-      <div className="w-full flex flex-col">
-        <div className="flex flex-row justify-between w-full items-center">
-          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Completion Percentage' : (chartIndex === 0) ? 'Tasks Assigned' : chartIndex === 2 ? 'Task Types' : 'Points Completed'}</span></h2>
-          <div className="inline-flex">
-            <button 
-              className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 2 || chartIndex == 0 ? "cursor-not-allowed" : "hover:text-gray-400")} 
-              onClick={() => handleChartChange(false)}
-              disabled={(chartData[chartIndex] <= 1 || chartIndex == 0)}
-            >
-              <i className="ri ri-arrow-left-s-line"></i>
-            </button>
-            <button 
-              className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 2 || chartIndex == chartData.length - 1 ? "cursor-not-allowed" : "hover:text-gray-400")}
-              onClick={() => handleChartChange(true)}
-              disabled={(chartData[chartIndex].length <= 1 || chartIndex == chartData.length - 1)}
-            >
-              <i className="ri ri-arrow-right-s-line"></i>
-            </button>
+    <div className="flex flex-col items-center gap-5 justify-start h-[95%]">
+      <div className="flex flex-row gap-8 w-full h-[40%]">
+        <div className="h-full flex flex-col justify-evenly gap-2 w-1/2">
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Application Overview</h2>
+          <div className="h-full flex flex-row items-center justify-evenly gap-8 w-full">
+            <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-1/2 rounded-md"></div>
+            <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-1/2 rounded-md"></div>
           </div>
         </div>
-        <div className="rounded-xl w-full h-full bg-white dark:bg-neutral-800 pt-5 pb-3 px-2" style={{height: "325px"}}>
-          {(chartIndex < 2 || chartIndex > 2 ) && <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} fill={chartIndex === 1 ? "#82ca9d" : "#F28C28"} chart_type={chartIndex === 0 ? 'task-assigned' : chartIndex === 1 ? 'completed-percentage' : 'points-completed'} />}
-          {(chartIndex === 2) && <PLLineChart data={chartData[chartIndex]}/>}
-          
+        <div className="h-full flex flex-col justify-evenly gap-2 w-1/2">
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">ProductLamb Roadmap</h2>
+          {/* TODO: Eventually this will be a feature for customers to display roadmap for an application. Items will be clickable with a popup modal with a more descriptive understanding of what is coming */}
+          <div className="flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-full rounded-md p-3 justify-evenly gap-2">
+            {productLambRoadMap.map((r, i) => {
+              const handleClick = () => {
+                setSelectedRoadMapItem(r)
+                setRoadMapModalOpen(true)
+              }
+              return (
+                <div key={i} className="hover:-translate-y-1 hover:shadow-orange-300 dark:hover:shadow-orange-400 cursor-pointer w-full h-1/3 flex flex-col px-4 rounded-md gap-1 justify-center shadow-lg dark:shadow-black" onClick={handleClick}>
+                  <p className="text-black dark:text-gray-100 font-semibold">{r.initiative}</p>
+                  <p className="text-black dark:text-gray-300 italic">{new Date(r.start_date).toLocaleDateString()} - {new Date(r.end_date).toLocaleDateString()}</p>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
-      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10 h-[330px] lg:h-[360px]">
+      <div className="flex md:flex-row flex-col justify-evenly w-full sm:gap-10 min-h-[330px] flex-1">
         <div className="w-full md:w-1/2 h-full flex flex-col gap-2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Current Sprint - <span className="italic text-black dark:text-neutral-500">{currentSprint ? '#' + currentSprint.id : 'No active sprint'}</span></h2>
           <div className="rounded-xl w-full md:h-1/2 flex flex-row items-center justify-evenly gap-4">
@@ -202,6 +190,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      {selectedRoadMapItem !== null && <PLRoadmapItemModal open={roadMapModalOpen} setOpen={setRoadMapModalOpen} roadmapItem={selectedRoadMapItem}/>}
     </div>
   )
 }

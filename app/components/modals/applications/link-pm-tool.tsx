@@ -5,7 +5,7 @@ import { ClickUpData, JiraData, NotionData, PROJECT_MANAGEMENT_TOOL } from "~/ty
 
 export function PLProjectManagementToolLink({onToolConfirmation, disabled, toolConfigured, application_id=-1}: {onToolConfirmation: (data: any) => void, disabled?: boolean, application_id?: number, toolConfigured?: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null, isApplicationSettingsPage?: boolean}) {
   const options = Object.values(PROJECT_MANAGEMENT_TOOL)
-  const [selectedToolIndex, setSelectedToolIndex] = useState<number>(0)
+  const [selectedToolIndex, setSelectedToolIndex] = useState<number>(toolConfigured ? options.map(o => o.toLowerCase()).indexOf(toolConfigured.type) : 0)
   const [data, setData] = useState<NotionData|ClickUpData |JiraData>()
   const [toolConfirmed, setToolConfirmed] = useState<boolean>(toolConfigured ? true : false)
   const [initalLoad, setInitialLoad] = useState<boolean>(true)

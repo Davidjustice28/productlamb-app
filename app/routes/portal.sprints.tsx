@@ -15,6 +15,9 @@ import { calculateTimeLeft } from "~/utils/date"
 import { PLConfirmModal } from "~/components/modals/confirm"
 import { PMToolIconComponent } from "~/components/common/pm-tool"
 import { DB_CLIENT } from "~/services/prismaClient"
+import { PLAreaChart } from "~/components/charts/area-chart"
+import { PLLineChart } from "~/components/charts/line-chart"
+import { createSprintPointsChartData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
@@ -48,11 +51,39 @@ export const loader: LoaderFunction = async ({request}) => {
       sprintInitiativesMap[sprint.id] = sprint.selectedInitiative ? initiatives.find(initiative => initiative.id === sprint.selectedInitiative)?.description || "" : ""
     })
   }
+  const currentOrCompletedSprints = (await DB_CLIENT.applicationSprint.findMany({
+    where: {
+      applicationId: accountCookie.selectedApplicationId,
+      status: { in: ['In Progress', 'Completed'] }
+    },
+    orderBy: {
+      startDate: 'desc'
+    },
+    take: 8
+  })).sort((a,b) => (new Date(a.startDate!).getTime()) - (new Date(b.startDate!).getTime()))
+
+  const tasks = await DB_CLIENT.generatedTask.findMany({ where: { sprintId: { in: currentOrCompletedSprints.map(s => s.id) } }})
+  const completedStatuses = ['done', 'complete', 'completed', 'finished']
+  const taskTotalsChartData = createSprintTaskTotalsChartData(
+    currentOrCompletedSprints.filter(s => s.status !== 'In Progress').map(s => ({name: s.id.toString(), taskCount: tasks.filter(t => t.sprintId === s.id).length}))
+  )
+  const sprintPointsChartData = createSprintPointsChartData(
+    currentOrCompletedSprints.filter(s => s.status !== 'In Progress').map(s => ({name: s.id.toString(), points: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).reduce((acc, t) => acc + (t.points || 0), 0)}))
+  )
+
+  const taskPercentagesChartData = createSprintTaskCompletionPercentageChartData(
+    currentOrCompletedSprints.filter(s => s.status !== 'In Progress').map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).length, total: tasks.filter(t => t.sprintId === s.id).length}))
+  )
+  const taskTypesData = createTaskTypeChartData(currentOrCompletedSprints.filter(s => s.status !== 'In Progress'), tasks)
   return json({
     sprints,
     taskMap,
     sprintInitiativesMap,
-    timezone: accountData!.timezone
+    timezone: accountData!.timezone,
+    taskTotalsChartData,
+    taskPercentagesChartData,
+    sprintPointsChartData,
+    taskTypesData
   })
 }
 
@@ -119,12 +150,34 @@ export const meta: MetaFunction = () => {
 };
 
 export default function SprintPage() {
-  const {sprints: loadedSprints, taskMap, sprintInitiativesMap, timezone } = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskMap: Record<number, GeneratedTask[]>, sprintInitiativesMap: Record<number, string>, timezone: string}
+  const {sprints: loadedSprints, taskMap, sprintInitiativesMap, timezone, taskTotalsChartData, taskPercentagesChartData, sprintPointsChartData, taskTypesData} = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskMap: Record<number, GeneratedTask[]>, sprintInitiativesMap: Record<number, string>, timezone: string, taskTotalsChartData: any, sprintPointsChartData: any[], taskPercentagesChartData: any, taskTypesData: any[]}
   const [sprints, setSprints] = useState<Array<ApplicationSprint>>(loadedSprints || [])
   const {pathname} = useLocation()
   const parsedPath = pathname.split('/sprints/')
   const generationPage = parsedPath.length > 1 && parsedPath[1] === 'generation'
   const formRef = React.createRef<HTMLFormElement>()
+  const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || []), (taskTypesData || []), (sprintPointsChartData || [])])
+  const [chartIndex, setChartIndex] = useState<number>(0)
+  const yKey = chartIndex == 0 ? "taskCount" : "completed"
+
+  const handleChartChange = (goingForward: boolean) => {
+    
+    if(chartData === null) return 
+    if (goingForward) {
+      if (chartIndex == chartData.length - 1) {
+        setChartIndex(0)
+      } else {
+        setChartIndex(chartIndex + 1)
+      }
+    } else {
+      if (chartIndex <= 0) {
+        setChartIndex(chartData.length - 1)
+      } else {
+        setChartIndex(chartIndex - 1)
+      }
+    }
+  }
+
   function generateFirstSprint() {
     formRef.current?.submit()
   }
@@ -164,6 +217,32 @@ export default function SprintPage() {
     <div className="w-full flex flex-col">
       <div className="flex items-center justify-between w-full">
         <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
+      </div>
+      <div className="w-full flex flex-col">
+        <div className="flex flex-row justify-between w-full items-center">
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Completion Percentage' : (chartIndex === 0) ? 'Tasks Assigned' : chartIndex === 2 ? 'Task Types' : 'Points Completed'}</span></h2>
+          <div className="inline-flex">
+            <button 
+              className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 2 || chartIndex == 0 ? "cursor-not-allowed" : "hover:text-gray-400")} 
+              onClick={() => handleChartChange(false)}
+              disabled={(chartData[chartIndex] <= 1 || chartIndex == 0)}
+            >
+              <i className="ri ri-arrow-left-s-line"></i>
+            </button>
+            <button 
+              className={"text-gray-700 dark:text-gray-500 font-bold py-2 px-2 " + (chartData.length <= 2 || chartIndex == chartData.length - 1 ? "cursor-not-allowed" : "hover:text-gray-400")}
+              onClick={() => handleChartChange(true)}
+              disabled={(chartData[chartIndex].length <= 1 || chartIndex == chartData.length - 1)}
+            >
+              <i className="ri ri-arrow-right-s-line"></i>
+            </button>
+          </div>
+        </div>
+        <div className="rounded-xl w-full h-full bg-white dark:bg-neutral-800 pt-5 pb-3 px-2" style={{height: "325px"}}>
+          {(chartIndex < 2 || chartIndex > 2 ) && <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} fill={chartIndex === 1 ? "#82ca9d" : "#F28C28"} chart_type={chartIndex === 0 ? 'task-assigned' : chartIndex === 1 ? 'completed-percentage' : 'points-completed'} />}
+          {(chartIndex === 2) && <PLLineChart data={chartData[chartIndex]}/>}
+          
+        </div>
       </div>
       <div className="mt-5 flex flex-col gap-3">
         {sprints.sort((a,b) => (new Date(a.startDate!).getTime()) - (new Date(b.startDate!).getTime())).reverse().map((sprint, index) => {
