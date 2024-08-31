@@ -37,7 +37,6 @@ export const loader: LoaderFunction = args => {
       return redirect("/")
     }
     if (!accountId || !setupIsComplete) {
-      const accountClient = AccountsClient(DB_CLIENT.account)
       const user = await DB_CLIENT.accountUser.findFirst({ where: { userId: userId }})
       if (!user) return redirect("/portal/setup")
       const accountData = user.accountId ? await DB_CLIENT.account.findUnique({ where: { id: user.accountId }}) : null
@@ -52,14 +51,15 @@ export const loader: LoaderFunction = args => {
       accountCookie.setupIsComplete = true
       setupIsComplete = accountCookie.setupIsComplete
       if (selectedApplicationId === undefined && applications && applications.length > 0) {
-        const id = accountData?.default_application_id !== null ? accountData?.default_application_id : applications[0].id
+        const id = accountData?.default_application_id !== null && applications.find(a => a.id === accountData?.default_application_id) ? accountData?.default_application_id : applications[0].id
         const selectedApp = applications.find(a => a.id === id)!
-        accountCookie.selectedApplicationId = selectedApp.id
-        accountCookie.selectedApplicationName = selectedApp.name
-        selectedApplicationId = accountCookie.selectedApplicationId
-        selectedApplicationName = accountCookie.selectedApplicationName
+        if (selectedApp) {
+          accountCookie.selectedApplicationId = selectedApp.id
+          accountCookie.selectedApplicationName = selectedApp.name
+          selectedApplicationId = accountCookie.selectedApplicationId
+          selectedApplicationName = accountCookie.selectedApplicationName
+        }
       }
-     
       return redirect("/portal/dashboard", { headers: { "Set-Cookie": await account.serialize(accountCookie) } })
     } else {
       setupIsComplete = true
@@ -71,7 +71,7 @@ export const loader: LoaderFunction = args => {
         const applicationClient = ApplicationsClient(DB_CLIENT.accountApplication)
         const {data: applications} = await applicationClient.getAccountApplications(accountCookie.accountId || 0)
         if (applications && applications.length > 0) {
-          const selectedApp = applications.find(a => a.id === (account?.default_application_id !== null ? account?.default_application_id : applications[0].id))!
+          const selectedApp = applications.find(a => a.id === (account?.default_application_id !== null && applications.find(a => a.id === account?.default_application_id) ? account?.default_application_id : applications[0].id))!
           accountCookie.selectedApplicationId = selectedApp.id
           selectedApplicationId = accountCookie.selectedApplicationId
           accountCookie.selectedApplicationName = selectedApp.name

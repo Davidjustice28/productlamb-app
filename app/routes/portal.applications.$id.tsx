@@ -6,13 +6,14 @@ import { ApplicationsClient } from "~/backend/database/applications/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLPhotoUploader } from "~/components/forms/photo-uploader"
-import { NewApplicationData, SprintInterval } from "~/types/database.types"
+import { ClickUpData, JiraData, NewApplicationData, NotionData, SprintInterval } from "~/types/database.types"
 import { uploadToPhotoToCloudStorage } from "~/services/gcp/upload-file"
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
 import { PLApplicationContextModel } from "~/components/modals/applications/upload-context"
 import { ToggleSwitch } from "~/components/forms/toggle-switch"
 import { DB_CLIENT } from "~/services/prismaClient"
+import { PLProjectManagementToolLink } from "~/components/modals/applications/link-pm-tool"
 
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -136,6 +137,7 @@ export default function IndividualApplicationsPage() {
   const [appContextModalOpen, setAppContextModalOpen] = useState(false)
   const [sprintInterval, setSprintInterval] = useState(updatedApplication ?updatedApplication.sprint_interval : currentApplicationData.sprint_interval)
   const [changesDetected, setChangesDetected] = useState(false)
+  const [configuringATool, setConfiguringATool] = useState(false)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
   const deleteFormRef = useRef<HTMLFormElement>(null)
@@ -158,29 +160,29 @@ export default function IndividualApplicationsPage() {
   }
 
   function checkForChanges() {
-    if (name !== currentApplicationData.name) {
+    if (name !== application.name) {
       setChangesDetected(true)
       return
     }
 
-    if (sprintInterval !== currentApplicationData.sprint_interval) {
+    if (sprintInterval !== application.sprint_interval) {
       setChangesDetected(true)
       return
     }
     
-    if (summary !== currentApplicationData.summary) {
+    if (summary !== application.summary) {
       setChangesDetected(true)
       return
     }
-    if (siteUrl !== currentApplicationData.siteUrl) {
+    if (siteUrl !== application.siteUrl) {
       setChangesDetected(true)
       return
     }
-    if (type !== currentApplicationData.type) {
+    if (type !== application.type) {
       setChangesDetected(true)
       return
     }
-    if (generationEnabled !== currentApplicationData.sprint_generation_enabled) {
+    if (generationEnabled !== application.sprint_generation_enabled) {
       setChangesDetected(true)
       return
     }
@@ -208,6 +210,24 @@ export default function IndividualApplicationsPage() {
   function handleGenerationToggle(e: React.ChangeEvent<HTMLInputElement>) {
     const isEnabled = e.target.checked
     setGenerationEnabled(isEnabled)
+    setConfiguringATool(isEnabled)
+  }
+
+  const onToolConfirmation = async (data: ClickUpData | NotionData | JiraData) => {
+    console.log(data)
+    const updatedAppData = await fetch('/api/pm-tool', {
+      method: 'POST',
+      body: JSON.stringify({
+        tool_data: data,
+        application_id: application.id,
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(res => res.json()).catch(e => null)
+    if (updatedAppData) {
+      setApplication(updatedAppData)
+    }
   }
 
   useEffect(() => {
@@ -297,6 +317,8 @@ export default function IndividualApplicationsPage() {
             <ToggleSwitch darkMode={generationEnabled} onChangeHandler={handleGenerationToggle}/>
             <input type="hidden" name="sprint_generation_enabled" value={generationEnabled} />
           </div>
+          <PLProjectManagementToolLink onToolConfirmation={onToolConfirmation} disabled={!configuringATool}/>
+
           <div className="mt-4 flex flex-col gap-5 text-black dark:text-neutral-400 " >
             <input type="hidden" name="goals" value={JSON.stringify(goals)} />
             <div className="flex flex-col gap-2">
@@ -352,7 +374,7 @@ export default function IndividualApplicationsPage() {
 
         </form>
       </div>
-      <PLApplicationContextModel open={appContextModalOpen} setOpen={setAppContextModalOpen} applicationId={currentApplicationData.id}/>
+      <PLApplicationContextModel open={appContextModalOpen} setOpen={setAppContextModalOpen} applicationId={application.id}/>
     </div>
   )
 }

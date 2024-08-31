@@ -3,17 +3,27 @@ import { PLBasicButton } from "~/components/buttons/basic-button"
 import { ClickUpData, JiraData, NotionData, PROJECT_MANAGEMENT_TOOL } from "~/types/database.types"
 
 
-export function PLProjectManagementToolLink({onToolConfirmation, disabled}: {onToolConfirmation: (data: any) => void, disabled?: boolean}) {
+export function PLProjectManagementToolLink({onToolConfirmation, disabled, jiraConfig, notionConfig, clickupConfig, application_id=-1}: {onToolConfirmation: (data: any) => void, disabled?: boolean, application_id?: number, jiraConfig?: {apiToken: string, parentBoardId: string, email: string, hostUrl: string, projectKey: string}, notionConfig?: {apiKey: string, parentPageId: string}, clickupConfig?: {apiToken: string, parentFolderId: string}}) {
   const options = Object.values(PROJECT_MANAGEMENT_TOOL)
   const [selectedToolIndex, setSelectedToolIndex] = useState<number>(0)
   const [data, setData] = useState<NotionData|ClickUpData |JiraData>()
-  const [toolConfirmed, setToolConfirmed] = useState<boolean>(false)
+  const [toolConfirmed, setToolConfirmed] = useState<boolean>((clickupConfig || jiraConfig || notionConfig) ? true : false)
 
   const onTabChange = (index: number) => {
     if (!toolConfirmed) {
       setSelectedToolIndex(index)
     }
   }
+
+  const removeConfig = application_id > -1 ? async () => {
+    await fetch('/api/pm-tool', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({application_id: application_id, remove_config: true})
+    }).then(res => res.json()).catch(err => null)
+  } : undefined
 
   useEffect(() => {
     if (toolConfirmed) {
@@ -29,28 +39,28 @@ export function PLProjectManagementToolLink({onToolConfirmation, disabled}: {onT
       <div className="flex gap-2">
         {options.map((tool, index) => {
           return (
-            <button key={tool} onClick={() => onTabChange(index)} className={`flex border-2 items-center justify-center rounded-lg px-4 py-2 ${selectedToolIndex === index ? "bg-black border-black text-white" : "bg-white text-black"}`}>
+            <button key={tool} type="button" onClick={() => onTabChange(index)} className={`flex border-2 items-center justify-center rounded-lg px-4 py-2 ${selectedToolIndex === index ? "bg-black border-black text-white" : "bg-white text-black"}`}>
               {tool}
             </button>
           )
         })}
       </div>
       <div>
-        {selectedToolIndex === 0 && <ClickUpToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
-        {selectedToolIndex === 1 && <JiraToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
-        {selectedToolIndex === 2 && <NotionToolForm setData={setData} setToolConfirmed={setToolConfirmed}/>}
+        {selectedToolIndex === 0 && <ClickUpToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig}/>}
+        {selectedToolIndex === 1 && <JiraToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig}/>}
+        {selectedToolIndex === 2 && <NotionToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig}/>}
         <p className="text-black dark:text-white mt-5 italic">Need help finding your credentials? Here's a simple steps-by-step <a href="https://docs.google.com/document/d/1lfK0njWuhI0eGz1hEaE82UTUwZSW_N97Zu65DwYAci8/edit?usp=sharing" target="_blank" className="text-blue-600 dark:text-blue-500 font-bold underline"> guide</a></p>
       </div>
     </div>
   )
 }
 
-const NotionToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfirmed: any}) => {
+const NotionToolForm = ({setData, setToolConfirmed, notionConfig, removeConfig}: {setData: any, setToolConfirmed: any, notionConfig?: {apiKey: string, parentPageId: string}, removeConfig?: (() => Promise<void>)}) => {
 
   const tokenInputRef = useRef<HTMLInputElement>(null)
   const parentIdInputRef = useRef<HTMLInputElement>(null)
   const [formValid, setFormValid] = useState<boolean>(false)
-  const [confirmed, setConfirmed] = useState<boolean>(false)
+  const [confirmed, setConfirmed] = useState<boolean>(notionConfig ? true : false)
 
   const checkValidity = () => {
     const notValid = !tokenInputRef.current?.value || !parentIdInputRef.current?.value
@@ -62,6 +72,23 @@ const NotionToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfi
     setConfirmed(true)
     setToolConfirmed(true)
   }
+
+  const deleteConfig = async () => {
+    if (removeConfig) {
+      await removeConfig()
+      tokenInputRef.current!.value = ''
+      parentIdInputRef.current!.value = ''
+    }
+    setToolConfirmed(false)
+  }
+
+  useEffect(() => {
+    if (notionConfig) {
+      tokenInputRef.current!.value = notionConfig.apiKey
+      parentIdInputRef.current!.value = notionConfig.parentPageId
+      setFormValid(true)
+    }
+  }, [])
 
   return (
     <>
@@ -77,18 +104,18 @@ const NotionToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfi
         <small>This page is where we create ProductLamb's page</small>
       </div>
     </div>
-    <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/>
+    {!notionConfig ? <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/> :
+      <div><PLBasicButton text="Remove Config" icon="ri-close-line" iconSide="left" noDefaultDarkModeStyles colorClasses="bg-red-500 text-black" onClick={deleteConfig}/></div>
+    }
     </>
   )
 }
 
-const ClickUpToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfirmed: any}) => {
-
+const ClickUpToolForm = ({setData, setToolConfirmed, clickupConfig, removeConfig}: {setData: any, setToolConfirmed: any, clickupConfig?: {apiToken: string, parentFolderId: string}, removeConfig?: (() => Promise<void>)}) => {
   const tokenInputRef = useRef<HTMLInputElement>(null)
   const parentIdInputRef = useRef<HTMLInputElement>(null)
   const [formValid, setFormValid] = useState<boolean>(false)
-  const [confirmed, setConfirmed] = useState<boolean>(false)
-
+  const [confirmed, setConfirmed] = useState<boolean>(clickupConfig ? true : false)
 
   const checkValidity = () => {
     const notValid = !tokenInputRef.current?.value || !parentIdInputRef.current?.value
@@ -100,6 +127,23 @@ const ClickUpToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConf
     setConfirmed(true)
     setToolConfirmed(true)
   }
+
+  const deleteConfig = async () => {
+    if (removeConfig) {
+      await removeConfig()
+      tokenInputRef.current!.value = ''
+      parentIdInputRef.current!.value = ''
+    }
+    setToolConfirmed(false)
+  }
+
+  useEffect(() => {
+    if (clickupConfig) {
+      tokenInputRef.current!.value = clickupConfig.apiToken
+      parentIdInputRef.current!.value = clickupConfig.parentFolderId
+      setFormValid(true)
+    }
+  } , [])
 
   return (
     <>
@@ -115,20 +159,21 @@ const ClickUpToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConf
           <small>This folder is where we create ProductLamb's folder</small>
         </div>
       </div>
-      <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/>
+      {!clickupConfig ? <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/> :
+       <div><PLBasicButton text="Remove Config" icon="ri-close-line" iconSide="left" noDefaultDarkModeStyles colorClasses="bg-red-500 text-black" onClick={deleteConfig}/></div>
+      }
     </>
   )
 }
 
-const JiraToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfirmed: any}) => {
-
+const JiraToolForm = ({setData, setToolConfirmed, jiraConfig, removeConfig}: {setData: any, setToolConfirmed: any, jiraConfig?: {apiToken: string, parentBoardId: string, email: string, hostUrl: string, projectKey: string}, removeConfig?: (() => Promise<void>)}) => {
   const tokenInputRef = useRef<HTMLInputElement>(null)
   const parentIdInputRef = useRef<HTMLInputElement>(null)
   const emailInputRef = useRef<HTMLInputElement>(null)
   const hostUrlInputRef = useRef<HTMLInputElement>(null)
   const projectKeyInputRef = useRef<HTMLInputElement>(null)
   const [formValid, setFormValid] = useState<boolean>(false)
-  const [confirmed, setConfirmed] = useState<boolean>(false)
+  const [confirmed, setConfirmed] = useState<boolean>(jiraConfig ? true : false)
 
   const checkValidity = () => {
     const notValid = !tokenInputRef.current?.value || !parentIdInputRef.current?.value || !emailInputRef.current?.value || !hostUrlInputRef.current?.value || !projectKeyInputRef.current?.value
@@ -140,6 +185,29 @@ const JiraToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfirm
     setConfirmed(true)
     setToolConfirmed(true)
   }
+
+  const deleteConfig = async () => {
+    if (removeConfig) {
+      await removeConfig()
+      tokenInputRef.current!.value = ''
+      parentIdInputRef.current!.value = ''
+      emailInputRef.current!.value = ''
+      hostUrlInputRef.current!.value = ''
+      projectKeyInputRef.current!.value = ''
+    }
+    setToolConfirmed(false)
+  }
+
+  useEffect(() => {
+    if (jiraConfig) {
+      tokenInputRef.current!.value = jiraConfig.apiToken
+      parentIdInputRef.current!.value = jiraConfig.parentBoardId
+      emailInputRef.current!.value = jiraConfig.email
+      hostUrlInputRef.current!.value = jiraConfig.hostUrl
+      projectKeyInputRef.current!.value = jiraConfig.projectKey
+      setFormValid(true)
+    }
+  }, [])
 
   return (
     <>
@@ -170,7 +238,9 @@ const JiraToolForm = ({setData, setToolConfirmed}: {setData: any, setToolConfirm
         <small>The key of the project you want to link</small>
       </div>
     </div>
-    <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/>
+    {!jiraConfig ? <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/> :
+      <div><PLBasicButton text="Remove Config" icon="ri-close-line" iconSide="left" noDefaultDarkModeStyles colorClasses="bg-red-500 text-black" onClick={deleteConfig}/></div>
+    }
     </>
   )
 }

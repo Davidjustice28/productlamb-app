@@ -79,7 +79,7 @@ export const loader: LoaderFunction = (args) => {
           const appClient = ApplicationsClient(DB_CLIENT.accountApplication);
           const { data: apps } = await appClient.getAccountApplications(accountCookie.accountId);
           if (apps && apps.length) {
-            if (accountData?.default_application_id !== null) {
+            if (accountData?.default_application_id !== null && apps.find(app => app.id === accountData?.default_application_id)) {
               accountCookie.selectedApplicationId = accountData.default_application_id;
               accountCookie.selectedApplicationName = apps.find(app => app.id === accountData.default_application_id)?.name ?? '';
             } else {

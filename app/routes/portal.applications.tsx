@@ -42,7 +42,13 @@ export let action: ActionFunction = async ({ request }) => {
   const appDbClient = ApplicationsClient(DB_CLIENT.accountApplication)
   const goalDbClient = ApplicationGoalsClient(DB_CLIENT.applicationGoal)
   if ('applicationId' in data) {
-    await appDbClient.deleteApplication(parseInt(data.applicationId))
+    const id = parseInt(data.applicationId)
+    const account = await DB_CLIENT.account.findFirst({where: {id: accountId}})
+    if (!account || account?.default_application_id === id) {
+      const applications = await DB_CLIENT.accountApplication.findFirst({where: {accountId: accountId, id: {not: id}}})
+      await DB_CLIENT.account.update({where: {id: accountId}, data: {default_application_id: applications?.id}})
+    }
+    await appDbClient.deleteApplication(id)
     return json({})
   } else if ('selectedAppId' in data) {
     const cookies = request.headers.get('Cookie')
