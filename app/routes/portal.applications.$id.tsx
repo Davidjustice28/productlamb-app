@@ -142,7 +142,9 @@ export const action: ActionFunction = async ({ request, params }) => {
       const goalDbClient = ApplicationGoalsClient(DB_CLIENT.applicationGoal)
       const updateData = data  as unknown as NewApplicationData
       if ("sprint_generation_enabled" in updateData) {
-        const isEnabled = (updateData.sprint_generation_enabled as any) === 'true'
+        const application = await DB_CLIENT.accountApplication.findFirst({where: {id: parseInt(id!)}})
+        const hasToolConfigured = !!application?.clickup_integration_id || !!application?.jira_integration_id || !!application?.notion_integration_id
+        const isEnabled = (updateData.sprint_generation_enabled as any) === 'true' && hasToolConfigured
         updateData.sprint_generation_enabled = isEnabled
       }
     
