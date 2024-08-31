@@ -3,11 +3,11 @@ import { PLBasicButton } from "~/components/buttons/basic-button"
 import { ClickUpData, JiraData, NotionData, PROJECT_MANAGEMENT_TOOL } from "~/types/database.types"
 
 
-export function PLProjectManagementToolLink({onToolConfirmation, disabled, jiraConfig, notionConfig, clickupConfig, application_id=-1}: {onToolConfirmation: (data: any) => void, disabled?: boolean, application_id?: number, jiraConfig?: {apiToken: string, parentBoardId: string, email: string, hostUrl: string, projectKey: string}, notionConfig?: {apiKey: string, parentPageId: string}, clickupConfig?: {apiToken: string, parentFolderId: string}}) {
+export function PLProjectManagementToolLink({onToolConfirmation, disabled, toolConfigured, application_id=-1}: {onToolConfirmation: (data: any) => void, disabled?: boolean, application_id?: number, toolConfigured?: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null}) {
   const options = Object.values(PROJECT_MANAGEMENT_TOOL)
   const [selectedToolIndex, setSelectedToolIndex] = useState<number>(0)
   const [data, setData] = useState<NotionData|ClickUpData |JiraData>()
-  const [toolConfirmed, setToolConfirmed] = useState<boolean>((clickupConfig || jiraConfig || notionConfig) ? true : false)
+  const [toolConfirmed, setToolConfirmed] = useState<boolean>(toolConfigured ? true : false)
 
   const onTabChange = (index: number) => {
     if (!toolConfirmed) {
@@ -46,9 +46,9 @@ export function PLProjectManagementToolLink({onToolConfirmation, disabled, jiraC
         })}
       </div>
       <div>
-        {selectedToolIndex === 0 && <ClickUpToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig}/>}
-        {selectedToolIndex === 1 && <JiraToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig}/>}
-        {selectedToolIndex === 2 && <NotionToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig}/>}
+        {selectedToolIndex === 0 && <ClickUpToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig} clickupConfig={toolConfigured && toolConfigured.type === 'clickup' ? toolConfigured.data as any: undefined}/>}
+        {selectedToolIndex === 1 && <JiraToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig} jiraConfig={toolConfigured && toolConfigured.type === 'jira' ? toolConfigured.data as any: undefined}/>}
+        {selectedToolIndex === 2 && <NotionToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig} notionConfig={toolConfigured && toolConfigured.type === 'notion' ? toolConfigured.data as any: undefined}/>}
         <p className="text-black dark:text-white mt-5 italic">Need help finding your credentials? Here's a simple steps-by-step <a href="https://docs.google.com/document/d/1lfK0njWuhI0eGz1hEaE82UTUwZSW_N97Zu65DwYAci8/edit?usp=sharing" target="_blank" className="text-blue-600 dark:text-blue-500 font-bold underline"> guide</a></p>
       </div>
     </div>

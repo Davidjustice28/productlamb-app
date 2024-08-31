@@ -38,7 +38,47 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     return redirect('/portal/applications')
   }
 
-  return json({application, goals, hasInitialContext} as const)
+  let data: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null = null
+  if (application?.clickup_integration_id) {
+    const result = await DB_CLIENT.applicationClickupIntegration.findFirst({where: {id: application.clickup_integration_id}})
+    if (result) {
+      data = {
+        type: 'clickup', 
+        data: {
+          apiToken: result.api_token,
+          parentFolderId: Number(result.parent_folder_id)
+        }
+      }
+    }
+  }
+  if (application?.jira_integration_id) {
+    const result = await DB_CLIENT.applicationJiraIntegration.findFirst({where: {id: application.jira_integration_id}})
+    if (result) {
+      data = {
+        type: 'jira',
+        data: {
+          apiToken: result.api_token,
+          parentBoardId: Number(result.parent_board_id),
+          email: result.email,
+          hostUrl: result.host_url,
+          projectKey: result.project_key
+        }
+      }
+    }
+  }
+  if (application?.notion_integration_id) {
+    const result = await DB_CLIENT.applicationNotionIntegration.findFirst({where: {id: application.notion_integration_id}})
+    if (result) {
+      data = {
+        type: 'notion',
+        data: {
+          apiKey: result.api_token,
+          parentPageId: result.parent_page_id
+        }
+      }
+    }
+  }
+  return json({application, goals, hasInitialContext, toolConfigured: data} as const)
 }
 
 interface NewGoalData {
@@ -124,7 +164,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function IndividualApplicationsPage() {
-  const {goals: currentGoals, application: currentApplicationData, hasInitialContext} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, hasInitialContext: boolean}>()
+  const {goals: currentGoals, application: currentApplicationData, hasInitialContext, toolConfigured} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, hasInitialContext: boolean, toolConfigured: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null}>()
   const { updatedApplication, updatedGoals } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null}
   const [application, setApplication] = useState<AccountApplication>(updatedApplication ?? currentApplicationData)
   const [goals, setGoals] = useState<NewGoalData[]>(updatedGoals ?? currentGoals)
@@ -137,7 +177,7 @@ export default function IndividualApplicationsPage() {
   const [appContextModalOpen, setAppContextModalOpen] = useState(false)
   const [sprintInterval, setSprintInterval] = useState(updatedApplication ?updatedApplication.sprint_interval : currentApplicationData.sprint_interval)
   const [changesDetected, setChangesDetected] = useState(false)
-  const [configuringATool, setConfiguringATool] = useState(false)
+  const [configuringATool, setConfiguringATool] = useState(application.sprint_generation_enabled)
   const shortTermGoalInputRef = useRef<HTMLInputElement>(null)
   const longTermGoalInputRef = useRef<HTMLInputElement>(null)
   const deleteFormRef = useRef<HTMLFormElement>(null)
@@ -317,7 +357,7 @@ export default function IndividualApplicationsPage() {
             <ToggleSwitch darkMode={generationEnabled} onChangeHandler={handleGenerationToggle}/>
             <input type="hidden" name="sprint_generation_enabled" value={generationEnabled} />
           </div>
-          <PLProjectManagementToolLink onToolConfirmation={onToolConfirmation} disabled={!configuringATool}/>
+          <PLProjectManagementToolLink onToolConfirmation={onToolConfirmation} disabled={!configuringATool} toolConfigured={toolConfigured} application_id={toolConfigured ? application.id : -1}/>
 
           <div className="mt-4 flex flex-col gap-5 text-black dark:text-neutral-400 " >
             <input type="hidden" name="goals" value={JSON.stringify(goals)} />
