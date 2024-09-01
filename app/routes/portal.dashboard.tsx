@@ -258,9 +258,9 @@ function PLMeterChart({score}: {score: number}) {
     let color: 'neutral' | 'green' | 'yellow' | 'orange' | 'red' | 'blue' = 'neutral';
   
     if (score >= 100) {
-      color = 'blue'; // New color for the highest range
+      color = 'green'; // New color for the highest range
     } else if (score >= 80) {
-      color = 'green';
+      color = 'blue';
     } else if (score >= 60) {
       color = 'yellow';
     } else if (score >= 40) {
