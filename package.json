@@ -45,7 +45,8 @@
     "remix-auth-socials": "^2.0.5",
     "remix-utils": "^7.1.0",
     "resend": "^3.4.0",
-    "stripe": "^11.18.0"
+    "stripe": "^11.18.0",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.2.0",
@@ -58,6 +59,7 @@
     "@types/papaparse": "^5.3.14",
     "@types/react": "^18.2.34",
     "@types/react-dom": "^18.2.14",
+    "@types/uuid": "^10.0.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.53.0",
     "eslint-config-prettier": "^8.10.0",

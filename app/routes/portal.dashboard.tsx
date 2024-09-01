@@ -1,5 +1,5 @@
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import { ApplicationSprint, ApplicationSuggestion } from "@prisma/client";
+import { ApplicationSprint, ApplicationSuggestion, roadmap_item } from "@prisma/client";
 import { LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
@@ -7,7 +7,9 @@ import { PieChart, Pie, Cell } from "recharts";
 import { account } from "~/backend/cookies/account";
 import { ApplicationsClient } from "~/backend/database/applications/client";
 import { createCurrentSprintChartsData, createSprintPointsChartData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts";
+import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLBarChart } from "~/components/charts/bar-chart";
+import { PLManagedRoadmapModal } from "~/components/modals/roadmaps/add-roadmap-step";
 import { PLRoadmapItemModal } from "~/components/modals/roadmaps/roadmap-view";
 import { DB_CLIENT } from "~/services/prismaClient";
 import { RoadmapItem } from "~/types/database.types";
@@ -105,7 +107,6 @@ export const loader: LoaderFunction = args => {
       if (app?.sprint_generation_enabled) score += 1
       if (settings?.notify_on_task_added || settings?.notify_on_member_join || settings?.notify_on_planning_ready || settings?.notify_on_sprint_ready) score += 1
       if (integrationCount > 0) score += 1
-      const scorePercentage = (score / 5) * 100
       const tasks = await DB_CLIENT.generatedTask.findMany({ where: { sprintId: { in: sprints.map(s => s.id) } }})
       const completedStatuses = ['done', 'complete', 'completed', 'finished']
       const completedTasks = tasks.filter(t => completedStatuses.includes(t.status.toLowerCase())).length
@@ -113,21 +114,46 @@ export const loader: LoaderFunction = args => {
       const currentSprintTasksData = currentSprint ? createCurrentSprintChartsData(tasks.filter(t => t.sprintId === currentSprint.id)) : []
       const timeLeftInSprint = currentSprint && currentSprint?.endDate ? calculateTimeLeft(account!.timezone, undefined, currentSprint.endDate, 'Expired') : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, time_left: timeLeftInSprint}
-      return json({ selectedApplicationName, selectedApplicationId, currentSprintTasksData, currentSprintSummary, currentSprint, suggestions, completedTasks, appScore: scorePercentage })
+      const roadmap = await DB_CLIENT.applicationRoadmap.findFirst({ where: { account_application_id: selectedApplicationId }, include: { roadmap_item: true }})
+      const roadmap_id = roadmap?.id !== undefined && roadmap?.id !== null ? roadmap?.id : -1
+      if (roadmap_id !== -1) score += 1
+      const scorePercentage = (score / 6) * 100
+      return json({ selectedApplicationName, selectedApplicationId, currentSprintTasksData, currentSprintSummary, currentSprint, suggestions, completedTasks, appScore: scorePercentage, roadmap_id, roadmap_items: roadmap?.roadmap_item || [] })
     }
   });
 };
 
 
 export default function DashboardPage() {
-  const { currentSprintSummary, currentSprint: loadedCurrentSprint, suggestions, currentSprintTasksData, completedTasks, appScore} = useLoaderData<{ currentSprintTasksData: any[], selectedApplicationName: string| undefined, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, currentSprint: ApplicationSprint|null, suggestions: ApplicationSuggestion[], completedTasks: number, appScore: number }>()
+  const { currentSprintSummary, currentSprint: loadedCurrentSprint, suggestions, currentSprintTasksData, completedTasks, appScore, roadmap_id: loadedRoadmapId, roadmap_items: loadedRoadmapItems} = useLoaderData<{ currentSprintTasksData: any[], selectedApplicationName: string| undefined, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, currentSprint: ApplicationSprint|null, suggestions: ApplicationSuggestion[], completedTasks: number, appScore: number, roadmap_id: number, roadmap_items: roadmap_item[] }>();
+  const [roadmap_id, setRoadmapId] = useState<number>(loadedRoadmapId)
+  const [roadmap_items, setRoadmapItems] = useState<RoadmapItem[]>(loadedRoadmapItems)
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
   const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(loadedCurrentSprint)
-  const [roadMapModalOpen, setRoadMapModalOpen] = useState(false)
+  const [roadMapItemModalOpen, setRoadMapItemModalOpen] = useState(false)
+  const [roadmapManagerModalOpen, setRoadmapManagerModalOpen] = useState(false)
   const [selectedRoadMapItem, setSelectedRoadMapItem] = useState<RoadmapItem|null>(null)
   const timeLeftTitle = (currentSprintSummary && currentSprintSummary.time_left ? currentSprintSummary.time_left.type : 'time')
   // list of features and date ranges for feature/development to take place. dates are iso strings
-  
+  const openRoadmapModal = async () => {
+    if (roadmap_id !== -1) {
+      setRoadmapManagerModalOpen(true)
+    } else {
+      await fetch('/api/roadmaps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'create', item: null })
+      }).then(async res => {
+        const data = await res.json();
+        if ('roadmap_id' in data) {
+          setRoadmapId(data.roadmap_id)
+          setRoadmapManagerModalOpen(true)
+        }
+      }).catch(err => console.error(err));
+    }
+  }
   return (
     <div className="flex flex-col items-center gap-5 justify-start h-[95%]">
       <div className="flex flex-row gap-8 w-full h-[40%]">
@@ -147,13 +173,16 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="h-full flex flex-col justify-evenly gap-2 w-1/2">
-          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">ProductLamb Roadmap</h2>
+        <div className="flex flex-row justify-between items-center">
+          <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Product Roadmap</h2>
+          <PLIconButton icon="ri-map-2-line" onClick={openRoadmapModal} />
+        </div>
           {/* TODO: Eventually this will be a feature for customers to display roadmap for an application. Items will be clickable with a popup modal with a more descriptive understanding of what is coming */}
-          <div className="flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-full rounded-md p-3 justify-evenly gap-2">
-            {productLambRoadMap.map((r, i) => {
+          <div className={"flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-full rounded-md p-3 gap-2 " + (roadmap_items.length ? 'justify-start' : 'justify-center')}>
+            {roadmap_items.slice(0,3).map((r, i) => {
               const handleClick = () => {
                 setSelectedRoadMapItem(r)
-                setRoadMapModalOpen(true)
+                setRoadMapItemModalOpen(true)
               }
               return (
                 <div key={i} className="hover:-translate-y-1 cursor-pointer w-full h-1/3 flex flex-col px-4 rounded-md gap-1 justify-center shadow-lg dark:shadow-black" onClick={handleClick}>
@@ -162,6 +191,7 @@ export default function DashboardPage() {
                 </div>
               )
             })}
+            {roadmap_items.length === 0 && <p className='dark:text-neutral-400 text-neutral-600 w-full h-full flex items-center justify-center'>You haven't implemented a roadmap for this project.</p>}
           </div>
         </div>
       </div>
@@ -197,7 +227,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-      {selectedRoadMapItem !== null && <PLRoadmapItemModal open={roadMapModalOpen} setOpen={setRoadMapModalOpen} roadmapItem={selectedRoadMapItem}/>}
+      {selectedRoadMapItem !== null && <PLRoadmapItemModal open={roadMapItemModalOpen} setOpen={setRoadMapItemModalOpen} roadmapItem={selectedRoadMapItem}/>}
+      <PLManagedRoadmapModal open={roadmapManagerModalOpen} onClose={() => setRoadmapManagerModalOpen(false)} setOpen={setRoadmapManagerModalOpen} roadmapItems={roadmap_items} roadmap_id={roadmap_id} setRoadmapItems={setRoadmapItems}/>
     </div>
   )
 }
@@ -215,30 +246,38 @@ function PLSuggestion({suggestion}: {suggestion: ApplicationSuggestion}) {
 
 function PLMeterChart({score}: {score: number}) {
   const colorMap = {
-    neutral: ['bg-neutral-500 opacity-90', 'bg-neutral-400 opacity-90', 'bg-neutral-300 opacity-90', 'bg-neutral-300 opacity-70', 'bg-neutral-200 opacity-80'],
-    green: ['bg-green-500 opacity-90', 'bg-green-400 opacity-90', 'bg-green-300 opacity-90', 'bg-green-300 opacity-70', 'bg-green-200 opacity-80'],
-    yellow: ['bg-yellow-500 opacity-90', 'bg-yellow-400 opacity-90', 'bg-yellow-300 opacity-90', 'bg-yellow-300 opacity-70', 'bg-yellow-200 opacity-80'],
-    orange: ['bg-orange-500 opacity-90', 'bg-orange-400 opacity-90', 'bg-orange-300 opacity-90', 'bg-orange-300 opacity-70', 'bg-orange-200 opacity-80'],
-    red: ['bg-red-500 opacity-90', 'bg-red-400 opacity-90', 'bg-red-300 opacity-90', 'bg-red-300 opacity-70', 'bg-red-200 opacity-80']
-  }
-   const getColor = (score: number, index: number) => {
-    let color: 'neutral' | 'green' | 'yellow' | 'orange' | 'red' = 'neutral'
+    neutral: ['bg-neutral-500 opacity-90', 'bg-neutral-400 opacity-90', 'bg-neutral-300 opacity-90', 'bg-neutral-300 opacity-70', 'bg-neutral-200 opacity-80', 'bg-neutral-100 opacity-70'],
+    green: ['bg-green-500 opacity-90', 'bg-green-400 opacity-90', 'bg-green-300 opacity-90', 'bg-green-300 opacity-70', 'bg-green-200 opacity-80', 'bg-green-100 opacity-70'],
+    yellow: ['bg-yellow-500 opacity-90', 'bg-yellow-400 opacity-90', 'bg-yellow-300 opacity-90', 'bg-yellow-300 opacity-70', 'bg-yellow-200 opacity-80', 'bg-yellow-100 opacity-70'],
+    orange: ['bg-orange-500 opacity-90', 'bg-orange-400 opacity-90', 'bg-orange-300 opacity-90', 'bg-orange-300 opacity-70', 'bg-orange-200 opacity-80', 'bg-orange-100 opacity-70'],
+    red: ['bg-red-500 opacity-90', 'bg-red-400 opacity-90', 'bg-red-300 opacity-90', 'bg-red-300 opacity-70', 'bg-red-200 opacity-80', 'bg-red-100 opacity-70'],
+    blue: ['bg-blue-500 opacity-90', 'bg-blue-400 opacity-90', 'bg-blue-300 opacity-90', 'bg-blue-300 opacity-70', 'bg-blue-200 opacity-80', 'bg-blue-100 opacity-70']
+  };
+  
+  const getColor = (score: number, index: number) => {
+    let color: 'neutral' | 'green' | 'yellow' | 'orange' | 'red' | 'blue' = 'neutral';
+  
     if (score >= 100) {
-      color = 'green'
+      color = 'blue'; // New color for the highest range
     } else if (score >= 80) {
-      color = 'yellow'
+      color = 'green';
     } else if (score >= 60) {
-      color = 'orange'
-    } else if (score < 60) {
-      color = 'red'
+      color = 'yellow';
+    } else if (score >= 40) {
+      color = 'orange';
+    } else if (score >= 20) {
+      color = 'red';
     } else {
-      color = 'neutral'
+      color = 'neutral';
     }
-    return colorMap[color][index]
+  
+    // Ensure index is within bounds of colorMap
+    const adjustedIndex = Math.min(index, colorMap[color].length - 1);
+    return colorMap[color][adjustedIndex];
   }
   return (
     <div className="flex flex-col border-2 border-neutral-300 dark:border-gray-500 h-32 w-40 gap-3 p-2">
-      {[0, 1, 2, 3, 4].map((i) => {
+      {[0, 1, 2, 3, 4, 5].map((i) => {
         return (
           <div key={i} className={"flex-1 w-full flex flex-row gap-2 " + getColor(score, i)}></div>
         )
