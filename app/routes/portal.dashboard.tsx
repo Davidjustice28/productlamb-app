@@ -156,8 +156,8 @@ export default function DashboardPage() {
                 setRoadMapModalOpen(true)
               }
               return (
-                <div key={i} className="hover:-translate-y-1 hover:shadow-orange-300 dark:hover:shadow-orange-400 cursor-pointer w-full h-1/3 flex flex-col px-4 rounded-md gap-1 justify-center shadow-lg dark:shadow-black" onClick={handleClick}>
-                  <p className="text-black dark:text-gray-100 font-semibold">{r.initiative}</p>
+                <div key={i} className="hover:-translate-y-1 cursor-pointer w-full h-1/3 flex flex-col px-4 rounded-md gap-1 justify-center shadow-lg dark:shadow-black" onClick={handleClick}>
+                  <p className="text-black dark:text-gray-300 font-semibold">{r.initiative}</p>
                   <p className="text-black dark:text-gray-300 italic">{new Date(r.start_date).toLocaleDateString()} - {new Date(r.end_date).toLocaleDateString()}</p>
                 </div>
               )
@@ -214,6 +214,13 @@ function PLSuggestion({suggestion}: {suggestion: ApplicationSuggestion}) {
 }
 
 function PLMeterChart({score}: {score: number}) {
+  const colorMap = {
+    neutral: ['bg-neutral-500 opacity-90', 'bg-neutral-400 opacity-90', 'bg-neutral-300 opacity-90', 'bg-neutral-300 opacity-70', 'bg-neutral-200 opacity-80'],
+    green: ['bg-green-500 opacity-90', 'bg-green-400 opacity-90', 'bg-green-300 opacity-90', 'bg-green-300 opacity-70', 'bg-green-200 opacity-80'],
+    yellow: ['bg-yellow-500 opacity-90', 'bg-yellow-400 opacity-90', 'bg-yellow-300 opacity-90', 'bg-yellow-300 opacity-70', 'bg-yellow-200 opacity-80'],
+    orange: ['bg-orange-500 opacity-90', 'bg-orange-400 opacity-90', 'bg-orange-300 opacity-90', 'bg-orange-300 opacity-70', 'bg-orange-200 opacity-80'],
+    red: ['bg-red-500 opacity-90', 'bg-red-400 opacity-90', 'bg-red-300 opacity-90', 'bg-red-300 opacity-70', 'bg-red-200 opacity-80']
+  }
    const getColor = (score: number, index: number) => {
     let color: 'neutral' | 'green' | 'yellow' | 'orange' | 'red' = 'neutral'
     if (score >= 100) {
@@ -224,13 +231,14 @@ function PLMeterChart({score}: {score: number}) {
       color = 'orange'
     } else if (score < 60) {
       color = 'red'
-    } 
-    if (index === 4) return `bg-${color}-500`
-    return `bg-${color}-${index + 2}00 opacity-80`
+    } else {
+      color = 'neutral'
+    }
+    return colorMap[color][index]
   }
   return (
     <div className="flex flex-col border-2 border-neutral-300 dark:border-gray-500 h-32 w-40 gap-3 p-2">
-      {[4, 3, 2, 1, 0].map((i) => {
+      {[0, 1, 2, 3, 4].map((i) => {
         return (
           <div key={i} className={"flex-1 w-full flex flex-row gap-2 " + getColor(score, i)}></div>
         )
