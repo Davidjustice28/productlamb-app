@@ -157,8 +157,8 @@ export default function DashboardPage() {
               }
               return (
                 <div key={i} className="hover:-translate-y-1 cursor-pointer w-full h-1/3 flex flex-col px-4 rounded-md gap-1 justify-center shadow-lg dark:shadow-black" onClick={handleClick}>
-                  <p className="text-black dark:text-gray-300 font-semibold">{r.initiative}</p>
-                  <p className="text-black dark:text-gray-300 italic">{new Date(r.start_date).toLocaleDateString()} - {new Date(r.end_date).toLocaleDateString()}</p>
+                  <p className="text-black dark:text-gray-300 font-semibold text-sm">{r.initiative}</p>
+                  <p className="text-black dark:text-gray-300 text-xs italic">{new Date(r.start_date).toLocaleDateString()} - {new Date(r.end_date).toLocaleDateString()}</p>
                 </div>
               )
             })}
