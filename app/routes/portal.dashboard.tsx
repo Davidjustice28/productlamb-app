@@ -3,6 +3,7 @@ import { ApplicationSprint, ApplicationSuggestion } from "@prisma/client";
 import { LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
+import { PieChart, Pie, Cell } from "recharts";
 import { account } from "~/backend/cookies/account";
 import { ApplicationsClient } from "~/backend/database/applications/client";
 import { createCurrentSprintChartsData, createSprintPointsChartData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts";
@@ -94,34 +95,32 @@ export const loader: LoaderFunction = args => {
         },
         take: 8
       })).sort((a,b) => (new Date(a.startDate!).getTime()) - (new Date(b.startDate!).getTime()))
+      const app = await DB_CLIENT.accountApplication.findUnique({ where: { id: selectedApplicationId }})!
+      const integrationCount = await DB_CLIENT.applicationIntegration.count({ where: { applicationId: selectedApplicationId }})
+      const settings = await DB_CLIENT.accountManagerSettings.findFirst({ where: { accountId: accountId }})
+      let score = 0
+      // check for tool, 1 integration, sprint generation enabled, site url, 1 notifaction event
+      if (app?.clickup_integration_id !== null && app?.notion_integration_id === null && app?.jira_integration_id === null) score += 1
+      if (app?.siteUrl !== null) score += 1
+      if (app?.sprint_generation_enabled) score += 1
+      if (settings?.notify_on_task_added || settings?.notify_on_member_join || settings?.notify_on_planning_ready || settings?.notify_on_sprint_ready) score += 1
+      if (integrationCount > 0) score += 1
+      const scorePercentage = (score / 5) * 100
       const tasks = await DB_CLIENT.generatedTask.findMany({ where: { sprintId: { in: sprints.map(s => s.id) } }})
       const completedStatuses = ['done', 'complete', 'completed', 'finished']
-
-      const taskTotalsChartData = createSprintTaskTotalsChartData(
-        sprints.filter(s => s.status !== 'In Progress').map(s => ({name: s.id.toString(), taskCount: tasks.filter(t => t.sprintId === s.id).length}))
-      )
-
-      const sprintPointsChartData = createSprintPointsChartData(
-        sprints.filter(s => s.status !== 'In Progress').map(s => ({name: s.id.toString(), points: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).reduce((acc, t) => acc + (t.points || 0), 0)}))
-      )
-
-      const taskPercentagesChartData = createSprintTaskCompletionPercentageChartData(
-        sprints.filter(s => s.status !== 'In Progress').map(s => ({name: s.id.toString(), completed: tasks.filter(t => t.sprintId === s.id && completedStatuses.includes(t.status.toLowerCase())).length, total: tasks.filter(t => t.sprintId === s.id).length}))
-      )
-
+      const completedTasks = tasks.filter(t => completedStatuses.includes(t.status.toLowerCase())).length
       const currentSprint = sprints.find(s => s.status === 'In Progress')
       const currentSprintTasksData = currentSprint ? createCurrentSprintChartsData(tasks.filter(t => t.sprintId === currentSprint.id)) : []
-      const taskTypesData = createTaskTypeChartData(sprints.filter(s => s.status !== 'In Progress'), tasks)
       const timeLeftInSprint = currentSprint && currentSprint?.endDate ? calculateTimeLeft(account!.timezone, undefined, currentSprint.endDate, 'Expired') : null
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, time_left: timeLeftInSprint}
-      return json({ selectedApplicationName, selectedApplicationId, taskTotalsChartData, currentSprintTasksData, taskPercentagesChartData, currentSprintSummary, currentSprint, taskTypesData, suggestions, sprintPointsChartData})
+      return json({ selectedApplicationName, selectedApplicationId, currentSprintTasksData, currentSprintSummary, currentSprint, suggestions, completedTasks, appScore: scorePercentage })
     }
   });
 };
 
 
 export default function DashboardPage() {
-  const { currentSprintSummary, currentSprint: loadedCurrentSprint, suggestions, currentSprintTasksData } = useLoaderData<{ currentSprintTasksData: any[], selectedApplicationName: string| undefined, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, currentSprint: ApplicationSprint|null, suggestions: ApplicationSuggestion[]}>();
+  const { currentSprintSummary, currentSprint: loadedCurrentSprint, suggestions, currentSprintTasksData, completedTasks, appScore} = useLoaderData<{ currentSprintTasksData: any[], selectedApplicationName: string| undefined, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, currentSprint: ApplicationSprint|null, suggestions: ApplicationSuggestion[], completedTasks: number, appScore: number }>()
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
   const [currentSprint, setCurrentSprint] = useState<ApplicationSprint|null>(loadedCurrentSprint)
   const [roadMapModalOpen, setRoadMapModalOpen] = useState(false)
@@ -135,8 +134,16 @@ export default function DashboardPage() {
         <div className="h-full flex flex-col justify-evenly gap-2 w-1/2">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Application Overview</h2>
           <div className="h-full flex flex-row items-center justify-evenly gap-8 w-full">
-            <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-1/2 rounded-md"></div>
-            <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-1/2 rounded-md"></div>
+            <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-1/2 rounded-md px-5 py-3">
+              <p className="text-black text-sm dark:text-gray-500">Configuration</p>
+              <PLMeterChart score={appScore}/>
+              <p className="text-black text-sm dark:text-gray-500">Health</p>
+            </div>
+            <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-1/2 rounded-md">
+              <p className="text-black text-sm dark:text-gray-500">Tasks</p>
+              <h3 className="text-black font-bold text-7xl dark:text-neutral-400">{completedTasks}</h3>
+              <p className="text-black text-sm dark:text-gray-500">Completed</p>
+            </div>
           </div>
         </div>
         <div className="h-full flex flex-col justify-evenly gap-2 w-1/2">
@@ -204,4 +211,30 @@ function PLSuggestion({suggestion}: {suggestion: ApplicationSuggestion}) {
       <p className="text-black dark:text-gray-300 italic text-[10px] text-xs w-full text-left">"{suggestion.suggestion}"</p>
     </div>
   )
+}
+
+function PLMeterChart({score}: {score: number}) {
+   const getColor = (score: number, index: number) => {
+    let color: 'neutral' | 'green' | 'yellow' | 'orange' | 'red' = 'neutral'
+    if (score >= 100) {
+      color = 'green'
+    } else if (score >= 80) {
+      color = 'yellow'
+    } else if (score >= 60) {
+      color = 'orange'
+    } else if (score < 60) {
+      color = 'red'
+    } 
+    if (index === 4) return `bg-${color}-500`
+    return `bg-${color}-${index + 2}00 opacity-80`
+  }
+  return (
+    <div className="flex flex-col border-2 border-neutral-300 dark:border-gray-500 h-32 w-40 gap-3 p-2">
+      {[4, 3, 2, 1, 0].map((i) => {
+        return (
+          <div key={i} className={"flex-1 w-full flex flex-row gap-2 " + getColor(score, i)}></div>
+        )
+      })}
+    </div>
+  );
 }
