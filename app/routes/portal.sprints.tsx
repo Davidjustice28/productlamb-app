@@ -215,10 +215,7 @@ export default function SprintPage() {
 
   return (
     <div className="w-full flex flex-col">
-      <div className="flex items-center justify-between w-full">
-        <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's</p>
-      </div>
-      <div className="w-full flex flex-col">
+      {chartData[0].length > 1 ? (<div className="w-full flex flex-col mb-5">
         <div className="flex flex-row justify-between w-full items-center">
           <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint Metrics - <span className="italic text-black dark:text-neutral-500">{chartIndex === 1 ? 'Completion Percentage' : (chartIndex === 0) ? 'Tasks Assigned' : chartIndex === 2 ? 'Task Types' : 'Points Completed'}</span></h2>
           <div className="inline-flex">
@@ -241,10 +238,14 @@ export default function SprintPage() {
         <div className="rounded-xl w-full h-full bg-white dark:bg-neutral-800 pt-5 pb-3 px-2" style={{height: "325px"}}>
           {(chartIndex < 2 || chartIndex > 2 ) && <PLAreaChart data={chartData[chartIndex]} xKey="name" yKey={yKey} fill={chartIndex === 1 ? "#82ca9d" : "#F28C28"} chart_type={chartIndex === 0 ? 'task-assigned' : chartIndex === 1 ? 'completed-percentage' : 'points-completed'} />}
           {(chartIndex === 2) && <PLLineChart data={chartData[chartIndex]}/>}
-          
         </div>
+      </div>) : (
+        <div className="flex items-center justify-between w-full">
+        <p className="font-sm italic text-neutral-800 dark:text-neutral-400 mt-5">Review and monitor key details about ProductLamb generated sprints for your project's. Analytics will be available after 2 completed sprints.</p>
       </div>
-      <div className="mt-5 flex flex-col gap-3">
+      )}
+      {chartData[0].length > 1 && <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint History</h2>}
+      <div className="mt-2 flex flex-col gap-3">
         {sprints.sort((a,b) => (new Date(a.startDate!).getTime()) - (new Date(b.startDate!).getTime())).reverse().map((sprint, index) => {
           return <SprintTableRow data={sprint} key={index} tasks={taskMap[sprint.id]} initiative={sprintInitiativesMap[sprint.id]} timezone={timezone} />
         })}
