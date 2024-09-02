@@ -3,10 +3,9 @@ import { ApplicationSprint, ApplicationSuggestion, roadmap_item } from "@prisma/
 import { LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import { PieChart, Pie, Cell } from "recharts";
 import { account } from "~/backend/cookies/account";
 import { ApplicationsClient } from "~/backend/database/applications/client";
-import { createCurrentSprintChartsData, createSprintPointsChartData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts";
+import { createCurrentSprintChartsData } from "~/backend/mocks/charts";
 import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLBarChart } from "~/components/charts/bar-chart";
 import { PLManagedRoadmapModal } from "~/components/modals/roadmaps/add-roadmap-step";
@@ -14,13 +13,6 @@ import { PLRoadmapItemModal } from "~/components/modals/roadmaps/roadmap-view";
 import { DB_CLIENT } from "~/services/prismaClient";
 import { RoadmapItem } from "~/types/database.types";
 import { calculateTimeLeft } from "~/utils/date";
-
-
-const productLambRoadMap: RoadmapItem[] = [
-  {id: 0, roadmap_id: 0, order: 0, initiative: "Increase AI manager's capabilites and improve onboarding experience", start_date: "2024-09-01T00:00:00.000Z", end_date: "2024-09-30T00:00:00.000Z", description: 'The goal of this phase is to expand the abilities of AI managers and what they can automate. Some of the features include: creating multiple types of documents, scanning codebase for context, & managing roadmaps.'},
-  {id: 1, roadmap_id: 0, order: 1, initiative: "Expand supported third-party integrations & task management tools", start_date: "2024-10-01T00:00:00.000Z", end_date: "2024-10-31T00:00:00.000Z", description: 'The goal of this phase is to expand the number of third-party integrations and task management tools that can be used with ProductLamb. Integrations to be added include: Trello, Plausible, Google Drive, Excel, and more.'},
-  {id: 2, roadmap_id: 0, order: 2, initiative: "Improve platform performance, reliability, and available analytics", start_date: "2024-11-01T00:00:00.000Z", end_date: "2024-11-30T00:00:00.000Z", description: 'Now that we have a solid user base, we will focus on improving the performance and reliability of the platform. We will also add more analytics to help users understand how they are using the platform.'},
-]
 
 export const meta: MetaFunction<typeof loader> = () => {
   return [
@@ -102,9 +94,9 @@ export const loader: LoaderFunction = args => {
       const settings = await DB_CLIENT.accountManagerSettings.findFirst({ where: { accountId: accountId }})
       let score = 0
       // check for tool, 1 integration, sprint generation enabled, site url, 1 notifaction event
-      if (app?.clickup_integration_id !== null && app?.notion_integration_id === null && app?.jira_integration_id === null) score += 1
-      if (app?.siteUrl !== null) score += 1
-      if (app?.sprint_generation_enabled) score += 1
+      if (app?.clickup_integration_id !== null || app?.notion_integration_id === null || app?.jira_integration_id === null) score += 1
+      if (!!app?.siteUrl) score += 1
+      if (!!app?.sprint_generation_enabled) score += 1
       if (settings?.notify_on_task_added || settings?.notify_on_member_join || settings?.notify_on_planning_ready || settings?.notify_on_sprint_ready) score += 1
       if (integrationCount > 0) score += 1
       const tasks = await DB_CLIENT.generatedTask.findMany({ where: { sprintId: { in: sprints.map(s => s.id) } }})
@@ -116,16 +108,24 @@ export const loader: LoaderFunction = args => {
       const currentSprintSummary = !currentSprint ? null : {total_tasks: tasks.filter(t => t.sprintId === currentSprint.id).length, incomplete_tasks: tasks.filter(t => t.sprintId === currentSprint.id && !completedStatuses.includes(t.status.toLowerCase())  ).length, time_left: timeLeftInSprint}
       const roadmap = await DB_CLIENT.applicationRoadmap.findFirst({ where: { account_application_id: selectedApplicationId }, include: { roadmap_item: true }})
       const roadmap_id = roadmap?.id !== undefined && roadmap?.id !== null ? roadmap?.id : -1
-      if (roadmap_id !== -1) score += 1
+      if (roadmap_id !== -1 && roadmap?.roadmap_item && roadmap?.roadmap_item.length > 0) score += 1
       const scorePercentage = (score / 6) * 100
-      return json({ selectedApplicationName, selectedApplicationId, currentSprintTasksData, currentSprintSummary, currentSprint, suggestions, completedTasks, appScore: scorePercentage, roadmap_id, roadmap_items: roadmap?.roadmap_item || [] })
+      const configurationData = {
+        hasProductRoadmap: roadmap?.roadmap_item && roadmap?.roadmap_item.length > 0, 
+        hasIntegration: integrationCount > 0,
+        hasSprintGeneration: !!app?.sprint_generation_enabled,
+        hasTaskManager: app?.clickup_integration_id !== null ||  app?.notion_integration_id === null || app?.jira_integration_id === null,
+        hasWebsiteUrl: !!app?.siteUrl,
+        hasNotifications: settings?.notify_on_task_added || settings?.notify_on_member_join || settings?.notify_on_planning_ready || settings?.notify_on_sprint_ready
+      }
+      return json({ selectedApplicationName, selectedApplicationId, currentSprintTasksData, currentSprintSummary, currentSprint, suggestions, completedTasks, appScore: scorePercentage, roadmap_id, roadmap_items: roadmap?.roadmap_item || [], configurationData })
     }
   });
 };
 
 
 export default function DashboardPage() {
-  const { currentSprintSummary, currentSprint: loadedCurrentSprint, suggestions, currentSprintTasksData, completedTasks, appScore, roadmap_id: loadedRoadmapId, roadmap_items: loadedRoadmapItems} = useLoaderData<{ currentSprintTasksData: any[], selectedApplicationName: string| undefined, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, currentSprint: ApplicationSprint|null, suggestions: ApplicationSuggestion[], completedTasks: number, appScore: number, roadmap_id: number, roadmap_items: roadmap_item[] }>();
+  const { currentSprintSummary, currentSprint: loadedCurrentSprint, suggestions, currentSprintTasksData, completedTasks, appScore, roadmap_id: loadedRoadmapId, roadmap_items: loadedRoadmapItems, configurationData} = useLoaderData<{ currentSprintTasksData: any[], selectedApplicationName: string| undefined, currentSprintSummary: {incomplete_tasks: number, total_tasks: number, time_left: {type: string, count: number | string} |null} | null, currentSprint: ApplicationSprint|null, suggestions: ApplicationSuggestion[], completedTasks: number, appScore: number, roadmap_id: number, roadmap_items: roadmap_item[], configurationData: any }>();
   const [roadmap_id, setRoadmapId] = useState<number>(loadedRoadmapId)
   const [roadmap_items, setRoadmapItems] = useState<RoadmapItem[]>(loadedRoadmapItems)
   const [barChartData, setBarChartData] = useState<Array<any>>(currentSprintTasksData || [])
@@ -162,7 +162,7 @@ export default function DashboardPage() {
           <div className="h-full flex flex-row items-center justify-evenly gap-8 w-full">
             <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-1/2 rounded-md px-5 py-3">
               <p className="text-black text-sm dark:text-gray-500">Configuration</p>
-              <PLMeterChart score={appScore}/>
+              <PLMeterChart score={appScore} data={configurationData}/>
               <p className="text-black text-sm dark:text-gray-500">Health</p>
             </div>
             <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 w-1/2 rounded-md">
@@ -244,7 +244,14 @@ function PLSuggestion({suggestion}: {suggestion: ApplicationSuggestion}) {
   )
 }
 
-function PLMeterChart({score}: {score: number}) {
+function PLMeterChart({score, data}: {score: number, data: {
+  hasProductRoadmap: boolean,
+  hasIntegration: boolean,
+  hasSprintGeneration: boolean,
+  hasTaskManager: boolean,
+  hasWebsiteUrl: boolean,
+  hasNotifications: boolean
+}}) {
   const colorMap = {
     neutral: ['bg-neutral-500 opacity-90', 'bg-neutral-400 opacity-90', 'bg-neutral-300 opacity-90', 'bg-neutral-300 opacity-70', 'bg-neutral-200 opacity-80', 'bg-neutral-100 opacity-70'],
     green: ['bg-green-500 opacity-90', 'bg-green-400 opacity-90', 'bg-green-300 opacity-90', 'bg-green-300 opacity-70', 'bg-green-200 opacity-80', 'bg-green-100 opacity-70'],
@@ -275,13 +282,26 @@ function PLMeterChart({score}: {score: number}) {
     const adjustedIndex = Math.min(index, colorMap[color].length - 1);
     return colorMap[color][adjustedIndex];
   }
+
+  const getListItemColor = (complete: boolean): 'green' | 'red' => {
+    return complete ? 'green' : 'red'
+  }
   return (
-    <div className="flex flex-col border-2 border-neutral-300 dark:border-gray-500 h-32 w-40 gap-3 p-2">
+    <div className="relative group flex flex-col border-2 border-neutral-300 dark:border-gray-500 h-32 w-40 gap-3 p-2 cursor-default">
       {[0, 1, 2, 3, 4, 5].map((i) => {
         return (
           <div key={i} className={"flex-1 w-full flex flex-row gap-2 " + getColor(score, i)}></div>
         )
       })}
+      <ul className='cursor-default left-20 absolute hidden group-hover:visible w-[300px] mx-h-1/3 shadow-md rounded-md bg-neutral-200 dark:bg-neutral-600 text-black dark:text-neutral-100 group-hover:flex group-hover:flex-col justify-center items-start px-5 py-3'>
+        <li className='font-bold underline mb-2'>Application Configuration</li>
+        <li className='flex flex-row gap-2 items-center'><div className={`bg-${getListItemColor(data.hasProductRoadmap)}-400 w-2 h-2 rounded-full`}></div> <p>Has a product roadmap</p></li>
+        <li className='flex flex-row gap-2 items-center'><div className={`bg-${getListItemColor(data.hasIntegration)}-400 w-2 h-2 rounded-full`}></div> <p>Configured atleast 1 integration</p></li>
+        <li className='flex flex-row gap-2 items-center'><div className={`bg-${getListItemColor(data.hasSprintGeneration)}-400 w-2 h-2 rounded-full`}></div> <p>Sprint generation is enabled</p></li>
+        <li className='flex flex-row gap-2 items-center'><div className={`bg-${getListItemColor(data.hasTaskManager)}-400 w-2 h-2 rounded-full`}></div> <p>Task manager tool is setup</p></li>
+        <li className='flex flex-row gap-2 items-center'><div className={`bg-${getListItemColor(data.hasWebsiteUrl)}-400 w-2 h-2 rounded-full`}></div> <p>Has a website url</p></li>
+        <li className='flex flex-row gap-2 items-center'><div className={`bg-${getListItemColor(data.hasNotifications)}-400 w-2 h-2 rounded-full`}></div> <p>Notifications are enabled</p></li>
+      </ul>
     </div>
   );
 }

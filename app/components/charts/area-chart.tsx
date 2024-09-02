@@ -63,7 +63,7 @@ export function PLAreaChart<T=any>(props: PLAreaChartProps) {
       <div className='absolute hidden group-hover:visible w-1/3 mx-h-1/3 shadow-md rounded-md bg-orange-400 dark:bg-[#F28C28] text-white dark:text-neutral-100 group-hover:flex group-hover:flex-col justify-center items-center top-10 left-1/3 p-3'>
         <p className='text-center font-bold underline'>Chart Summary</p>
         <p className='text-center'>{message}</p>
-        </div>
+      </div>
     </div>
   );
   
