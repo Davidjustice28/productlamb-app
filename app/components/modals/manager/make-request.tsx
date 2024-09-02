@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { PLBaseModal } from '../base';
+import OpenAI from 'openai';
 
 
-function AudioRecorder({open}: {open: boolean}) {
+function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean) => void}) {
   const [isRecording, setIsRecording] = useState(false);
   const [requestMade, setRequestMade] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [volumes, setVolumes] = useState<Array<number>>([]);
   const [avgVolume, setAvgVolume] = useState<number>(0);
   const [blob, setBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<string>("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -16,6 +18,10 @@ function AudioRecorder({open}: {open: boolean}) {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
+  const [queue, setQueue] = useState<Array<string>>([]);
+  // const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioRef, setAudioRef] = useState<HTMLAudioElement| null>(null);
+
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -118,19 +124,67 @@ function AudioRecorder({open}: {open: boolean}) {
         method: 'POST',
         body: formData,
       });
-      
+      let transcript = ''
       if (!response.ok) {
-        setTranscript('Hmm, something went wrong. Please try again.');
+        transcript = 'Hmm, something went wrong. Please try again later.'
+      } else {
+        const result = await response.json();
+        if (result?.transcript.length ) {
+          transcript = result?.transcript;
+        } else {
+          transcript = 'Hmm, I couldn\'t understand that. Please try again.'
+        }
       }
       
-      const result = await response.json();
-      if (result?.transcript.length ) {
-        setTranscript(result?.transcript);
-      } 
+      setTranscript('speaking');
+      await getVoiceFromText(transcript);
     } catch (error) {
-      setTranscript('Hmm, something went wrong. Please try again later.');
+      const transcript = 'Hmm, something went wrong. Please try again later.'
+      setTranscript('speaking');
+      await getVoiceFromText(transcript);
     }
   }
+
+  async function getVoiceFromText(text: string) {
+    try {
+      const response = await fetch('/api/audio', {
+        method: 'POST',
+        body: JSON.stringify({text}),
+      });
+      let transcript = ''
+      if (response.ok) {
+        const result = await response.json();
+        const url = result?.url;
+        setAudioUrl(url);
+        setTranscript('speaking');
+        setQueue([...queue, url]);
+      }
+      
+    } catch(e) {
+
+    }
+  }
+
+  async function playAudio() {
+    if (audioUrl && audioRef) {
+      console.log('playing audio');
+      await audioRef.play();
+    } 
+  }
+
+  async function removeTempAudioFiles() {
+    await Promise.all(queue.map(async (url) => {
+      const r = await fetch('/api/audio', {
+        method: 'POST',
+        body: JSON.stringify({url: audioUrl}),
+      });
+      return r;
+    }))
+  }
+
+  useEffect(() => {
+    playAudio()
+  }, [audioUrl && audioRef])
 
   useEffect(() => {
     if(!open) {
@@ -149,6 +203,8 @@ function AudioRecorder({open}: {open: boolean}) {
       }
       setTranscript("");
       setRequestMade(false);
+      setAudioURL(null);
+      removeTempAudioFiles();      
     } else {
       startRecording();
     }
@@ -165,9 +221,21 @@ function AudioRecorder({open}: {open: boolean}) {
         </div>
       ) : (
         <div className='flex flex-row px-3 items-center h-48 w-5/6 justify-center border-2 border-neutral-500 dark:border-neutral-300'>
-          <p className='text-center text-md font-bold'>{transcript?.length ? transcript : "Give me a few seconds to process your request..."}</p>
+          
+          {!audioUrl && transcript !== 'speaking' && <p className='text-center text-md font-bold'>{transcript.length ? transcript : "Give me a few seconds to process your request..."}</p>}
         </div>
-      )}
+      )
+      }
+      <audio
+        ref={(ref) => setAudioRef(ref)}
+        src={audioUrl ?? undefined}
+        style={{ display: 'none' }} // Hide the audio element
+        onEnded={() => {
+          setAudioUrl(null);
+          setTranscript("");
+          setOpen(false);
+        }}
+      />
     </div>
   );
 };
@@ -177,7 +245,7 @@ export function PLManagerRequestModal({open, setOpen}: {open: boolean, setOpen: 
 
   return (
     <PLBaseModal open={open} title={title} setOpen={setOpen} size='sm'>
-      <AudioRecorder open={open}/>
+      <AudioRecorder open={open} setOpen={setOpen}/>
     </PLBaseModal>
   )
 }

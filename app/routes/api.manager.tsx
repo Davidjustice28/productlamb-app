@@ -57,7 +57,6 @@ export const action: ActionFunction = async (args) => {
 
     const result = await response.json();
     transcript = result.text || '';
-    console.log('Transcription result:', result);
   } catch (error) {
     console.error('Error during transcription:', error);
     return json({ message: 'Failed to transcribe audio.' }, { status: 500 });
@@ -88,8 +87,6 @@ export const action: ActionFunction = async (args) => {
       console.error('### Sprint manager caught an error: ', e);
       return null;
     });
-
-    console.log('### Sprint manager request result:', result);
 
     if (!result || !("result_summary" in result)) {
       console.error('### Sprint manager error: ', result);
