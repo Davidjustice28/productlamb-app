@@ -161,7 +161,9 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
       }
       
     } catch(e) {
-
+      setAudioUrl('https://storage.googleapis.com/productlamb_project_images/1725320037970-14-speech-1725320037970.mp3')
+      setTranscript('speaking');
+      console.error('Contact support', e);
     }
   }
 
