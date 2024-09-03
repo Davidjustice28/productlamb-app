@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { PLBaseModal } from '../base';
-import OpenAI from 'openai';
+import { BarLoader, BeatLoader } from 'react-spinners';
 
 
 function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean) => void}) {
@@ -11,7 +11,7 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
   const [avgVolume, setAvgVolume] = useState<number>(0);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [transcript, setTranscript] = useState<string>("");
+  const [action, setAction] = useState<string>("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -108,10 +108,14 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
 
   async function sendAudioFileToServer(blob?: Blob, audioURL?: string) {
     if (!blob || !audioURL || !audioURL?.length || audioURL === 'blob:' || blob?.size === 181925) {
-      console.error('Error: Unable to get audio contents');
-      setTranscript('Hmm, something went wrong. Please try again.');
+      const transcript = 'Hmm, something went wrong. Please try again later.'
+      setAction('speaking');
+      await getVoiceFromText(transcript);
       return
     }
+
+    setAction('processing');
+    setAudioUrl('https://storage.googleapis.com/productlamb_project_images/1725329322228-manager-loading-message.mp3')
 
     // Upload audio and get transcript
     const file = new File([blob], 'audio.wav', { type: 'audio/wav' });
@@ -136,11 +140,11 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
         }
       }
       
-      setTranscript('speaking');
+      setAction('speaking');
       await getVoiceFromText(transcript);
     } catch (error) {
       const transcript = 'Hmm, something went wrong. Please try again later.'
-      setTranscript('speaking');
+      setAction('speaking');
       await getVoiceFromText(transcript);
     }
   }
@@ -151,18 +155,17 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
         method: 'POST',
         body: JSON.stringify({text}),
       });
-      let transcript = ''
       if (response.ok) {
         const result = await response.json();
         const url = result?.url;
         setAudioUrl(url);
-        setTranscript('speaking');
+        setAction('speaking');
         setQueue([...queue, url]);
       }
       
     } catch(e) {
       setAudioUrl('https://storage.googleapis.com/productlamb_project_images/1725320037970-14-speech-1725320037970.mp3')
-      setTranscript('speaking');
+      setAction('speaking');
       console.error('Contact support', e);
     }
   }
@@ -203,7 +206,7 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
       if (blob) {
         setBlob(null);
       }
-      setTranscript("");
+      setAction("");
       setRequestMade(false);
       setAudioURL(null);
       removeTempAudioFiles();      
@@ -223,8 +226,16 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
         </div>
       ) : (
         <div className='flex flex-row px-3 items-center h-48 w-5/6 justify-center border-2 border-neutral-500 dark:border-neutral-300'>
-          
-          {!audioUrl && transcript !== 'speaking' && <p className='text-center text-md font-bold'>{transcript.length ? transcript : "Give me a few seconds to process your request..."}</p>}
+          {!audioUrl ? (
+            <BarLoader
+              color="#F28C28"
+              /> 
+            ): 
+            <BeatLoader
+              color="#F28C28"
+              size={18}
+            />
+          }
         </div>
       )
       }
@@ -234,8 +245,10 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
         style={{ display: 'none' }} // Hide the audio element
         onEnded={() => {
           setAudioUrl(null);
-          setTranscript("");
-          setOpen(false);
+          if(action === 'speaking') {
+            setOpen(false);
+          }
+          setAction("");
         }}
       />
     </div>
