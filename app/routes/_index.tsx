@@ -1,8 +1,9 @@
 import { SignInButton, SignUpButton, useAuth, useUser } from "@clerk/remix";
 import { ActionFunction, LinksFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PLBasicButton } from "~/components/buttons/basic-button";
+import { PLIconButton } from "~/components/buttons/icon-button";
 import { PLStatusBadge } from "~/components/common/status-badge";
 import { ToggleSwitch } from "~/components/forms/toggle-switch";
 import { Colors } from "~/types/base.types";
@@ -67,10 +68,41 @@ export default function LandingPage() {
   const actionData = useActionData<typeof action>()
   const { isLocalHost } = useLoaderData<typeof loader>()
   const [showConfetti, setShowConfetti] = useState(actionData?.joined || false)
+  const [playButtonVisible, setPlayButtonVisible] = useState(true)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const playButtonRef = useRef<HTMLButtonElement>(null)
+
+  const playVideo = () => {
+    if (videoRef.current) {
+      console.log('playing video')
+      if (videoRef.current.muted) {
+        videoRef.current.currentTime = 0; // Reset video to the start
+      }
+      videoRef.current.muted = false
+      videoRef.current.play()
+      videoRef.current.controls = true
+      setPlayButtonVisible(false)
+      videoRef.current.addEventListener('ended', () => {
+        setPlayButtonVisible(true)
+      })
+
+      videoRef.current.addEventListener('pause', () => {
+        setPlayButtonVisible(true)
+      })
+
+      videoRef.current.addEventListener('click', () => {
+        setPlayButtonVisible(false)
+      })
+
+      videoRef.current.addEventListener('play', () => {
+        setPlayButtonVisible(false)
+      })
+    }
+  }
  
   return (
-    <div className="flex flex-col bg-white w-full md:pt-2">
-      <div className="relative flex flex-wrap items-center justify-between w-full bg-white group py-7 shrink-0 md:px-16 px-5">
+    <div className="flex flex-col bg-neutral-100 w-full md:pt-2">
+      <div className="flex flex-wrap items-center justify-between w-full bg-white group py-8 shrink-0 md:px-16 px-5 sticky top-0 z-10">
         <div className="m-auto hidden md:block md:m-0">
           <img className="h-8" src="https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png"/>
         </div>
@@ -78,15 +110,9 @@ export default function LandingPage() {
           <img className="h-10" src="https://storage.googleapis.com/product-lamb-images/productlamb_logo_icon.png"/>
           <PLBasicButton text="Schedule Demo" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true} onClick={() => window.open('https://cal.com/productlamb/15min', '_blank')}/>
         </div>
-        <div className="items-center justify-between hidden gap-12 text-black md:flex">
-          <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#features">Features</a>
-          <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#values">Value Proposition</a>
-          <a className="text-sm font-normal text-dark-grey-700 hover:text-dark-grey-900" href="#contact-us">Contact Us</a>
-        </div>
         <div className="items-center hidden gap-8 md:flex">
-          
           <SignInButton mode="modal" forceRedirectUrl={'/portal/dashboard'} signUpForceRedirectUrl={'/portal/setup'} signUpFallbackRedirectUrl={null}>
-            <button className="flex items-center text-sm font-normal text-gray-800 hover:text-gray-900 transition duration-300">Log In</button>
+            <button className="flex items-center text-md font-[500] text-gray-800 hover:text-gray-900 transition duration-300">Sign In</button>
           </SignInButton>
           
           {/* <SignUpButton mode="modal" forceRedirectUrl={'/portal/setup'}> */}
@@ -94,34 +120,46 @@ export default function LandingPage() {
           {/* </SignUpButton> */}
         </div>
       </div>
-      <div className="flex w-full flex-col my-auto mb-8 md:flex-row xl:gap-14 md:gap-5 md:px-16 px-5">
-        <div className="flex flex-col justify-center w-full md:w-1/2 text-center lg:text-start">
-          <div className="flex items-center justify-center mb-2 md:mb-4 lg:justify-normal">
-            <h4 className="text-sm invisible md:visible font-bold tracking-widest text-[#F28C28] uppercase">Explore the Benefits of Direction</h4>
-          </div>
-          <h1 className="-mt-6 md:-mt-0 mb-6 md:mb-8 text-3xl font-extrabold leading-tight md:text-6xl text-black">Product Management<br/>for the Little Guys</h1>
-          <p className="md:mb-6 text-base font-normal leading-7 mb-3 text-left md:mx-0 w-[90%] mx-auto md:w-3/4 text-black">
-            Early-stage startup or small team? Enjoy many of the benefits that proper planning and organization bring through a dedicated AI powered product manager.
-          </p>
-          <div className="flex-row gap-5 items-center hidden md:flex">
-            <p className="text-lg font-semibold text-black">Want to see how we can help your business?</p>
-            <PLBasicButton text="Schedule Demo" icon="ri-calendar-line" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true} onClick={() => window.open('https://cal.com/productlamb/15min', '_blank')}/>
-          </div>
+      {/* -mt-6 md:-mt-0 mb-6 md:mb-8 leading-tight */}
+      <div className="flex w-full flex-col my-auto md:px-16 px-5 bg-orange-200 pb-32 pt-28 gap-5 shadow-lg">
+        <h1 className="w-full text-3xl font-bold md:text-6xl text-orange-800 text-center">Product managers, for the little guys</h1>
+        <p className="font-[500] text-center text-3xl md:text-[25px] mx-auto w-3/5 text-orange-600 leading-normal">
+          Supercharge your product development process with an AI powered product manager waiting to assist you.
+          {/* Early-stage startup or small team? Enjoy many of the benefits that proper planning and organization bring through a dedicated AI powered product manager. */}
+        </p>
+        {/* my button */}
+        <div className="group mx-auto mb-7 mt-3 p-2 rounded-full bg-orange-300 hover:shadow-2xl hover:scale-105 delay-100">
+          <button 
+            onClick={() => window.open('https://cal.com/productlamb/15min', '_blank')}
+            ref={playButtonRef}
+            className="cursor-pointer font-bold py-8 px-28 text-2xl inline-flex items-center rounded-full bg-[#FF5F1F] text-neutral-50 group-hover:bg-orange-600"
+          >
+            {/* <i className="ri-calendar-line mr-2 "></i> */}
+            <span className="tracking-wider">Schedule Demo</span>
+          </button>
         </div>
-        <div className="items-center justify-end flex w-full md:w-1/2 md:flex mt-5 md:mt-0">
-          <img className="w-full md:w-4/5 rounded-md h-lg" src="https://storage.googleapis.com/productlamb_project_images/pl-header-img.png" alt="header image"/>
+        <div className="relative">
+          <video src="https://storage.googleapis.com/productlamb_project_images/pl_demo_5.MP4" className="w-full md:w-4/5 md:mx-auto h-lg rounded-[50px] shadow-xl shadow-black" autoPlay muted ref={videoRef}/>
+          <div className="absolute w-full top-[40%] flex flex-row justify-center">
+           {playButtonVisible && (<button 
+              onClick={playVideo}
+              className={'flex flex-row justify-center items-center gap-2 rounded-full p-4 w-28 h-28 cursor-pointer bg-orange-600 hover:bg-gray-400 text-gray-800 dark:bg-neutral-800 dark:hover:bg-neutral-900 dark:text-neutral-400'}
+            >
+              <i className='ri-arrow-right-s-fill inline-block text-[80px] text-white'></i>
+            </button>)}
+          </div>
         </div>
       </div>
       <div className="w-full flex flex-col text-black items-center">
         <div className="w-full flex flex-col text-black items-center gap-10 ">
-          <div className="w-full flex flex-col items-center gap-5 -mb-14 py-10 bg-orange-200 mt-10 rounded-sm" id="product">
+          <div className="flex flex-col items-center justify-center gap-7 -mb-14 py-10 mt-10 lg:justify-normal">
+            <h4 className="text-4xl md:text-5xl text-orange-600 text-center invisible md:visible font-extrabold tracking-widest">Develop better software while saving time</h4>
+            <p className="text-lg md:text-2xl text-center font-[500] text-neutral-800">Make requests. Offload tedious work. Plan better.</p>
+          </div>
+          {/* <div className="w-full flex flex-col items-center gap-5 -mb-14 py-10 mt-10 rounded-sm" id="product">
             <h1 className="font-bold text-xl w-3/4 text-center md:text-4xl mb-2 text-orange-600">How does <span className="text-black">ProductLamb</span> help you build <span className="text-black">better</span> software?</h1>
-          </div>
+          </div> */}
           <FeaturesSection />
-          <div className="w-full flex flex-col items-center gap-5 -mb-14 py-10 bg-orange-200 mt-10 rounded-sm" id="product">
-            <h1 className="font-bold text-xl text-center md:text-4xl mb-2 text-orange-600">What makes us <span className="text-black">different</span>?<br className="md:hidden"/> What do we <span className="text-black">offer</span> ?</h1>
-          </div>
-          <ValueSection />
           <PricingSection />
           {/* <ValidationSection /> */}
           <ContactUsSection />
@@ -136,47 +174,34 @@ function FeaturesSection() {
     "https://storage.googleapis.com/productlamb_project_images/manager_screenshot.png",
     "https://storage.googleapis.com/productlamb_project_images/clickup_screenshot.png",
     "https://storage.googleapis.com/productlamb_project_images/analytics_screenshot.png",
-    'https://storage.googleapis.com/productlamb_project_images/screely-1720575351485.png',
-    "https://storage.googleapis.com/productlamb_project_images/screely-1720590712501.png",
-    "https://storage.googleapis.com/productlamb_project_images/apps_screenshot.png",
+    // "https://storage.googleapis.com/productlamb_project_images/screely-1720590712501.png",
   ]
 
   const featureHeaders = [
     "Work with your AI product manager like a regular team member",
     "Automate 60-80% of your sprint planning process",
     "Make better planning decisions with key metrics",
-    "Keep your team focused",
-    "Automate more with your favorite third party integrations",
-    "Properly plan development across multiple projects",
+    // "Automate more with your favorite third party integrations",
   ]
 
   const featureDescriptions = [
     "Through natural language, ask your product manager to do things on your behalf like add tasks to your backlog, schedule meetings, or follow up on developers progress.",
     "ProductLamb auto generates sprints in your preferred management tool by analyzing your goals, code repository issues, user feedback, self reported bugs, and more.",
     "Most startups care about a few core metrics. Understand these key metrics about your project's development, like how many points per sprint does your team average and what type of work is being prioritized.",
-    "Through email and integrations like slack, ProductLamb can notify your team of recent updates, remind them of deadlines, and keep them focused on the work that matters.",
-    "Connect to ProductLamb with tools you're already using to do automate more like tracking repository issues, scheduling meetings, and notifying the team of updates.",
-    "Most production software has multiple code repositories. Many companies have multiple products. ProductLamb can help plan and manage work for all of your applications individually.",
+    // "Connect to ProductLamb with tools you're already using to do automate more like tracking repository issues, scheduling meetings, and notifying the team of updates.",
   ]
 
   return (
-    <div className="w-full flex flex-col items-center py-16 -mb-10 gap-20 md:gap-24 md:px-16 px-8" id="features">
+    <div className="w-full flex flex-col items-center pt-16 -mb-10 gap-20 md:gap-24 md:px-16 px-8" id="features">
       {imgs.map((photo, i) => {
         return (
-          <div className={"mt-10 gap-16 w-full items-start md:items-center justify-between flex" + (i % 2 === 0 ? ' flex-col md:flex-row' : ' flex-col md:flex-row-reverse')} key={i}>
+          <div className={"mt-10 gap-16 w-full items-start md:items-center justify-between flex px-20 py-28 rounded-3xl" + (i % 2 === 0 ? ' flex-col md:flex-row bg-neutral-800' : ' bg-orange-200 flex-col md:flex-row-reverse')} key={i}>
             <div className="md:w-1/2 w-full flex flex-col gap-8">
-              <h2 className="font-bold text-4xl md:text-4xl">{featureHeaders[i]}</h2>
-              <p className="font-regular text-lg md:text-xl">{featureDescriptions[i]}</p>
+              <h2 className={"font-bold text-4xl md:text-4xl " + (i % 2 === 0 ? 'text-neutral-50' : '')}>{featureHeaders[i]}</h2>
+              <p className={"font-regular text-lg md:text-xl " + (i % 2 === 0 ? 'text-white opacity-80' : '') }>{featureDescriptions[i]}</p>
               {i === 0 && (
                 <div className="flex flex-col gap-7">
-                  <p className="text-lg text-orange-500 md:text-xl italic">"In a few seconds, your product manager can do things that were incrementally eating up your time."</p>
-                  <div className="flex flex-row gap-4 items-center">
-                    <img className="h-12 w-12 rounded-full" src="https://storage.googleapis.com/productlamb_project_images/IMG_7841.jpg"/>
-                    <div className="flex flex-col">
-                      <p className="font-semibold text-sm text-black">David Justice</p>
-                      <p className="font-regular text-xs text-black">Co-Founder</p>
-                    </div>
-                  </div>
+                  <PLBasicButton text="Get Access" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true} onClick={() => window.open('https://cal.com/productlamb/15min', '_blank')} useStaticWidth/>
                 </div>
               )}
               {i === 1 && (
@@ -191,51 +216,7 @@ function FeaturesSection() {
               )}
               {i === 2 && (
                 <div className="flex flex-col gap-7">
-                  <p className="text-lg text-orange-500 md:text-xl italic">"We've been using ProductLamb internally and it has brought so much insight on what work we need to prioritize."</p>
-                  <div className="flex flex-row gap-4 items-center">
-                    <img className="h-12 w-12 rounded-full" src="https://storage.googleapis.com/productlamb_project_images/IMG_7841.jpg"/>
-                    <div className="flex flex-col">
-                      <p className="font-semibold text-sm text-black">David Justice</p>
-                      <p className="font-regular text-xs text-black">Co-Founder</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {i === 3 && (
-                <div className="flex flex-col gap-7">
-                  <p className="text-lg text-orange-500 md:text-xl italic">"ProductLamb will keep your team accountable and on track to hit your productivity goals just like a tradional Product Manager."</p>
-                  <div className="flex flex-row gap-4 items-center">
-                    <img className="h-12 w-12 rounded-full" src="https://storage.googleapis.com/productlamb_project_images/IMG_1467.png"/>
-                    <div className="flex flex-col">
-                      <p className="font-semibold text-sm text-black">Nicholas LePore</p>
-                      <p className="font-regular text-xs text-black">Co-Founder</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {i === 4 && (
-                <div className="flex flex-row gap-5 items-center">
-                  {/* <p className="text-black font-semibold">Support for</p> */}
-                  <div className="flex items-center gap-4">
-                    <img className="h-7 w-7" src="https://storage.googleapis.com/productlamb_project_images/github.256x244.png"/>
-                    <img className="h-7 w-7" src="https://storage.googleapis.com/productlamb_project_images/gitlab.256x236.png"/>
-                    <img className="h-5 w-5" src="https://storage.googleapis.com/productlamb_project_images/slack-icon.256x255.png"/>
-                    <img className="h-10 w-10 -ml-2" src="https://storage.googleapis.com/productlamb_project_images/google-calendar.256x256.png"/>
-                    <p className="text-black font-semibold -ml-2">and more...</p>
-                  </div>
-                </div>
-              )}
-              {i === 5 && (
-                <div className="flex flex-col gap-7">
-                  <p className="text-lg text-orange-500 md:text-xl italic">"No service, product, or application should be a second thought. Make sure every portion of your product is well thought out."</p>
-                  <div className="flex flex-row gap-4 items-center">
-                    <img className="h-12 w-12 rounded-full" src="https://storage.googleapis.com/productlamb_project_images/IMG_7841.jpg"/>
-                    <div className="flex flex-col">
-                      <p className="font-semibold text-sm text-black">David Justice</p>
-                      <p className="font-regular text-xs text-black">Co-Founder</p>
-                    </div>
-                  </div>
+                  <PLBasicButton text="Get Access" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true} onClick={() => window.open('https://cal.com/productlamb/15min', '_blank')} useStaticWidth/>
                 </div>
               )}
             </div>
@@ -251,7 +232,7 @@ function FeaturesSection() {
 
 function ContactUsSection() {
   return (
-    <div className="w-full flex flex-col items-center gap-10 mt-20 border-2 bg-orange-200 pt-14" id="contact-us">
+    <div className="w-full flex flex-col items-center gap-10 border-2 bg-orange-200 pt-14" id="contact-us">
       <h1 className="font-bold text-center text-orange-600 text-3xl md:text-5xl">Get in touch with us</h1>
       <div className="container flex flex-col mx-auto">
         <div className="w-full">
@@ -291,33 +272,6 @@ function ContactUsSection() {
   )
 }
 
-function ValueSection() {
-  return (
-    <div className="w-full -mb-16 sm:-mb-32" id="values">
-      <div className="bg-white py-12 sm:pt-20 sm:pb-28">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 bo">
-          <div className="sm:px-32">
-            <p className="mt-2 text-left text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">We automate as much of the planning process as possible so that you can focus your time on building and growing your business.</p>
-            <p className="mt-6 text-left text-md sm:text-lg leading-8 text-gray-600">Project Managers are crucial personnel, especially in startups. But with an average salary cost of $70k - $120k, hiring one is just not an option. However, we believe that all tech companies, whether large or small, could benefit from someone or something
-              that can keep them accountable, that really manages the lifecycle of new features, and plans a project's workload. So how do most early-staged startups manage their product's development? By winging it or with a project management software with a kanban board. We decided to improve these "processes".</p>
-            <p className="mt-6 text-md text-left sm:text-lg leading-8 text-gray-600">
-              Never again do you have to waste your little time adding tasks into Jira or analyzing survey results to design features. We provide you with a virtual AI product manager, that takes away a lot of the tedious work you do and does them in seconds. 
-              Sure, adding 1 tasks to Jira may only take 5 minutes. But a bunch of these little things that you do in a day/week/month adds up to a lot of time and stress. With ProductLamb, budgeting won't prohibit you from making the hire your team needs.</p>
-            <p className="mt-6 text-md text-left sm:text-lg leading-8 text-gray-600">
-              We also provide you with a platform that helps you manage your preferred pm tools like ClickUp and Notion. There are many great tools on the 
-              market, but they are too complex and bloated. They are designed for big teams and big projects. ProductLamb is designed for you, the small team with a lot to do. We're not looking to replace your favorite tool, but to manage it for you. ProductLamb automates most of the things needed to keep your project on track to hit your goals,
-              while providing the core features you care about, in the case that you want to get your own hands dirty.
-            </p>
-            <p className="mt-6 text-md text-left sm:text-lg leading-8 text-gray-600">Our platform gives you more time back and enables you to make data driven decisions when choosing what work to prioritize next.
-              We're here to help you spend more time building your product rather than losing time planning it.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function PricingSection() {
   const offerings = [
     "Communicate with your manager via audio and Slack. (email coming soon)",
@@ -339,8 +293,8 @@ function PricingSection() {
   }
 
   return (
-    <div className="w-full" id="pricing">
-      <div className="bg-white sm:pt-28">
+    <div className="w-full mb-20" id="pricing">
+      <div className=" sm:pt-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl sm:text-center">
             <h2 className="text-2xl text-center font-bold tracking-tight text-gray-900 sm:text-4xl">Simple pricing. One plan for all.</h2>

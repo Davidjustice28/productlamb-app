@@ -16,7 +16,7 @@ html {
 body {
   color: #e5e7eb;
   background-color: #0d1117;
-
+  /* font-family: Circular, Helvetica, sans-serif; */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
