@@ -392,9 +392,9 @@ function BacklogTable({tasks, setIdsChecked, listType}: {tasks: Array<GeneratedT
   }
 
   const columns: Array<TableColumn> = [
-    {key: "description", type: "text"},
-    {key: "reason", type: "text"},
+    {key: "title", type: "text"},
     {key: "points", type: "text"},
+    {key: "category", type: "text"},
   ]
   if (tasks.length === 0) return (
     <p className="text-red-400 mt-3">
