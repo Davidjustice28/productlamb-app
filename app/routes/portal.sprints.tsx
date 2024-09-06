@@ -1,6 +1,6 @@
 import { PLStatusBadge } from "~/components/common/status-badge"
 import { Colors, TableColumn } from "~/types/base.types"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { ActionFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node"
@@ -18,6 +18,7 @@ import { DB_CLIENT } from "~/services/prismaClient"
 import { PLAreaChart } from "~/components/charts/area-chart"
 import { PLLineChart } from "~/components/charts/line-chart"
 import { createSprintPointsChartData, createSprintTaskCompletionPercentageChartData, createSprintTaskTotalsChartData, createTaskTypeChartData } from "~/backend/mocks/charts"
+import { PLNoticationModal } from "~/components/modals/notification"
 
 export const loader: LoaderFunction = async ({request}) => {
   const cookies = request.headers.get('Cookie')
@@ -159,7 +160,7 @@ export default function SprintPage() {
   const [chartData, setChartData] = useState<Array<any>>([(taskTotalsChartData || []), (taskPercentagesChartData || []), (taskTypesData || []), (sprintPointsChartData || [])])
   const [chartIndex, setChartIndex] = useState<number>(0)
   const yKey = chartIndex == 0 ? "taskCount" : "completed"
-
+  const [notificationShown, setNotificationShown] = useState<boolean>(false)
   const handleChartChange = (goingForward: boolean) => {
     
     if(chartData === null) return 
@@ -213,6 +214,28 @@ export default function SprintPage() {
     )
   }
 
+  useEffect(() => {
+    const intervalTimer = setInterval(() => {
+      fetch('/api/sprints')
+      .then(res => res.json())
+      .then(data => {
+        const updates = (data?.sprints) as ApplicationSprint[] | undefined
+        if (updates) {
+          const sprintBeingGenerated = sprints.find(sprint => sprint.is_generating)
+          if (sprintBeingGenerated) {
+            const updatedSprint = updates.find(sprint => sprint.id === sprintBeingGenerated.id)
+            if (updatedSprint && updatedSprint.is_generating === false) {
+              setNotificationShown(true)
+            }
+          }
+          setSprints(updates)
+        }
+      })
+      .catch(err => null)
+    }, 5000)
+    return () => clearInterval(intervalTimer)
+  }, [])
+
   return (
     <div className="w-full flex flex-col">
       {chartData[0].length > 1 ? (<div className="w-full flex flex-col mb-5">
@@ -250,6 +273,7 @@ export default function SprintPage() {
           return <SprintTableRow data={sprint} key={index} tasks={taskMap[sprint.id]} initiative={sprintInitiativesMap[sprint.id]} timezone={timezone} />
         })}
       </div>
+      <PLNoticationModal open={notificationShown} setOpen={setNotificationShown} message="Your sprint has successfully generated."/>
     </div>
   )
 }
