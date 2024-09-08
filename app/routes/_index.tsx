@@ -1,10 +1,12 @@
 import { SignInButton } from "@clerk/remix";
 import { ActionFunction, LinksFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import { useRef, useState } from "react";
+import { useLoaderData, useNavigate } from "@remix-run/react";
+import { useEffect, useRef, useState } from "react";
+import { preferences } from "~/backend/cookies/preferences";
 import { PLBasicButton } from "~/components/buttons/basic-button";
 import { PLStatusBadge } from "~/components/common/status-badge";
 import { ToggleSwitch } from "~/components/forms/toggle-switch";
+import { PLPrivacyPopupModal } from "~/components/modals/privacy-popup";
 import { Colors } from "~/types/base.types";
 
 export const links: LinksFunction = () => {
@@ -58,20 +60,25 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const isLocalHost = process.env.SERVER_ENVIRONMENT !== 'production'
-  return json({ isLocalHost }, { headers: {
-    "Set-Cookie": 'account=; Max-Age=0; Path=/;'
+  const cookies = request.headers.get('Cookie')
+  const preferecnes = await preferences.parse(cookies)
+  const privacyPolicyAck = preferecnes?.privacyPolicyAck ? true : false
+
+  return json({ isLocalHost, privacyPolicyAck }, { headers: {
+    // set cookie for privacy acknowledgement
+    "Set-Cookie": 'account=; Max-Age=0; Path=/;',
   }})
 }
 
 export default function LandingPage() {
-  const { isLocalHost } = useLoaderData<typeof loader>()
+  const { isLocalHost, privacyPolicyAck } = useLoaderData<typeof loader>()
+  const [privacyModalOpen, setPrivacyModalOpen] = useState(false)
   const [playButtonVisible, setPlayButtonVisible] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
   const playButtonRef = useRef<HTMLButtonElement>(null)
 
   const playVideo = () => {
     if (videoRef.current) {
-      console.log('playing video')
       if (videoRef.current.muted) {
         videoRef.current.currentTime = 0; // Reset video to the start
       }
@@ -96,9 +103,16 @@ export default function LandingPage() {
       })
     }
   }
+
+  useEffect(() => {
+    if (privacyPolicyAck) return
+    setTimeout(() => {
+      setPrivacyModalOpen(true)
+    }, 2500);
+  }, [])
  
   return (
-    <div className="flex flex-col bg-neutral-100 w-full md:pt-2">
+    <div className="flex flex-col bg-neutral-100 w-full">
       <div className="flex flex-wrap items-center justify-between w-full bg-white group py-6 md:py-8 shrink-0 md:px-16 px-5 sticky top-0 z-10">
         <div className="m-auto hidden md:block md:m-0">
           <img className="h-8" src="https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png"/>
@@ -162,6 +176,7 @@ export default function LandingPage() {
           <ContactUsSection />
         </div>
       </div>
+      {privacyModalOpen ? <PLPrivacyPopupModal open={privacyModalOpen} setOpen={setPrivacyModalOpen} message="We coolect personal information to improve your experience. Please read our Privacy Policy to learn more about how we handle your data."/> : null}
     </div>
   )
 }
@@ -262,6 +277,7 @@ function ContactUsSection() {
           <hr className="my-10 border-orange-700" />
           <div className="flex flex-col items-center sm:flex-row sm:justify-between">
             <p className="text-sm text-orange-600">© ProductLamb 2024. All Rights Reserved.</p>
+            <a className="text-sm text-orange-600 underline" href="/privacy">Privacy Policy</a>
           </div>
         </div>
       </footer>
