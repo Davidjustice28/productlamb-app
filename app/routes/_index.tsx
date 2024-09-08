@@ -165,7 +165,7 @@ export default function LandingPage() {
         <div className="w-full flex flex-col text-black items-center gap-10 ">
           <div className="flex flex-col items-center justify-center gap-7 -mb-28 md:-mb-14 py-10 mt-10 lg:justify-normal">
             <h4 className="w-[80%] md:w-full text-2xl md:text-5xl text-orange-800 md:text-center font-extrabold tracking-widest">Design better software while saving time</h4>
-            <p className="text-lg md:text-2xl text-center font-[500] text-neutral-800">Make requests. Offload tedious work. Plan better.</p>
+            <p className="w-[80%] md:w-full text-lg md:text-2xl md:text-center font-[500] text-neutral-800">Make requests. Offload tedious work. Plan better.</p>
           </div>
           {/* <div className="w-full flex flex-col items-center gap-5 -mb-14 py-10 mt-10 rounded-sm" id="product">
             <h1 className="font-bold text-xl w-3/4 text-center md:text-4xl mb-2 text-orange-600">How does <span className="text-black">ProductLamb</span> help you build <span className="text-black">better</span> software?</h1>
@@ -204,7 +204,7 @@ function FeaturesSection() {
   ]
 
   return (
-    <div className="w-full flex flex-col items-center pt-16 -mb-10 gap-20 md:gap-24 md:px-16 px-8" id="features">
+    <div className="w-full flex flex-col items-center pt-8 md:pt-16 -mb-10 gap-14 md:gap-24 md:px-16 px-8" id="features">
       {imgs.map((photo, i) => {
         return (
           <div className={"mt-10 gap-16 w-full items-start md:items-center justify-between flex px-8 py-12 md:px-20 md:py-28 rounded-3xl" + (i % 2 === 0 ? ' flex-col md:flex-row bg-[#F28C28]' : ' bg-[#ffcc99] flex-col md:flex-row-reverse')} key={i}>
@@ -307,11 +307,11 @@ function PricingSection() {
 
   return (
     <div className="w-full mb-20" id="pricing">
-      <div className=" sm:pt-28">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <div className="sm:pt-28">
+        <div className="mx-auto max-w-7xl px-8">
           <div className="mx-auto max-w-2xl sm:text-center mt-14 mb-14 md:my-0">
             <h2 className="text-2xl text-center font-bold tracking-tight text-orange-800 sm:text-4xl decoration-orange-800 ">Simple pricing. One plan for all.</h2>
-            <p className="w-5/6 md:w-full mx-auto md:mx-0 mt-4 md:mt-6 text-lg leading-8 font-[500] text-black">Why discriminate on feature access. We make things simple. Choose between monthly or annual subscription and get access to everything.</p>
+            <p className="w-full mx-auto md:mx-0 mt-4 md:mt-6 text-lg leading-8 font-[500] text-black">Why discriminate on feature access. We make things simple. Choose between monthly or annual subscription and get access to everything.</p>
           </div>
           <div className="mx-auto mt-8 md:mt-16 max-w-2xl rounded-3xl ring-2 ring-orange-800 sm:mt-20 lg:mx-0 lg:flex lg:max-w-none ">
             <div className="p-8 sm:p-10 lg:flex-auto">
