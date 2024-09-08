@@ -164,7 +164,7 @@ export default function LandingPage() {
       <div className="w-full flex flex-col text-black items-center">
         <div className="w-full flex flex-col text-black items-center gap-10 ">
           <div className="flex flex-col items-center justify-center gap-7 -mb-28 md:-mb-14 py-10 mt-10 lg:justify-normal">
-            <h4 className="w-[80%] md:w-full text-2xl md:text-5xl text-orange-800 md:text-center font-extrabold tracking-widest">Develop better software while saving time</h4>
+            <h4 className="w-[80%] md:w-full text-2xl md:text-5xl text-orange-800 md:text-center font-extrabold tracking-widest">Design better software while saving time</h4>
             <p className="text-lg md:text-2xl text-center font-[500] text-neutral-800">Make requests. Offload tedious work. Plan better.</p>
           </div>
           {/* <div className="w-full flex flex-col items-center gap-5 -mb-14 py-10 mt-10 rounded-sm" id="product">
@@ -207,7 +207,7 @@ function FeaturesSection() {
     <div className="w-full flex flex-col items-center pt-16 -mb-10 gap-20 md:gap-24 md:px-16 px-8" id="features">
       {imgs.map((photo, i) => {
         return (
-          <div className={"mt-10 gap-16 w-full items-start md:items-center justify-between flex px-20 py-28 rounded-3xl" + (i % 2 === 0 ? ' flex-col md:flex-row bg-orange-500' : ' bg-[#ffcc99] flex-col md:flex-row-reverse')} key={i}>
+          <div className={"mt-10 gap-16 w-full items-start md:items-center justify-between flex px-8 py-12 md:px-20 md:py-28 rounded-3xl" + (i % 2 === 0 ? ' flex-col md:flex-row bg-[#F28C28]' : ' bg-[#ffcc99] flex-col md:flex-row-reverse')} key={i}>
             <div className="md:w-1/2 w-full flex flex-col gap-8">
               <h2 className={"font-bold text-4xl md:text-4xl " + (i % 2 === 0 ? 'text-orange-900' : 'text-orange-700')}>{featureHeaders[i]}</h2>
               <p className={"font-[500] text-lg md:text-xl " + (i % 2 === 0 ? 'text-orange-900' : 'text-orange-600')}>{featureDescriptions[i]}</p>
@@ -313,7 +313,7 @@ function PricingSection() {
             <h2 className="text-2xl text-center font-bold tracking-tight text-orange-800 sm:text-4xl decoration-orange-800 ">Simple pricing. One plan for all.</h2>
             <p className="w-5/6 md:w-full mx-auto md:mx-0 mt-4 md:mt-6 text-lg leading-8 font-[500] text-black">Why discriminate on feature access. We make things simple. Choose between monthly or annual subscription and get access to everything.</p>
           </div>
-          <div className="mx-auto mt-8 md:mt-16 max-w-2xl rounded-3xl ring-4 ring-orange-800 sm:mt-20 lg:mx-0 lg:flex lg:max-w-none ">
+          <div className="mx-auto mt-8 md:mt-16 max-w-2xl rounded-3xl ring-2 ring-orange-800 sm:mt-20 lg:mx-0 lg:flex lg:max-w-none ">
             <div className="p-8 sm:p-10 lg:flex-auto">
               <h3 className="text-2xl font-bold tracking-tight text-orange-900">Standard Subscription</h3>
               <p className="mt-6 text-base leading-7 text-orange-600 font-semibold">Access all features so that you can build and manage better software products.</p>
@@ -333,7 +333,7 @@ function PricingSection() {
               </ul>
             </div>
             <div className="-mt-2 p-2 lg:mt-0 lg:w-full lg:max-w-md lg:flex-shrink-0">
-              <div className="rounded-2xl bg-gray-50 py-10 text-center ring-4 ring-inset ring-orange-800 lg:flex lg:flex-col lg:justify-center lg:py-16 h-full">
+              <div className="rounded-2xl bg-gray-50 py-10 text-center ring-2 ring-inset ring-orange-800 lg:flex lg:flex-col lg:justify-center lg:py-16 h-full">
                 <div className="mx-auto max-w-xs px-8">
                   <p className="text-base font-semibold text-orange-900">Affordable pricing for all</p>
                   <p className="mt-6 flex items-baseline justify-center gap-x-2 mb-6">
