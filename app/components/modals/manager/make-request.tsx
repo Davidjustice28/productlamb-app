@@ -115,7 +115,8 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
     }
 
     setAction('processing');
-    setAudioUrl('https://storage.googleapis.com/productlamb_project_images/1725329322228-manager-loading-message.mp3')
+    // This is the initial loading audio. "sure give me a few seconds"
+    setAudioUrl('https://storage.googleapis.com/productlamb_project_images/1725916528777-14-speech-1725916528776.mp3')
 
     // Upload audio and get transcript
     const file = new File([blob], 'audio.wav', { type: 'audio/wav' });
@@ -136,7 +137,7 @@ function AudioRecorder({open, setOpen}: {open: boolean, setOpen: (open: boolean)
         if (result?.transcript.length ) {
           transcript = result?.transcript;
         } else {
-          transcript = 'Hmm, I couldn\'t understand that. Please try again.'
+          transcript = 'Hmm, I couldn\'t understand what. Please try again.'
         }
       }
       
