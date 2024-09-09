@@ -14,6 +14,7 @@ import { PLApplicationContextModel } from "~/components/modals/applications/uplo
 import { ToggleSwitch } from "~/components/forms/toggle-switch"
 import { DB_CLIENT } from "~/services/prismaClient"
 import { PLProjectManagementToolLink } from "~/components/modals/applications/link-pm-tool"
+import moment from "moment"
 
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -142,15 +143,48 @@ export const action: ActionFunction = async ({ request, params }) => {
     } else {
       const goalDbClient = ApplicationGoalsClient(DB_CLIENT.applicationGoal)
       const updateData = data  as unknown as NewApplicationData
+      const application = await DB_CLIENT.accountApplication.findFirst({where: {id: parseInt(id!)}})
       if ("sprint_generation_enabled" in updateData) {
-        const application = await DB_CLIENT.accountApplication.findFirst({where: {id: parseInt(id!)}})
         const hasToolConfigured = !!application?.clickup_integration_id || !!application?.jira_integration_id || !!application?.notion_integration_id
         const isEnabled = (updateData?.sprint_generation_enabled as any) === 'true' && hasToolConfigured
         updateData.sprint_generation_enabled = isEnabled
       }
+
     
       const goals = updateData.goals.length ? JSON.parse(updateData.goals) as NewGoalData[] : []
       const {data: updatedApplication} = await appDbClient.updateApplication(parseInt(id!), updateData)
+
+      if ("sprint_interval" in updateData) {
+        const sprint = await DB_CLIENT.applicationSprint.findFirst({where: {applicationId: parseInt(id!), status: 'In Progress'}})
+        const managerSettings = await DB_CLIENT.accountManagerSettings.findFirst({where: {accountId: application?.accountId}})
+        if (sprint && managerSettings) {
+          const { startDate } = sprint
+          const { sprint_interval } = updateData
+          const { timezone } = managerSettings
+          const newDate = moment(startDate).utc().tz(timezone)
+          switch (sprint_interval.toLowerCase()) {
+            case 'weekly':
+              newDate.add(7, 'days')
+              break
+            case 'bi-weekly':
+              newDate.add(14, 'days')
+              break
+            case 'monthly':
+              newDate.add(30, 'days')
+              break
+            case 'daily':
+              newDate.add(1, 'days')
+              break
+            default:
+              newDate.add(14, 'days')
+              break
+          }
+        
+          newDate.set('hours', 8)
+          await DB_CLIENT.applicationSprint.update({where: {id: sprint.id}, data: {endDate: newDate.toISOString()}})
+        }
+      }
+      
       const {data: updatedGoals} = await goalDbClient.updateApplicationGoals(parseInt(id!), goals)
       if (!updatedApplication || !updatedGoals) {
         return json({ errors: [1] })
