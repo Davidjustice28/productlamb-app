@@ -1,6 +1,6 @@
 import { SignInButton } from "@clerk/remix";
 import { ActionFunction, LinksFunction, LoaderFunction, MetaFunction, json } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import { preferences } from "~/backend/cookies/preferences";
 import { PLBasicButton } from "~/components/buttons/basic-button";
@@ -164,8 +164,8 @@ export default function LandingPage() {
       <div className="w-full flex flex-col text-black items-center">
         <div className="w-full flex flex-col text-black items-center gap-10 ">
           <div className="flex flex-col items-center justify-center gap-7 -mb-28 md:-mb-14 py-10 mt-10 lg:justify-normal">
-            <h4 className="w-[80%] md:w-full text-2xl md:text-5xl text-orange-800 md:text-center font-extrabold tracking-widest">Design better software while saving time</h4>
-            <p className="w-[80%] md:w-full text-lg md:text-2xl md:text-center font-[500] text-neutral-800">Make requests. Offload tedious work. Plan better.</p>
+            <h4 className="w-[80%] md:w-full text-2xl md:text-5xl text-black md:text-center font-extrabold tracking-widest">Design better software while saving time</h4>
+            <p className="w-[80%] md:w-full text-lg md:text-2xl md:text-center font-[500] text-neutral-600">Make requests. Offload tedious work. Plan better.</p>
           </div>
           {/* <div className="w-full flex flex-col items-center gap-5 -mb-14 py-10 mt-10 rounded-sm" id="product">
             <h1 className="font-bold text-xl w-3/4 text-center md:text-4xl mb-2 text-orange-600">How does <span className="text-black">ProductLamb</span> help you build <span className="text-black">better</span> software?</h1>

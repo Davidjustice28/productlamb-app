@@ -1,16 +1,22 @@
 import { SignInButton } from "@clerk/remix"
-import { json, LoaderFunction } from "@remix-run/node"
+import { useNavigate } from "@remix-run/react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 
 export default function PrivacyNotice() {
+  const navigate = useNavigate()
+
+  function navigateToHome() {
+    navigate('/')
+  }
+
   return (
     <div className="flex flex-col bg-neutral-100 w-full">
       <div className="flex flex-wrap items-center justify-between w-full bg-white group py-6 md:py-8 shrink-0 md:px-16 px-5 sticky top-0 z-10">
         <div className="m-auto hidden md:block md:m-0">
-          <img className="h-8" src="https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png"/>
+          <img className="h-8 cursor-pointer" src="https://storage.googleapis.com/product-lamb-images/product_lamb_logo_full_black.png" onClick={navigateToHome}/>
         </div>
         <div className="md:hidden flex flex-row justify-between items-center w-full md:border-b-2 md:pb-5">
-          <img className="h-10" src="https://storage.googleapis.com/product-lamb-images/productlamb_logo_icon.png"/>
+          <img className="h-10 cursor-pointer" src="https://storage.googleapis.com/product-lamb-images/productlamb_logo_icon.png" onClick={navigateToHome}/>
           <PLBasicButton text="Schedule Demo" rounded colorClasses="bg-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white" noDefaultDarkModeStyles={true} onClick={() => window.open('https://cal.com/productlamb/15min', '_blank')}/>
         </div>
         <div className="items-center hidden gap-8 md:flex">
