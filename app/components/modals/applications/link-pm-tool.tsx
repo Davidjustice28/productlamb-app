@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { PLBasicButton } from "~/components/buttons/basic-button"
-import { ClickUpData, JiraData, NotionData, PROJECT_MANAGEMENT_TOOL } from "~/types/database.types"
+import { ClickUpData, GithubData, JiraData, NotionData, PROJECT_MANAGEMENT_TOOL } from "~/types/database.types"
 
 
-export function PLProjectManagementToolLink({onToolConfirmation, disabled, toolConfigured, application_id=-1}: {onToolConfirmation: (data: any) => void, disabled?: boolean, application_id?: number, toolConfigured?: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null, isApplicationSettingsPage?: boolean}) {
+export function PLProjectManagementToolLink({onToolConfirmation, disabled, toolConfigured, application_id=-1}: {onToolConfirmation: (data: any) => void, disabled?: boolean, application_id?: number, toolConfigured?: {type: 'notion' | 'jira' | 'clickup' | 'github', data: JiraData | NotionData | ClickUpData | GithubData } | null, isApplicationSettingsPage?: boolean}) {
   const options = Object.values(PROJECT_MANAGEMENT_TOOL)
   const [selectedToolIndex, setSelectedToolIndex] = useState<number>(toolConfigured ? options.map(o => o.toLowerCase()).indexOf(toolConfigured.type) : 0)
-  const [data, setData] = useState<NotionData|ClickUpData |JiraData>()
+  const [data, setData] = useState<NotionData|ClickUpData |JiraData | GithubData>()
   const [toolConfirmed, setToolConfirmed] = useState<boolean>(toolConfigured ? true : false)
   const [initalLoad, setInitialLoad] = useState<boolean>(true)
   const onTabChange = (index: number) => {
@@ -53,6 +53,7 @@ export function PLProjectManagementToolLink({onToolConfirmation, disabled, toolC
         {selectedToolIndex === 0 && <ClickUpToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig} clickupConfig={toolConfigured && toolConfigured.type === 'clickup' ? toolConfigured.data as any: undefined}/>}
         {selectedToolIndex === 1 && <JiraToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig} jiraConfig={toolConfigured && toolConfigured.type === 'jira' ? toolConfigured.data as any: undefined}/>}
         {selectedToolIndex === 2 && <NotionToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig} notionConfig={toolConfigured && toolConfigured.type === 'notion' ? toolConfigured.data as any: undefined}/>}
+        {selectedToolIndex === 3 && <GithubProjectsToolForm setData={setData} setToolConfirmed={setToolConfirmed} removeConfig={removeConfig} githubConfig={toolConfigured && toolConfigured.type === 'github' ? toolConfigured.data as any: undefined}/>}
         <p className="text-black dark:text-white mt-5 italic">Need help finding your credentials? Here's a simple steps-by-step <a href="https://docs.google.com/document/d/1lfK0njWuhI0eGz1hEaE82UTUwZSW_N97Zu65DwYAci8/edit?usp=sharing" target="_blank" className="text-blue-600 dark:text-blue-500 font-bold underline"> guide</a></p>
       </div>
     </div>
@@ -245,6 +246,78 @@ const JiraToolForm = ({setData, setToolConfirmed, jiraConfig, removeConfig}: {se
     {!jiraConfig ? <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/> :
       <div><PLBasicButton text="Remove Config" icon="ri-close-line" iconSide="left" noDefaultDarkModeStyles colorClasses="bg-red-500 text-black" onClick={deleteConfig}/></div>
     }
+    </>
+  )
+}
+
+const GithubProjectsToolForm = ({setData, setToolConfirmed, githubConfig, removeConfig}: {setData: any, setToolConfirmed: any, githubConfig?: GithubData, removeConfig?: (() => Promise<void>)}) => {
+  const tokenInputRef = useRef<HTMLInputElement>(null)
+  const projectIdInputRef = useRef<HTMLInputElement>(null)
+  const repoInputRef = useRef<HTMLInputElement>(null)
+  const ownerInputRef = useRef<HTMLInputElement>(null)
+  
+  const [formValid, setFormValid] = useState<boolean>(false)
+  const [confirmed, setConfirmed] = useState<boolean>(githubConfig ? true : false)
+
+  const checkValidity = () => {
+    const notValid = !tokenInputRef.current?.value || !projectIdInputRef.current?.value
+    setFormValid(!notValid)
+  }
+
+  const onConfirm = () => {
+    setData({apiToken: tokenInputRef.current?.value, projectId: parseInt(projectIdInputRef.current!.value), repo: repoInputRef.current!.value, owner: ownerInputRef.current!.value})
+    setConfirmed(true)
+    setToolConfirmed(true)
+  }
+
+  const deleteConfig = async () => {
+    if (removeConfig) {
+      await removeConfig()
+      tokenInputRef.current!.value = ''
+      projectIdInputRef.current!.value = ''
+      repoInputRef.current!.value = ''
+      ownerInputRef.current!.value = ''
+    }
+    setToolConfirmed(false)
+  }
+
+  useEffect(() => {
+    if (githubConfig) {
+      tokenInputRef.current!.value = githubConfig.apiToken
+      projectIdInputRef.current!.value = `${githubConfig.projectId}`
+      repoInputRef.current!.value = githubConfig.repo
+      ownerInputRef.current!.value = githubConfig.owner
+      setFormValid(true)
+    }
+  } , [])
+
+  return (
+    <>
+      <div className="flex flex-col gap-5 text-black dark:text-neutral-400 mb-5">
+        <div className="flex flex-col gap-2">
+          <label className="dark:text-white">API Token</label>
+          <input type="password" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={tokenInputRef} onChange={checkValidity} disabled={confirmed}/>
+          <small>Get your Github API Token from <a href="https://app.clickup.com/234234/settings">here</a></small>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="dark:text-white">Project Id</label>
+          <input type="number" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" min={0} ref={projectIdInputRef} onChange={checkValidity} disabled={confirmed}/>
+          <small>This project's board is where your tasks live</small>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="dark:text-white">Repository</label>
+          <input type="text" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={repoInputRef} onChange={checkValidity} disabled={confirmed}/>
+          <small>The repository you want to link</small>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="dark:text-white">Owner</label>
+          <input type="text" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={ownerInputRef} onChange={checkValidity} disabled={confirmed}/>
+          <small>The owner of the repository</small>
+        </div>
+      </div>
+      {!githubConfig ? <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/> :
+       <div><PLBasicButton text="Remove Config" icon="ri-close-line" iconSide="left" noDefaultDarkModeStyles colorClasses="bg-red-500 text-black" onClick={deleteConfig}/></div>
+      }
     </>
   )
 }

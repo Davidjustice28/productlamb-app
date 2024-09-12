@@ -40,10 +40,12 @@ export const loader: LoaderFunction = async ({request}) => {
       return {...acc, clickup: acc.clickup + 1}
     } else if (sprint?.jira_sprint_id) {
       return {...acc, jira: acc.jira + 1}
-    } else  {
+    } else if (sprint?.notion_sprint_id) {
       return {...acc, notion: acc.notion + 1}
+    } else {
+      return {...acc, github: acc.github + 1}
     }
-  }, {notion: 0, clickup: 0, jira: 0} as {clickup: number, jira: number, notion: number})
+  }, {notion: 0, clickup: 0, jira: 0, github: 0} as {clickup: number, jira: number, notion: number, github: number})
   const mostPopularTool = Object.entries(toolCounts).reduce((acc, [tool, count]) => {
     if (count > acc.count) {
       acc = {tool, count}
@@ -124,7 +126,7 @@ export default function InternalPage() {
         </div>
         <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">
           <p className="text-black text-sm dark:text-gray-500">Preferred</p>
-          <PMToolIconComponent tool={mostPopularTool as 'clickup' | 'jira' | 'notion' | 'none'} large={true}/>
+          <PMToolIconComponent tool={mostPopularTool as 'clickup' | 'jira' | 'notion' | 'github' |'none'} large={true}/>
           <p className="text-black text-sm dark:text-gray-500">Tool</p>
         </div>
         <div className="justify-evenly flex flex-col items-center h-full bg-white dark:bg-neutral-800 flex-1 rounded-md">

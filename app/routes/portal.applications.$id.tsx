@@ -6,7 +6,7 @@ import { ApplicationsClient } from "~/backend/database/applications/client"
 import { ApplicationGoalsClient } from "~/backend/database/goals/client"
 import { PLBasicButton } from "~/components/buttons/basic-button"
 import { PLPhotoUploader } from "~/components/forms/photo-uploader"
-import { ClickUpData, JiraData, NewApplicationData, NotionData, SprintInterval } from "~/types/database.types"
+import { ClickUpData, GithubData, JiraData, NewApplicationData, NotionData, SprintInterval } from "~/types/database.types"
 import { uploadToPhotoToCloudStorage } from "~/services/gcp/upload-file"
 import { PLIconButton } from "~/components/buttons/icon-button"
 import { deleteFileFromCloudStorage } from "~/services/gcp/delete-file"
@@ -145,7 +145,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       const updateData = data  as unknown as NewApplicationData
       const application = await DB_CLIENT.accountApplication.findFirst({where: {id: parseInt(id!)}})
       if ("sprint_generation_enabled" in updateData) {
-        const hasToolConfigured = !!application?.clickup_integration_id || !!application?.jira_integration_id || !!application?.notion_integration_id
+        const hasToolConfigured = !!application?.clickup_integration_id || !!application?.jira_integration_id || !!application?.notion_integration_id || application?.github_integration_id !== null || application?.github_integration_id !== undefined
         const isEnabled = (updateData?.sprint_generation_enabled as any) === 'true' && hasToolConfigured
         updateData.sprint_generation_enabled = isEnabled
       }
@@ -291,7 +291,7 @@ export default function IndividualApplicationsPage() {
     setConfiguringATool(isEnabled)
   }
 
-  const onToolConfirmation = async (data: ClickUpData | NotionData | JiraData) => {
+  const onToolConfirmation = async (data: ClickUpData | NotionData | JiraData | GithubData) => {
     const updatedAppData = await fetch('/api/pm-tool', {
       method: 'POST',
       body: JSON.stringify({

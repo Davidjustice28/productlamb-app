@@ -2,7 +2,7 @@ import { ActionFunction, json } from "@remix-run/node";
 import { ApplicationsClient } from "~/backend/database/applications/client";
 import { ApplicationPMToolClient } from "~/backend/database/pm-tools/client";
 import { DB_CLIENT } from "~/services/prismaClient";
-import { ClickUpData, NotionData, JiraData } from "~/types/database.types";
+import { ClickUpData, NotionData, JiraData, GithubData } from "~/types/database.types";
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.json() as {tool_data?: ClickUpData | NotionData | JiraData, application_id?: number, remove_config?: boolean};
@@ -24,12 +24,12 @@ export const action: ActionFunction = async ({ request }) => {
       return json({}, {status: 500})
     }
   } else {
-    const {application_id, tool_data} = body as {application_id: number, tool_data: ClickUpData | NotionData | JiraData};
+    const {application_id, tool_data} = body as {application_id: number, tool_data: ClickUpData | NotionData | JiraData | GithubData };
     const pmToolClient = ApplicationPMToolClient(DB_CLIENT)
     const appDbClient = ApplicationsClient(DB_CLIENT.accountApplication)
   
     let pmToolConfigurationResponseId: number| null = null
-    let pmToolType: 'clickup' | 'notion' | 'jira' | null = null
+    let pmToolType: 'clickup' | 'notion' | 'jira' | 'github' | null = null
     if ('parentFolderId' in tool_data) {
       const {parentFolderId, apiToken} = tool_data
       const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, application_id)
@@ -52,6 +52,15 @@ export const action: ActionFunction = async ({ request }) => {
         console.error('error adding jira config', errors)
       }
   
+    } else if('projectId' in tool_data) {
+      const {projectId, apiToken, repo, owner} = tool_data
+      const {data, errors} = await pmToolClient.github.addConfig(apiToken, projectId, repo, owner, application_id)
+      if (data) {
+        pmToolConfigurationResponseId = data.id
+        pmToolType = 'github'
+      } else {
+        console.error('error adding github config', errors)
+      }
     } else {
       const {parentPageId, apiKey} = tool_data
       let parent_id = '' 
@@ -84,18 +93,20 @@ export const action: ActionFunction = async ({ request }) => {
       }
     }
     if (pmToolConfigurationResponseId && pmToolType) {
-      await DB_CLIENT.accountApplication.updateMany({ where: {id: application_id}, data: {clickup_integration_id: null, jira_integration_id: null, notion_integration_id: null}})
+      await DB_CLIENT.accountApplication.updateMany({ where: {id: application_id}, data: {clickup_integration_id: null, jira_integration_id: null, notion_integration_id: null, github_integration_id: null}})
       if (pmToolType === 'clickup') {
         const response = await appDbClient.updateApplication(application_id, {clickup_integration_id: pmToolConfigurationResponseId})
       } else if(pmToolType === 'jira') {
         const response = await appDbClient.updateApplication(application_id, {jira_integration_id: pmToolConfigurationResponseId})
+      } else if (pmToolType === 'github') {
+        const response = await appDbClient.updateApplication(application_id, {github_integration_id: pmToolConfigurationResponseId})
       } else {
         const response = await appDbClient.updateApplication(application_id, {notion_integration_id: pmToolConfigurationResponseId})
       }
       const updatedApp = await appDbClient.getApplicationById(application_id)
       if (updatedApp?.data) {
         const application = updatedApp.data
-        let data: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null = null
+        let data: {type: 'notion' | 'jira' | 'clickup' | 'github', data: JiraData | NotionData | ClickUpData | GithubData} | null = null
         if (application?.clickup_integration_id) {
           const result = await DB_CLIENT.applicationClickupIntegration.findFirst({where: {id: application.clickup_integration_id}})
           if (result) {
@@ -131,6 +142,21 @@ export const action: ActionFunction = async ({ request }) => {
               data: {
                 apiKey: result.api_token,
                 parentPageId: result.parent_page_id
+              }
+            }
+          }
+        }
+
+        if (application?.github_integration_id) {
+          const result = await DB_CLIENT.applicationGithubIntegration.findFirst({where: {id: application.github_integration_id}})
+          if (result) {
+            data = {
+              type: 'github',
+              data: {
+                apiToken: result.api_token,
+                projectId: result.project_id,
+                repo: result.repo,
+                owner: result.owner
               }
             }
           }

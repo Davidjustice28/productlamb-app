@@ -29,6 +29,7 @@ export interface NewApplicationData {
   sprint_generation_enabled?: boolean
   sprint_interval: SprintInterval
   jira_integration_id?: number
+  github_integration_id?: number
 }
 
 export type BugSource = 'repository' | 'self-identified' | 'productLamb' | 'integration' | 'pm-tool' | 'other'
@@ -49,6 +50,7 @@ export enum PROJECT_MANAGEMENT_TOOL {
   CLICKUP = "ClickUp",
   JIRA = "Jira",
   NOTION = "Notion",
+  GITHUB_PROJECTS = "GitHub Projects",
 }
 
 export interface NotionData {
@@ -67,6 +69,13 @@ export interface JiraData {
   email: string, 
   hostUrl: string, 
   projectKey: string
+}
+
+export interface GithubData {
+  apiToken: string, 
+  projectId: number,
+  repo: string,
+  owner: string
 }
 
 export enum SupportedTimezone {

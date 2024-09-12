@@ -12,7 +12,7 @@ import { PLContentLess } from "~/components/common/contentless"
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application"
 import { PLConfirmModal } from "~/components/modals/confirm"
 import { DB_CLIENT } from "~/services/prismaClient"
-import { ClickUpData, JiraData, NewApplicationData, NotionData } from "~/types/database.types"
+import { ClickUpData, GithubData, JiraData, NewApplicationData, NotionData } from "~/types/database.types"
 
 interface ApplicationDeleteData {
   applicationId: string
@@ -68,10 +68,10 @@ export let action: ActionFunction = async ({ request }) => {
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)
 
       if (data?.projectManagementTool && data.projectManagementTool.length > 2) {
-        const pmToolData = JSON.parse(data.projectManagementTool) as ClickUpData | NotionData | JiraData
+        const pmToolData = JSON.parse(data.projectManagementTool) as ClickUpData | NotionData | JiraData | GithubData
   
         let pmToolConfigurationResponseId: number| null = null
-        let pmToolType: 'clickup' | 'notion' | 'jira' | null = null
+        let pmToolType: 'clickup' | 'notion' | 'jira' | 'github' | null = null
         if ('parentFolderId' in pmToolData) {
           const {parentFolderId, apiToken} = pmToolData
           const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, createAppResult.id)
@@ -94,6 +94,16 @@ export let action: ActionFunction = async ({ request }) => {
             console.error('error adding jira config', errors)
           }
   
+        } else if('projectId' in pmToolData) {
+          const {projectId, apiToken, repo, owner} = pmToolData
+          const {data, errors} = await pmToolClient.github.addConfig(apiToken, projectId, repo, owner, createAppResult.id)
+          if (data) {
+            pmToolConfigurationResponseId = data.id
+            pmToolType = 'github'
+          } else {
+            console.error('error adding github config', errors)
+          }
+
         } else {
           const {parentPageId, apiKey} = pmToolData
           let parent_id = '' 
@@ -130,7 +140,9 @@ export let action: ActionFunction = async ({ request }) => {
             const response = await appDbClient.updateApplication(createAppResult.id, {clickup_integration_id: pmToolConfigurationResponseId})
           } else if(pmToolType === 'jira') {
             const response = await appDbClient.updateApplication(createAppResult.id, {jira_integration_id: pmToolConfigurationResponseId})
-          } else {
+          } else if (pmToolType === 'github') {
+            const response = await appDbClient.updateApplication(createAppResult.id, {github_integration_id: pmToolConfigurationResponseId})
+          } else {    
             const response = await appDbClient.updateApplication(createAppResult.id, {notion_integration_id: pmToolConfigurationResponseId})
           }
         }

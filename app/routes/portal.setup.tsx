@@ -14,7 +14,7 @@ import { PLOrganizationDetailsModal } from "~/components/modals/account/organiza
 import { PLAddApplicationModal } from "~/components/modals/applications/add-application";
 import { PLIntegrationOptionsModal } from "~/components/modals/integrations/integration-options";
 import { availableIntegrations } from "~/static/integration-options";
-import { ClickUpData, JiraData, NewApplicationData, NotionData, PLAvailableIntegrationNames, SupportedTimezone } from "~/types/database.types";
+import { ClickUpData, GithubData, JiraData, NewApplicationData, NotionData, PLAvailableIntegrationNames, SupportedTimezone } from "~/types/database.types";
 import { GithubIntegrationSetupFormData, GitlabIntegrationSetupFormData, TypeformIntegrationMetaData, TypeformIntegrationSetupFormData } from "~/types/integrations.types";
 import { createClerkClient } from '@clerk/remix/api.server';
 import { useOrganizationList } from "@clerk/remix";
@@ -188,10 +188,10 @@ export let action: ActionFunction = async (args) => {
       await goalDbClient.addMultipleGoals(createAppResult.id, goals)      
       if (newAppData?.projectManagementTool && newAppData.projectManagementTool.length > 2) {
 
-        const pmToolData = JSON.parse(newAppData.projectManagementTool) as ClickUpData | NotionData | JiraData
+        const pmToolData = JSON.parse(newAppData.projectManagementTool) as ClickUpData | NotionData | JiraData | GithubData
   
         let pmToolConfigurationResponseId: number| null = null
-        let pmToolType: 'clickup' | 'notion' | 'jira' | null = null
+        let pmToolType: 'clickup' | 'notion' | 'jira' | 'github' | null = null
         if ('parentFolderId' in pmToolData) {
           const {parentFolderId, apiToken} = pmToolData
           const {data, errors} = await pmToolClient.clickup.addConfig(apiToken, parentFolderId, createAppResult.id)
@@ -214,7 +214,17 @@ export let action: ActionFunction = async (args) => {
             console.error('error adding jira config', errors)
           }
   
-        }else {
+        } else if('projectId' in pmToolData) {
+          const {projectId, apiToken, repo, owner} = pmToolData
+          const {data, errors} = await pmToolClient.github.addConfig(apiToken, projectId, repo, owner, createAppResult.id)
+          if (data) {
+            pmToolConfigurationResponseId = data.id
+            pmToolType = 'github'
+          } else {
+            console.error('error adding github config', errors)
+          }
+
+        } else {
           const {parentPageId, apiKey} = pmToolData
           const {data, errors} = await pmToolClient.notion.addConfig(apiKey, parentPageId, createAppResult.id)
           if (data) {
@@ -229,6 +239,8 @@ export let action: ActionFunction = async (args) => {
             const response = await appDbClient.updateApplication(createAppResult.id, {clickup_integration_id: pmToolConfigurationResponseId})
           } else if(pmToolType === 'jira') {
             const response = await appDbClient.updateApplication(createAppResult.id, {jira_integration_id: pmToolConfigurationResponseId})
+          } else if (pmToolType === 'github') {
+            const response = await appDbClient.updateApplication(createAppResult.id, {github_integration_id: pmToolConfigurationResponseId})
           } else {
             const response = await appDbClient.updateApplication(createAppResult.id, {notion_integration_id: pmToolConfigurationResponseId})
           }

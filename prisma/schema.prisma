@@ -23,36 +23,39 @@ model Account {
 }
 
 model AccountApplication {
-  id                            Int                            @id @default(autoincrement())
-  name                          String
-  summary                       String
-  archived                      Boolean
-  siteUrl                       String?
-  type                          String
-  accountId                     Int
-  logo_url                      String?
-  clickup_integration_id        Int?                           @unique
-  google_integration_id         Int?                           @unique
-  jira_integration_id           Int?                           @unique
-  lastSprintCheck               String?
-  notion_integration_id         Int?                           @unique
-  sprint_generation_enabled     Boolean
-  sprint_interval               String                         @default("weekly")
-  Account                       Account                        @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  ApplicationClickupIntegration ApplicationClickupIntegration? @relation(fields: [clickup_integration_id], references: [id], onDelete: Cascade)
-  ApplicationGoogleIntegration  ApplicationGoogleIntegration?  @relation(fields: [google_integration_id], references: [id], onDelete: Cascade)
-  ApplicationJiraIntegration    ApplicationJiraIntegration?    @relation(fields: [jira_integration_id], references: [id], onDelete: Cascade)
-  ApplicationNotionIntegration  ApplicationNotionIntegration?  @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
-  ApplicationBug                ApplicationBug[]
-  ApplicationDocuments          ApplicationDocuments[]
-  ApplicationFeedback           ApplicationFeedback[]
-  ApplicationGoal               ApplicationGoal[]
-  ApplicationIntegration        ApplicationIntegration[]
-  ApplicationRoadmap            ApplicationRoadmap[]
-  ApplicationSprint             ApplicationSprint[]
-  ApplicationSuggestion         ApplicationSuggestion[]
-  GeneratedInitiative           GeneratedInitiative[]
-  GeneratedTask                 GeneratedTask[]
+  id                                                                                                  Int                            @id @default(autoincrement())
+  name                                                                                                String
+  summary                                                                                             String
+  archived                                                                                            Boolean
+  siteUrl                                                                                             String?
+  type                                                                                                String
+  accountId                                                                                           Int
+  logo_url                                                                                            String?
+  clickup_integration_id                                                                              Int?                           @unique
+  google_integration_id                                                                               Int?                           @unique
+  jira_integration_id                                                                                 Int?                           @unique
+  lastSprintCheck                                                                                     String?
+  notion_integration_id                                                                               Int?                           @unique
+  sprint_generation_enabled                                                                           Boolean
+  sprint_interval                                                                                     String                         @default("weekly")
+  github_integration_id                                                                               Int?                           @unique
+  Account                                                                                             Account                        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  ApplicationClickupIntegration                                                                       ApplicationClickupIntegration? @relation(fields: [clickup_integration_id], references: [id], onDelete: Cascade)
+  ApplicationGithubIntegration_AccountApplication_github_integration_idToApplicationGithubIntegration ApplicationGithubIntegration?  @relation("AccountApplication_github_integration_idToApplicationGithubIntegration", fields: [github_integration_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  ApplicationGoogleIntegration                                                                        ApplicationGoogleIntegration?  @relation(fields: [google_integration_id], references: [id], onDelete: Cascade)
+  ApplicationJiraIntegration                                                                          ApplicationJiraIntegration?    @relation(fields: [jira_integration_id], references: [id], onDelete: Cascade)
+  ApplicationNotionIntegration                                                                        ApplicationNotionIntegration?  @relation(fields: [notion_integration_id], references: [id], onDelete: Cascade)
+  ApplicationBug                                                                                      ApplicationBug[]
+  ApplicationDocuments                                                                                ApplicationDocuments[]
+  ApplicationFeedback                                                                                 ApplicationFeedback[]
+  ApplicationGithubIntegration_ApplicationGithubIntegration_applicationidToAccountApplication         ApplicationGithubIntegration[] @relation("ApplicationGithubIntegration_applicationidToAccountApplication")
+  ApplicationGoal                                                                                     ApplicationGoal[]
+  ApplicationIntegration                                                                              ApplicationIntegration[]
+  ApplicationRoadmap                                                                                  ApplicationRoadmap[]
+  ApplicationSprint                                                                                   ApplicationSprint[]
+  ApplicationSuggestion                                                                               ApplicationSuggestion[]
+  GeneratedInitiative                                                                                 GeneratedInitiative[]
+  GeneratedTask                                                                                       GeneratedTask[]
 }
 
 model AccountManagerSettings {
@@ -140,19 +143,20 @@ model ApplicationNotionIntegration {
 }
 
 model ApplicationSprint {
-  id                  Int                   @id @default(autoincrement())
-  applicationId       Int
-  startDate           String?
-  endDate             String?
-  clickup_sprint_id   String?
-  is_generating       Boolean               @default(false)
-  jira_sprint_id      String?
-  notion_sprint_id    String?
-  selectedInitiative  Int?
-  status              String
-  AccountApplication  AccountApplication    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  GeneratedInitiative GeneratedInitiative[]
-  GeneratedTask       GeneratedTask[]
+  id                    Int                   @id @default(autoincrement())
+  applicationId         Int
+  startDate             String?
+  endDate               String?
+  clickup_sprint_id     String?
+  is_generating         Boolean               @default(false)
+  jira_sprint_id        String?
+  notion_sprint_id      String?
+  selectedInitiative    Int?
+  status                String
+  using_github_projects Boolean?
+  AccountApplication    AccountApplication    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  GeneratedInitiative   GeneratedInitiative[]
+  GeneratedTask         GeneratedTask[]
 }
 
 model ApplicationSuggestion {
@@ -187,6 +191,7 @@ model GeneratedTask {
   clickup_id          String?
   notion_id           String?
   jira_id             String?
+  github_id           String?              @db.VarChar(255)
   AccountApplication  AccountApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   GeneratedInitiative GeneratedInitiative? @relation(fields: [initiativeId], references: [id])
   ApplicationSprint   ApplicationSprint?   @relation(fields: [sprintId], references: [id])
@@ -229,4 +234,15 @@ model roadmap_item {
   start_date         String             @db.VarChar(255)
   end_date           String             @db.VarChar(255)
   ApplicationRoadmap ApplicationRoadmap @relation(fields: [roadmap_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model ApplicationGithubIntegration {
+  id                                                                                        Int                 @id @default(autoincrement())
+  applicationid                                                                             Int
+  api_token                                                                                 String              @db.VarChar(255)
+  repo                                                                                      String              @db.VarChar(255)
+  owner                                                                                     String              @db.VarChar(255)
+  project_id                                                                                Int
+  AccountApplication_AccountApplication_github_integration_idToApplicationGithubIntegration AccountApplication? @relation("AccountApplication_github_integration_idToApplicationGithubIntegration")
+  AccountApplication_ApplicationGithubIntegration_applicationidToAccountApplication         AccountApplication  @relation("ApplicationGithubIntegration_applicationidToAccountApplication", fields: [applicationid], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }

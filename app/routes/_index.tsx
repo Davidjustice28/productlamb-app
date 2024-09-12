@@ -223,6 +223,7 @@ function FeaturesSection() {
                     <img className="md:h-10 w-10" src="https://storage.googleapis.com/productlamb_project_images/clickup.png"/>
                     <img className="h-7 w-7" src="https://storage.googleapis.com/productlamb_project_images/notion.246x256.png"/>
                     <img className="h-5 w-5" src="https://storage.googleapis.com/productlamb_project_images/jira.256x256.png"/>
+                    <img className="h-7 w-7" src="https://storage.googleapis.com/productlamb_project_images/github.256x244.png"/>
                   </div>
                 </div>
               )}
@@ -288,7 +289,7 @@ function ContactUsSection() {
 function PricingSection() {
   const offerings = [
     "Communicate with your manager via audio and Slack. (email coming soon)",
-    "Spring planning automation for your Project Management tools. (ClickUp, Notion, Jira)",
+    "Spring planning automation for your favorite Project Management tools.",
     "Manage up to 10 applications",
     "Key analytics and metric summaries",
     "Agile tools like point estimators",

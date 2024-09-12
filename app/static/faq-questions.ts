@@ -23,7 +23,7 @@ export const generalQuestions: FAQQuestion[] = [
   },
   {
     question: "What project management tools does ProductLamb integrate with?",
-    answer: "ProductLamb integrates with Notion, ClickUp, and Jira. Coming soon: Trello, and Github Projects."
+    answer: "ProductLamb integrates with Notion, ClickUp, GitHub Projects, and Jira. Coming soon: Trello."
   }
 ]
 
