@@ -39,7 +39,21 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     return redirect('/portal/applications')
   }
 
-  let data: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null = null
+  let data: {type: 'notion' | 'jira' | 'clickup' | 'github', data: JiraData | NotionData | ClickUpData | GithubData} | null = null
+  if (application?.github_integration_id) {
+    const result = await DB_CLIENT.applicationGithubIntegration.findFirst({where: {id: application.github_integration_id}})
+    if (result) {
+      data = {
+        type: 'github',
+        data: {
+          apiToken: result.api_token,
+          projectId: Number(result.project_id),
+          repo: result.repo,
+          owner: result.owner
+        }
+      }
+    }
+  }
   if (application?.clickup_integration_id) {
     const result = await DB_CLIENT.applicationClickupIntegration.findFirst({where: {id: application.clickup_integration_id}})
     if (result) {
@@ -201,7 +215,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function IndividualApplicationsPage() {
-  const {goals: currentGoals, application: currentApplicationData, hasInitialContext, toolConfigured: loadedToolConfigured} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, hasInitialContext: boolean, toolConfigured: {type: 'notion' | 'jira' | 'clickup', data: JiraData | NotionData | ClickUpData} | null}>()
+  const {goals: currentGoals, application: currentApplicationData, hasInitialContext, toolConfigured: loadedToolConfigured} = useLoaderData<{goals: Array<ApplicationGoal>, application: AccountApplication, hasInitialContext: boolean, toolConfigured: {type: 'notion' | 'jira' | 'clickup' | 'github', data: JiraData | NotionData | ClickUpData | GithubData } | null}>()
   const { updatedApplication, updatedGoals } = useActionData<typeof action>() || {updateApplication: null, updatedGoals: null}
   const [application, setApplication] = useState<AccountApplication>(updatedApplication ?? currentApplicationData)
   const [goals, setGoals] = useState<NewGoalData[]>(updatedGoals ?? currentGoals)

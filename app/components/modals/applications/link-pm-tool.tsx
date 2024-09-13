@@ -5,7 +5,7 @@ import { ClickUpData, GithubData, JiraData, NotionData, PROJECT_MANAGEMENT_TOOL 
 
 export function PLProjectManagementToolLink({onToolConfirmation, disabled, toolConfigured, application_id=-1}: {onToolConfirmation: (data: any) => void, disabled?: boolean, application_id?: number, toolConfigured?: {type: 'notion' | 'jira' | 'clickup' | 'github', data: JiraData | NotionData | ClickUpData | GithubData } | null, isApplicationSettingsPage?: boolean}) {
   const options = Object.values(PROJECT_MANAGEMENT_TOOL)
-  const [selectedToolIndex, setSelectedToolIndex] = useState<number>(toolConfigured ? options.map(o => o.toLowerCase()).indexOf(toolConfigured.type) : 0)
+  const [selectedToolIndex, setSelectedToolIndex] = useState<number>(toolConfigured ? options.map(o => o.toLowerCase()).indexOf(toolConfigured.type === 'github' ? 'github projects' : toolConfigured.type) : 0)
   const [data, setData] = useState<NotionData|ClickUpData |JiraData | GithubData>()
   const [toolConfirmed, setToolConfirmed] = useState<boolean>(toolConfigured ? true : false)
   const [initalLoad, setInitialLoad] = useState<boolean>(true)
@@ -22,7 +22,9 @@ export function PLProjectManagementToolLink({onToolConfirmation, disabled, toolC
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({application_id: application_id, remove_config: true})
-    }).then(res => res.json()).catch(err => null)
+    }).then(res => {
+        setToolConfirmed(false)
+    }).catch(err => null)
   } : undefined
 
   useEffect(() => {
@@ -305,14 +307,14 @@ const GithubProjectsToolForm = ({setData, setToolConfirmed, githubConfig, remove
           <small>This project's board is where your tasks live</small>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="dark:text-white">Repository</label>
+          <label className="dark:text-white">Repositories</label>
           <input type="text" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={repoInputRef} onChange={checkValidity} disabled={confirmed}/>
-          <small>The repository you want to link</small>
+          <small>Provide a comma separated list of repository names we can create issues for {'(Case Sensitive)'}</small>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="dark:text-white">Owner</label>
+          <label className="dark:text-white">Organization</label>
           <input type="text" className="border-2 border-gray-300 rounded-md p-2 dark:bg-transparent dark:border-neutral-700" ref={ownerInputRef} onChange={checkValidity} disabled={confirmed}/>
-          <small>The owner of the repository</small>
+          <small>The name of the GitHub Organization {'(Case Sensitive)'}</small>
         </div>
       </div>
       {!githubConfig ? <PLBasicButton onClick={onConfirm} text={confirmed ? 'Confirmed' : "Confirm Configuration"} disabled={!formValid || confirmed}/> :

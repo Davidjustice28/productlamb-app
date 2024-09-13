@@ -110,8 +110,10 @@ export const loader: LoaderFunction = async ({request}) => {
     hasToolConfigured = true
   } else if (app?.notion_integration_id !== null) {
     hasToolConfigured = true
+  } else if(app?.github_integration_id !== null) {
+    hasToolConfigured = true
   } else {
-    hasToolConfigured = false
+  hasToolConfigured = false
     }
   return json({bugs: bugs ?? null, activeSprint: activeSprint, hasToolConfigured})
 

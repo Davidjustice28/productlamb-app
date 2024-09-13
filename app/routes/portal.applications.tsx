@@ -49,6 +49,7 @@ export let action: ActionFunction = async ({ request }) => {
       await DB_CLIENT.account.update({where: {id: accountId}, data: {default_application_id: applications?.id}})
     }
     await appDbClient.deleteApplication(id)
+    await DB_CLIENT.applicationGithubIntegration.deleteMany({where: {applicationid: id}})
     return json({})
   } else if ('selectedAppId' in data) {
     const cookies = request.headers.get('Cookie')

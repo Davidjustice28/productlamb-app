@@ -15,7 +15,26 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if ("remove_config" in body) {
-    await DB_CLIENT.accountApplication.updateMany({ where: {id: body.application_id}, data: {clickup_integration_id: null, jira_integration_id: null, notion_integration_id: null, sprint_generation_enabled: false}})
+    const application = await DB_CLIENT.accountApplication.findFirst({where: {id: body.application_id}})
+    if (!application) {
+      return json({}, {status: 404})
+    }
+    if (application.clickup_integration_id) {
+      await DB_CLIENT.applicationClickupIntegration.deleteMany({where: {id: application.clickup_integration_id}})
+    }
+    if (application.jira_integration_id) {
+      await DB_CLIENT.applicationJiraIntegration.deleteMany({where: {id: application.jira_integration_id}})
+    }
+
+    if (application.notion_integration_id) {
+      await DB_CLIENT.applicationNotionIntegration.deleteMany({where: {id: application.notion_integration_id}})
+    }
+
+    if (application.github_integration_id) {
+      await DB_CLIENT.applicationGithubIntegration.deleteMany({where: {id: application.github_integration_id}})
+    }
+     
+    await DB_CLIENT.accountApplication.updateMany({ where: {id: body.application_id}, data: {clickup_integration_id: null, jira_integration_id: null, notion_integration_id: null, github_integration_id: null, sprint_generation_enabled: false}})
     const appDbClient = ApplicationsClient(DB_CLIENT.accountApplication)
     const updatedApp = await appDbClient.getApplicationById(body.application_id!)
     if (updatedApp) {

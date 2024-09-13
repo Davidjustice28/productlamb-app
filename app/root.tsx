@@ -101,6 +101,8 @@ export const loader: LoaderFunction = (args) => {
           hasToolConfigured = true
         } else if (app?.notion_integration_id !== null) {
           hasToolConfigured = true
+        } else if(app?.github_integration_id !== null || app?.github_integration_id !== undefined) {
+          hasToolConfigured = true
         } else {
           hasToolConfigured = false
         }

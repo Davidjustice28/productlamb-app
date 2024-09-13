@@ -110,6 +110,8 @@ export const loader: LoaderFunction = args => {
       hasToolConfigured = true
     } else if (app?.notion_integration_id !== null) {
       hasToolConfigured = true
+    } else if(app?.github_integration_id !== null) {
+      hasToolConfigured = true
     } else {
       hasToolConfigured = false
     }
@@ -141,10 +143,6 @@ export default function BacklogPage() {
 
   function onCheck(ids:Array<number>) {
     const itemsChecked = ids.length > 0
-    console.log({
-      itemsChecked,
-      ids
-    })
     setItemsSelected(itemsChecked)
     setIdsChecked(ids)
   }
