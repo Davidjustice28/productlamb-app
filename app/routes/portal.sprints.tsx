@@ -80,7 +80,6 @@ export const loader: LoaderFunction = async ({request}) => {
     sprints,
     taskMap,
     sprintInitiativesMap,
-    timezone: accountData!.timezone,
     taskTotalsChartData,
     taskPercentagesChartData,
     sprintPointsChartData,
@@ -151,7 +150,7 @@ export const meta: MetaFunction = () => {
 };
 
 export default function SprintPage() {
-  const {sprints: loadedSprints, taskMap, sprintInitiativesMap, timezone, taskTotalsChartData, taskPercentagesChartData, sprintPointsChartData, taskTypesData} = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskMap: Record<number, GeneratedTask[]>, sprintInitiativesMap: Record<number, string>, timezone: string, taskTotalsChartData: any, sprintPointsChartData: any[], taskPercentagesChartData: any, taskTypesData: any[]}
+  const {sprints: loadedSprints, taskMap, sprintInitiativesMap, taskTotalsChartData, taskPercentagesChartData, sprintPointsChartData, taskTypesData} = useLoaderData<typeof loader>() as {sprints: Array<ApplicationSprint>, taskMap: Record<number, GeneratedTask[]>, sprintInitiativesMap: Record<number, string>, taskTotalsChartData: any, sprintPointsChartData: any[], taskPercentagesChartData: any, taskTypesData: any[]}
   const [sprints, setSprints] = useState<Array<ApplicationSprint>>(loadedSprints || [])
   const {pathname} = useLocation()
   const parsedPath = pathname.split('/sprints/')
@@ -270,7 +269,7 @@ export default function SprintPage() {
       {chartData[0].length > 1 && <h2 className="text-gray-700 dark:text-gray-500 font-bold text-sm">Sprint History</h2>}
       <div className="mt-2 flex flex-col gap-3">
         {sprints.sort((a,b) => (new Date(a.startDate!).getTime()) - (new Date(b.startDate!).getTime())).reverse().map((sprint, index) => {
-          return <SprintTableRow data={sprint} key={index} tasks={taskMap[sprint.id]} initiative={sprintInitiativesMap[sprint.id]} timezone={timezone} />
+          return <SprintTableRow data={sprint} key={index} tasks={taskMap[sprint.id]} initiative={sprintInitiativesMap[sprint.id]} />
         })}
       </div>
       <PLNoticationModal open={notificationShown} setOpen={setNotificationShown} message="Your sprint has successfully generated."/>
@@ -279,7 +278,7 @@ export default function SprintPage() {
 }
 
 
-function SprintTableRow({data, tasks: initialTasks, initiative, timezone}: {data: ApplicationSprint, tasks?: GeneratedTask[], initiative?: string, timezone: string }) {
+function SprintTableRow({data, tasks: initialTasks, initiative}: {data: ApplicationSprint, tasks?: GeneratedTask[], initiative?: string }) {
   const [tasks, setTasks] = useState<Array<GeneratedTask>|undefined>(initialTasks)
   const [showDetails, setShowDetails] = useState<boolean>(false)
   const isCurrentSprint = data.status === 'In Progress'
@@ -348,9 +347,6 @@ function SprintTableRow({data, tasks: initialTasks, initiative, timezone}: {data
     {key: "points", type: "text", sortable: true},
   ]
 
-  const timeData = calculateTimeLeft(timezone, undefined, data.endDate!, 'Past Due')
-  const timeTitle = timeData.type.charAt(0).toUpperCase() + timeData.type.slice(1)
-  const timeLeft = `${timeTitle} left: ${timeData.count}`
   const tool = data?.using_github_projects ? 'github' : data?.jira_sprint_id ? 'jira' : data?.clickup_sprint_id ? 'clickup' : data?.notion_sprint_id ? 'notion' : 'none'
 
   return (
@@ -376,7 +372,6 @@ function SprintTableRow({data, tasks: initialTasks, initiative, timezone}: {data
           <p className="italic text-gray-500 dark:text-white"><i className="ri-task-line"></i> {tasks?.length ?? 0} tasks</p>
           <PLStatusBadge color={data.is_generating ? Colors.ORANGE : data.status === 'Completed' ? Colors.GREEN : data.status === 'In Progress' ? Colors.BLUE : data.status === 'Under Construction' ? Colors.YELLOW : Colors.RED} text={data.is_generating ? 'Generating' : data.status}/>
           {data.status === 'Under Construction' && !data.is_generating && <PLBasicButton text="Start Planning" onClick={startPlanning} colorClasses="py-[3px] px-[8px] text-xs bg-green-200 dark:bg-green-300 hover:bg-green-300 hover:dark:bg-green-400" icon="ri-tools-line" noDefaultDarkModeStyles/>}
-          {data.status === 'In Progress' && <p className="text-black dark:text-white">{timeLeft}</p>}
           {data.status !== 'Under Construction' && (
               <div className="bg-gray-300 rounded-lg w-1/3 h-6 relative">
                 <div className={`rounded-lg h-6  ${percentageWidthClass}`}></div>
