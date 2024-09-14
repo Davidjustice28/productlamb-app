@@ -24,11 +24,21 @@ export function calculateTimeLeft(timezone: string, start?: string, end?: string
   if (!end) {
     return {type: 'time', count: 'N/A'}
   }
-
   const now = moment(start).utc().tz(timezone);
   const cutoff = moment.utc(end).clone().tz(timezone);
   const daysLeft = cutoff.diff(now, 'days');
   const hoursLeft = cutoff.diff(now, 'hours');
   const minutesLeft = cutoff.diff(now, 'minutes');
+
+  console.log('time data: ', {
+    currentTime: now.toISOString(),
+    cutoffTime: cutoff.toISOString(),
+    timezone,
+    start,
+    end,
+    daysLeft,
+    hoursLeft,
+    minutesLeft
+  });
   return  daysLeft >= 1 ?{type: 'days', count: daysLeft} : hoursLeft >= 1 ? {type: 'hours', count: hoursLeft} : minutesLeft >= 1 ? {type: 'minutes', count: minutesLeft} : {type: 'time', count: pastDueMessage}
 }
