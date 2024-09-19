@@ -214,13 +214,13 @@ export default function SprintPage() {
   }
 
   useEffect(() => {
+    const sprintBeingGenerated = sprints.find(sprint => sprint.is_generating)
     const intervalTimer = setInterval(() => {
       fetch('/api/sprints')
       .then(res => res.json())
       .then(data => {
         const updates = (data?.sprints) as ApplicationSprint[] | undefined
         if (updates) {
-          const sprintBeingGenerated = sprints.find(sprint => sprint.is_generating)
           if (sprintBeingGenerated) {
             const updatedSprint = updates.find(sprint => sprint.id === sprintBeingGenerated.id)
             if (updatedSprint && updatedSprint.is_generating === false) {
@@ -232,8 +232,13 @@ export default function SprintPage() {
       })
       .catch(err => null)
     }, 5000)
+
+    if (!sprintBeingGenerated) {
+      console.log('clearing interval')
+      return () => clearInterval(intervalTimer)
+    }
     return () => clearInterval(intervalTimer)
-  }, [])
+  }, [notificationShown])
 
   return (
     <div className="w-full flex flex-col">
